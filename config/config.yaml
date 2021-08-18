@@ -1,0 +1,54 @@
+directories:
+  input: 'test'
+  prepdwi: 'test/derivatives/hcp_preproc'
+  work: 'temp'
+  output: 'test/derivatives/prepdwi_recon'
+  qc: 'test/derivatives/prepdwi_recon/qc'
+
+tmpdir: 'temp'
+
+tractography:
+  maxlength: 250
+  cutoff: 0.06
+  num_tracts: 10000000
+
+pybids_inputs:
+  preproc_dwi:
+    filters:
+      suffix: dwi
+      extension: .nii.gz
+      datatype: dwi
+      desc: "preproc"
+    wildcards:
+      - subject
+  brainmask:
+    filters:
+      suffix: brainmask
+      extension: '.nii.gz'
+      datatype: dwi
+    wildcards:
+      - subject
+  bvec:
+    filters:
+      suffix: dwi
+      extension: bvec
+      datatype: dwi
+      desc: "preproc"
+    wildcards:
+      - subject
+  bval:
+    filters:
+      suffix: dwi
+      extension: bval
+      datatype: dwi
+      desc: preproc
+    wildcards:
+      - subject
+  t1:
+    filters:
+      suffix: T1w
+      extension: .nii.gz
+      datatype: anat
+      desc: preproc
+    wildcards:
+      - subject

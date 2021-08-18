@@ -1,0 +1,116 @@
+from snakebids import bids, generate_inputs
+import groups
+
+configfile: 'config/config.yaml'
+
+
+config.update(generate_inputs(
+    bids_dir=config['directories']['input'],
+    pybids_inputs=config['pybids_inputs'],
+    derivatives=config['directories']['prepdwi']
+))
+
+include: 'rules/response_function.smk'
+include: 'rules/anatomical_segmentation.smk'
+
+wildcards = config['input_wildcards']['preproc_dwi']
+
+work = config['directories']['work']
+qc = config['directories']['qc']
+output = config['directories']['output']
+
+
+rule all:
+    input:
+        expand(bids(root=output,
+            datatype='dwi',
+            desc="tracks",
+            suffix='10M',
+            **wildcards),
+                **config['input_lists']['preproc_dwi'])
+
+
+
+rule run_act:
+    input:
+        act=bids(root=work,
+            datatype='anat',
+            suffix="5tt.mif",
+            **wildcards),
+        gmwmi=bids(root=work,
+            datatype='anat',
+            suffix="gmwmi.mif",
+            **wildcards),
+        fod=bids(root=work,
+            datatype='dwi',
+            suffix='wmfod_norm.mif',
+            **wildcards),
+    output:
+        bids(root=output,
+            datatype='dwi',
+            desc="tracks",
+            suffix='10M',
+            **wildcards)
+    params:
+        maxlength=config['tractography']['maxlength'],
+        cutoff=config['tractography']['cutoff'],
+        num_tracts=config['tractography']['num_tracts']
+    threads: 8
+    shell:
+        'tckgen -act {input.act} -seed_gmwmi {input.gmwmi} '
+        '-nthreads {threads} -backtrack '
+        '-maxlength {params.maxlength} -cutoff {params.cutoff} -select {params.num_tracts} '
+        '{input.fod} {output}'
+
+rule generate_qc_FOD_image:
+    input:
+        wm=bids(root=work,
+                datatype='dwi',
+                suffix='wmfod.mif',
+                **wildcards),
+        gm=bids(root=work,
+                datatype='dwi',
+                suffix='gmfod.mif',
+                **wildcards),
+        csf=bids(root=work,
+                datatype='dwi',
+                suffix='csffod.mif',
+                **wildcards)
+    output:
+        bids(root=qc,
+            datatype='dwi',
+            suffix='vf.mif',
+            **wildcards)
+    shell:
+        'mrconvert -coord 3 0 {input.wm} - | mrcat {input.csf} {input.gm} - {output}'
+
+
+
+rule collect_gmwmi_image:
+    input:
+        bids(root=work,
+            datatype='anat',
+            suffix="gmwmi.mif",
+            **wildcards)
+    output:
+        bids(root=qc,
+            datatype='anat',
+            suffix="gmwmi.mif",
+            **wildcards)
+    shell:
+        'cp {input} {output}'
+
+rule generate_5tt_qc_view_script:
+    input:
+        dwi=config['input_path']['preproc_dwi'],
+        anat=bids(root=qc,
+            datatype='anat',
+            suffix="gmwmi.mif",
+            **wildcards)
+    output:
+        bids(root=qc,
+            datatype='anat',
+            suffix="viewinterface",
+            **wildcards)
+    shell:
+        'echo #!/bin/bash\nmrview $(realpath {input.dwi}) -overlay.load $(realpath {input.anat}) > {output} && chmod +x {output}'
