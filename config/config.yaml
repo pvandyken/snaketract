@@ -19,6 +19,7 @@ pybids_inputs:
       extension: .nii.gz
       datatype: dwi
       desc: "preproc"
+      subject: 966975
     wildcards:
       - subject
   brainmask:
