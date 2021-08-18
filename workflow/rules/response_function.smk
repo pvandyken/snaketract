@@ -101,7 +101,7 @@ rule compute_fiber_orientation_densities:
     shell:
         'ss3t_csd_beta1 {input.dwi} '
         '{input.wm} {output.wm} {input.gm} {output.gm} {input.csf} {output.csf} '
-        '-mask {input.mask} -nthreads {threads} -scratch {resources.tempdir}'
+        '-mask {input.mask} -nthreads {threads} -scratch {resources.tmpdir}'
 
 rule normalize_fiber_orientation_densities:
     input:
