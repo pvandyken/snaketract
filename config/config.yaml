@@ -1,7 +1,6 @@
 directories:
   input: '../hcp1200'
   prepdwi: '../hcp1200/derivatives/hcp_preproc'
-  work: 'temp'
   output: '../hcp1200/derivatives/prepdwi_recon'
   qc: '../hcp1200/derivatives/prepdwi_recon/qc'
 
