@@ -1,9 +1,9 @@
 directories:
-  input: 'test'
-  prepdwi: 'test/derivatives/hcp_preproc'
+  input: '../hcp1200'
+  prepdwi: '../hcp1200/derivatives/hcp_preproc'
   work: 'temp'
-  output: 'test/derivatives/prepdwi_recon'
-  qc: 'test/derivatives/prepdwi_recon/qc'
+  output: '../hcp1200/test/derivatives/prepdwi_recon'
+  qc: '../hcp1200/test/derivatives/prepdwi_recon/qc'
 
 tmpdir: 'temp'
 
