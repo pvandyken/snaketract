@@ -19,6 +19,7 @@ work = config['directories']['work']
 qc = config['directories']['qc']
 output = config['directories']['output']
 
+localrules: all
 
 rule all:
     input:
@@ -56,6 +57,10 @@ rule run_act:
         cutoff=config['tractography']['cutoff'],
         num_tracts=config['tractography']['num_tracts']
     threads: 8
+    benchmark:
+        'benchmarks/run_act/{subject}.tsv'
+    envmodules:
+        "mrtrix/3.0.1"
     shell:
         'tckgen -act {input.act} -seed_gmwmi {input.gmwmi} '
         '-nthreads {threads} -backtrack '

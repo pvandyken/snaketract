@@ -6,6 +6,8 @@ work = config['directories']['work']
 qc = config['directories']['qc']
 output = config['directories']['output']
 
+localrules: convert_t1_to_mrtrix_format
+
 rule convert_t1_to_mrtrix_format:
     input:
         config['input_path']['t1']
@@ -15,6 +17,8 @@ rule convert_t1_to_mrtrix_format:
             suffix="t1w.mif",
             **wildcards)
     group: groups.segmentation
+    envmodules:
+        "mrtrix/3.0.1"
     shell:
         'mrconvert {input} {output}'
 
@@ -33,6 +37,13 @@ rule segment_anatomical_image:
     group: groups.segmentation
     resources:
         tmpdir=config['tmpdir']
+    benchmark:
+        'benchmarks/segment_anatomical_image/{subject}.tsv'
+    envmodules:
+        "mrtrix/3.0.1",
+        "StdEnv/2020",
+        "gcc/9.3.0",
+        "fsl/6.0.4"
     shell:
         '5ttgen fsl {input} {output} -premasked -scratch {resources.tmpdir}'
 
@@ -48,5 +59,9 @@ rule create_seed_boundary:
             suffix="gmwmi.mif",
             **wildcards)
     group: groups.segmentation
+    benchmark:
+        'benchmarks/create_seed_boundary/{subject}.tsv'
+    envmodules:
+        "mrtrix/3.0.1"
     shell:
         '5tt2gmwmi {input} {output}'

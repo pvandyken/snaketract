@@ -6,6 +6,7 @@ work = config['directories']['work']
 qc = config['directories']['qc']
 output = config['directories']['output']
 
+localrules: convert_dwi_to_mrtrix_format
 
 rule convert_dwi_to_mrtrix_format:
     input:
@@ -17,9 +18,8 @@ rule convert_dwi_to_mrtrix_format:
             datatype='dwi',
             suffix="dwi.mif",
             **wildcards)
-    group: groups.response_generation
-    container: 
-        "brainlife_mrtrix3_3.0.2.sif"
+    envmodules:
+        "mrtrix/3.0.1"
     shell:
         'mrconvert {input.dwi} {output} -fslgrad {input.bvec} {input.bval}'
 
@@ -49,6 +49,10 @@ rule generate_response_function:
     group: groups.response_generation
     resources:
         tmpdir=config['tmpdir']
+    benchmark:
+        'benchmarks/generate_response_function/{subject}.tsv'
+    envmodules:
+        "mrtrix/3.0.1"
     shell:
         'dwi2response dhollander {input} {output.wm} {output.gm} {output.csf} '
         '-voxels {output.voxels} -scratch {resources.tmpdir}'
@@ -92,6 +96,8 @@ rule compute_fiber_orientation_densities:
         tmpdir=config['tmpdir']
     container:
         'penbbl_ss3t_beta_0.0.1.sif'
+    benchmark:
+        'benchmarks/compute_fiber_orientation_densities/{subject}.tsv'
     shell:
         'ss3t_csd_beta1 {input.dwi} '
         '{input.wm} {output.wm} {input.gm} {output.gm} {input.csf} {output.csf} '
@@ -126,5 +132,9 @@ rule normalize_fiber_orientation_densities:
                 suffix='csffod_norm.mif',
                 **wildcards)
     group: groups.response_generation
+    benchmark:
+        'benchmarks/normalize_fiber_orientation_densities/{subject}.tsv'
+    envmodules:
+        "mrtrix/3.0.1"
     shell:
         'mtnormalize {input.wm} {output.wm} {input.gm} {output.gm} {input.csf} {output.csf} -mask {input.mask}'
