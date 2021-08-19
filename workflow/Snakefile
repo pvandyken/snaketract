@@ -50,7 +50,7 @@ rule run_act:
         bids(root=output,
             datatype='dwi',
             desc="tracks",
-            suffix='10M',
+            suffix='10M.tck',
             **wildcards)
     params:
         maxlength=config['tractography']['maxlength'],
