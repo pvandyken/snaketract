@@ -31,6 +31,10 @@ rule convert_mask_to_mrtrix_format:
             datatype='dwi',
             suffix="brainmask.mif",
             **wildcards))
+    envmodules:
+        "mrtrix/3.0.1"
+    shell:
+        'mrconvert {input} {output}'
 
 rule generate_response_function:
     input:
