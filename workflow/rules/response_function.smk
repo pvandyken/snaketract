@@ -2,7 +2,7 @@ from snakebids import bids
 
 wildcards = config['input_wildcards']['preproc_dwi']
 
-work = config['tmpdir'] + '/data'
+work = config['directories']['output']
 qc = config['directories']['qc']
 output = config['directories']['output']
 

@@ -4,7 +4,7 @@ directories:
   output: '../hcp1200/derivatives/prepdwi_recon'
   qc: '../hcp1200/derivatives/prepdwi_recon/qc'
 
-tmpdir: 'temp'
+tmpdir: $SLURM_TMPDIR
 
 tractography:
   maxlength: 250

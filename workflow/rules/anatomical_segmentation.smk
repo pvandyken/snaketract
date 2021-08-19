@@ -2,7 +2,7 @@ from snakebids import bids
 
 wildcards = config['input_wildcards']['preproc_dwi']
 
-work = config['tmpdir'] + '/data'
+work = config['directories']['output']
 qc = config['directories']['qc']
 output = config['directories']['output']
 
@@ -36,7 +36,7 @@ rule segment_anatomical_image:
             **wildcards)
     group: groups.segmentation
     resources:
-        tmpdir=config['tmpdir']
+        tmpdir=config["tmpdir"]
     benchmark:
         'benchmarks/segment_anatomical_image/{subject}.tsv'
     envmodules:
