@@ -206,4 +206,4 @@ rule normalize_fiber_orientation_densities:
     envmodules:
         "mrtrix/3.0.1"
     shell:
-        'mtnormalize {input.wm} {output.wm} {input.gm} {output.gm} {input.csf} {output.csf} -mask {input.mask}'
+        'mtnormalise {input.wm} {output.wm} {input.gm} {output.gm} {input.csf} {output.csf} -mask {input.mask}'
