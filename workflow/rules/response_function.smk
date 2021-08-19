@@ -14,20 +14,33 @@ rule convert_dwi_to_mrtrix_format:
         bvec=config['input_path']['bvec'],
         bval=config['input_path']['bval']
     output:
-        bids(root=work,
+        temp(bids(root=work,
             datatype='dwi',
             suffix="dwi.mif",
-            **wildcards)
+            **wildcards))
     envmodules:
         "mrtrix/3.0.1"
     shell:
         'mrconvert {input.dwi} {output} -fslgrad {input.bvec} {input.bval}'
 
+rule convert_mask_to_mrtrix_format:
+    input:
+        config['input_path']['brainmask']
+    output:
+        temp(bids(root=work,
+            datatype='dwi',
+            suffix="brainmask.mif",
+            **wildcards))
+
 rule generate_response_function:
     input:
-        bids(root=work,
+        dwi=bids(root=work,
             datatype='dwi',
             suffix="dwi.mif",
+            **wildcards),
+        mask=bids(root=work,
+            datatype='dwi',
+            suffix="brainmask.mif",
             **wildcards)
     output:
         wm=bids(root=work,
@@ -54,8 +67,8 @@ rule generate_response_function:
     envmodules:
         "mrtrix/3.0.1"
     shell:
-        'dwi2response dhollander {input} {output.wm} {output.gm} {output.csf} '
-        '-voxels {output.voxels} -scratch {resources.tmpdir}'
+        'dwi2response dhollander {input.dwi} {output.wm} {output.gm} {output.csf} '
+        '-voxels {output.voxels} -mask {input.mask} -scratch {resources.tmpdir}'
 
 
 rule compute_fiber_orientation_densities:
@@ -76,7 +89,10 @@ rule compute_fiber_orientation_densities:
                 datatype='dwi',
                 suffix='csf.txt',
                 **wildcards),
-        mask=config['input_path']['brainmask']
+        mask=bids(root=work,
+            datatype='dwi',
+            suffix="brainmask.mif",
+            **wildcards)
     output: 
         wm=bids(root=work,
                 datatype='dwi',
@@ -117,7 +133,10 @@ rule normalize_fiber_orientation_densities:
                 datatype='dwi',
                 suffix='csffod.mif',
                 **wildcards),
-        mask=config['input_path']['brainmask']
+        mask=bids(root=work,
+            datatype='dwi',
+            suffix="brainmask.mif",
+            **wildcards)
     output:
         wm=bids(root=work,
                 datatype='dwi',
