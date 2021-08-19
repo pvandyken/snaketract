@@ -42,6 +42,10 @@ rule generate_response_function:
             datatype='dwi',
             suffix="brainmask.mif",
             **wildcards)
+        mask=bids(root=work,
+            datatype='dwi',
+            suffix="brainmask.mif",
+            **wildcards)
     output:
         wm=bids(root=work,
                 datatype='dwi',
