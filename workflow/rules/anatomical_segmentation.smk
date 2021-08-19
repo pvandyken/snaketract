@@ -12,10 +12,10 @@ rule convert_t1_to_mrtrix_format:
     input:
         config['input_path']['t1']
     output:
-        bids(root=work,
+        temp(bids(root=work,
             datatype='anat',
             suffix="t1w.mif",
-            **wildcards)
+            **wildcards))
     group: groups.segmentation
     envmodules:
         "mrtrix/3.0.1"
