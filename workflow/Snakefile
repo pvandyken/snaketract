@@ -26,7 +26,7 @@ rule all:
         expand(bids(root=output,
             datatype='dwi',
             desc="tracks",
-            suffix='10M',
+            suffix='10M.tck',
             **wildcards),
                 **config['input_lists']['preproc_dwi'])
 
