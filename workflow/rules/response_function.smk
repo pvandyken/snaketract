@@ -115,7 +115,11 @@ rule compute_fiber_orientation_densities:
     resources:
         tmpdir=config['tmpdir']
     container:
+<<<<<<< HEAD
         'docker://pennbbl/ss3t_beta:0.0.1'
+=======
+        'docker://pennbbl/ss3t_beta:0.0.1.sif'
+>>>>>>> cd55600f43eb2c6acd0938a356ba441d4710c54a
     benchmark:
         'benchmarks/compute_fiber_orientation_densities/{subject}.tsv'
     shell:
