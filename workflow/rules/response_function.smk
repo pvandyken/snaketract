@@ -160,8 +160,8 @@ rule compute_fiber_orientation_densities:
                 **wildcards)
     group: groups.response_generation
     threads: 8
-    container:
-        'docker://pennbbl/ss3t_beta:0.0.1'
+    envmodules:
+        "mrtrix/3.0.1"
     benchmark:
         'benchmarks/compute_fiber_orientation_densities/{subject}.tsv'
     shell:
