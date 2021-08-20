@@ -21,8 +21,6 @@ rule convert_dwi_to_mrtrix_format:
     envmodules:
         "mrtrix/3.0.1"
     log: "logs/convert_dwi_to_mrtrix_format/{subject}.log"
-    resources:
-        tmpdir=config['tmpdir']
     group: groups.response_generation 
     shell:
         'mrconvert {input.dwi} {output} -fslgrad {input.bvec} {input.bval} 2> {log}'
@@ -38,8 +36,6 @@ rule convert_mask_to_mrtrix_format:
     envmodules:
         "mrtrix/3.0.1"
     log: "logs/convert_mask_to_mrtrix_format/{subject}.log"
-    resources:
-        tmpdir=config['tmpdir']
     group: groups.response_generation
     shell:
         'mrconvert {input} {output} 2> {log}'
@@ -73,14 +69,12 @@ rule generate_response_function:
                 suffix='voxels.mif',
                 **wildcards)
     group: groups.response_generation
-    resources:
-        tmpdir=config['tmpdir']
     log: "logs/generate_response_function/{subject}.log"
     envmodules:
         "mrtrix/3.0.1"
     shell:
         'dwi2response dhollander {input.dwi} {output.wm} {output.gm} {output.csf} '
-        '-voxels {output.voxels} -mask {input.mask} -scratch {resources.tmpdir} 2> {log}'
+        '-voxels {output.voxels} -mask {input.mask} -scratch $SLURM_TMPDIR 2> {log}'
 
 
 # rule compute_fiber_orientation_densities:
@@ -171,7 +165,6 @@ rule compute_fiber_orientation_densities:
     resources:
         mem_mb=10000,
         runtime="00:15:00",
-        tmpdir=config['tmpdir']
     envmodules:
         "mrtrix/3.0.1"
     log: "logs/compute_fiber_orientation_densities/{subject}.log"
@@ -215,8 +208,6 @@ rule normalize_fiber_orientation_densities:
                 suffix='csffod.mif',
                 **wildcards)
     group: groups.response_generation
-    resources:
-        tmpdir=config['tmpdir']
     log: "logs/normalize_fiber_orientation_densities/{subject}.log"
     envmodules:
         "mrtrix/3.0.1"
