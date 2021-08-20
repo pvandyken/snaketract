@@ -6,7 +6,6 @@ work = config['directories']['output']
 qc = config['directories']['qc']
 output = config['directories']['output']
 
-localrules: convert_t1_to_mrtrix_format
 
 rule convert_t1_to_mrtrix_format:
     input:
@@ -20,6 +19,7 @@ rule convert_t1_to_mrtrix_format:
     log: "logs/convert_t1_to_mrtrix_format/{subject}.log"
     envmodules:
         "mrtrix/3.0.1"
+    group: groups.segmentation
     shell:
         'mrconvert {input} {output} 2> {log}'
 
@@ -38,7 +38,7 @@ rule segment_anatomical_image:
     group: groups.segmentation
     resources:
         tmpdir=config["tmpdir"],
-        mem_mb=2500,
+        mem_mb=9000,
         runtime='20:00'
     log: "logs/segment_anatomical_image/{subject}.log"
     envmodules:
@@ -61,9 +61,6 @@ rule create_seed_boundary:
             suffix="gmwmi.mif",
             **wildcards)
     group: groups.segmentation
-    resources:
-        runtime='00:00:05',
-        mem_mb=250
     log: "logs/create_seed_boundary/{subject}.log"
     envmodules:
         "mrtrix/3.0.1"

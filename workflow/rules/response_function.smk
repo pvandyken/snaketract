@@ -6,7 +6,6 @@ work = config['directories']['output']
 qc = config['directories']['qc']
 output = config['directories']['output']
 
-localrules: convert_dwi_to_mrtrix_format, convert_mask_to_mrtrix_format
 
 rule convert_dwi_to_mrtrix_format:
     input:
@@ -69,8 +68,7 @@ rule generate_response_function:
     group: groups.response_generation
     resources:
         tmpdir=config['tmpdir'],
-        runtime='00:02:00',
-        mem_mb=7000
+        runtime=2
     log: "logs/generate_response_function/{subject}.log"
     envmodules:
         "mrtrix/3.0.1"
@@ -165,8 +163,8 @@ rule compute_fiber_orientation_densities:
     group: groups.response_generation
     threads: 32
     resources:
-        mem_mb=7894,
-        runtime='00:25:54'
+        mem_mb=10000,
+        runtime=10
     envmodules:
         "mrtrix/3.0.1"
     log: "logs/compute_fiber_orientation_densities/{subject}.log"
@@ -211,8 +209,7 @@ rule normalize_fiber_orientation_densities:
                 **wildcards)
     group: groups.response_generation
     resources:
-        mem_mb=450,
-        runtime='00:00:38'
+        runtime=1
     log: "logs/normalize_fiber_orientation_densities/{subject}.log"
     envmodules:
         "mrtrix/3.0.1"

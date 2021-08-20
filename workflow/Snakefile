@@ -56,10 +56,14 @@ rule run_act:
         maxlength=config['tractography']['maxlength'],
         cutoff=config['tractography']['cutoff'],
         num_tracts=config['tractography']['num_tracts']
-    threads: 8
+    threads: 32
+    resources:
+        runtime=45,
+        mem_mb=4000
     log: "logs/run_act/{subject}.log"
     envmodules:
         "mrtrix/3.0.1"
+    group: 'act'
     shell:
         'tckgen -act {input.act} -seed_gmwmi {input.gmwmi} '
         '-nthreads {threads} -backtrack '
