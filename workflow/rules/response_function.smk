@@ -21,6 +21,8 @@ rule convert_dwi_to_mrtrix_format:
     envmodules:
         "mrtrix/3.0.1"
     log: "logs/convert_dwi_to_mrtrix_format/{subject}.log"
+    resources:
+        tmpdir=config['tmpdir']
     group: groups.response_generation 
     shell:
         'mrconvert {input.dwi} {output} -fslgrad {input.bvec} {input.bval} 2> {log}'
@@ -36,6 +38,8 @@ rule convert_mask_to_mrtrix_format:
     envmodules:
         "mrtrix/3.0.1"
     log: "logs/convert_mask_to_mrtrix_format/{subject}.log"
+    resources:
+        tmpdir=config['tmpdir']
     group: groups.response_generation
     shell:
         'mrconvert {input} {output} 2> {log}'
@@ -167,6 +171,7 @@ rule compute_fiber_orientation_densities:
     resources:
         mem_mb=10000,
         runtime=15,
+        tmpdir=config['tmpdir']
     envmodules:
         "mrtrix/3.0.1"
     log: "logs/compute_fiber_orientation_densities/{subject}.log"
@@ -213,6 +218,8 @@ rule normalize_fiber_orientation_densities:
     log: "logs/normalize_fiber_orientation_densities/{subject}.log"
     envmodules:
         "mrtrix/3.0.1"
+    resources:
+        tmpdir=config['tmpdir']
     shell:
         'mtnormalise {input.wm} {output.wm} {input.gm} {output.gm} {input.csf} {output.csf} '
         '-mask {input.mask} 2> {log}'
