@@ -75,7 +75,8 @@ rule generate_response_function:
     group: groups.response_generation
     log: "logs/generate_response_function/{subject}.log"
     resources:
-        tmpdir=config['tmpdir']
+        tmpdir=config['tmpdir'],
+        runtime=2
     envmodules:
         "mrtrix/3.0.1"
     shell:
