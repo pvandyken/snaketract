@@ -70,11 +70,13 @@ rule generate_response_function:
                 **wildcards)
     group: groups.response_generation
     log: "logs/generate_response_function/{subject}.log"
+    resources:
+        tmpdir=config['tmpdir']
     envmodules:
         "mrtrix/3.0.1"
     shell:
         'dwi2response dhollander {input.dwi} {output.wm} {output.gm} {output.csf} '
-        '-voxels {output.voxels} -mask {input.mask} -scratch $SLURM_TMPDIR 2> {log}'
+        '-voxels {output.voxels} -mask {input.mask} -scratch {resources.tmpdir} 2> {log}'
 
 
 # rule compute_fiber_orientation_densities:
@@ -164,7 +166,7 @@ rule compute_fiber_orientation_densities:
     threads: 32
     resources:
         mem_mb=10000,
-        runtime="00:15:00",
+        runtime=15,
     envmodules:
         "mrtrix/3.0.1"
     log: "logs/compute_fiber_orientation_densities/{subject}.log"
