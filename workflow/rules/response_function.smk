@@ -6,6 +6,7 @@ work = config['directories']['output']
 qc = config['directories']['qc']
 output = config['directories']['output']
 
+localrules: convert_mask_to_mrtrix_format, convert_dwi_to_mrtrix_format
 
 rule convert_dwi_to_mrtrix_format:
     input:

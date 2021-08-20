@@ -19,7 +19,6 @@ rule convert_t1_to_mrtrix_format:
     log: "logs/convert_t1_to_mrtrix_format/{subject}.log"
     envmodules:
         "mrtrix/3.0.1"
-    group: groups.segmentation
     shell:
         'mrconvert {input} {output} 2> {log}'
 
