@@ -17,10 +17,11 @@ rule convert_t1_to_mrtrix_format:
             suffix="t1w.mif",
             **wildcards))
     group: groups.segmentation
+    log: "logs/convert_t1_to_mrtrix_format/{subject}.log"
     envmodules:
         "mrtrix/3.0.1"
     shell:
-        'mrconvert {input} {output}'
+        'mrconvert {input} {output} 2> {log}'
 
 
 rule segment_anatomical_image:
@@ -36,16 +37,17 @@ rule segment_anatomical_image:
             **wildcards)
     group: groups.segmentation
     resources:
-        tmpdir=config["tmpdir"]
-    benchmark:
-        'benchmarks/segment_anatomical_image/{subject}.tsv'
+        tmpdir=config["tmpdir"],
+        mem_mb=2500,
+        runtime='20:00'
+    log: "logs/segment_anatomical_image/{subject}.log"
     envmodules:
         "mrtrix/3.0.1",
         "StdEnv/2020",
         "gcc/9.3.0",
         "fsl/6.0.4"
     shell:
-        '5ttgen fsl {input} {output} -premasked -scratch {resources.tmpdir}'
+        '5ttgen fsl {input} {output} -premasked -scratch {resources.tmpdir} 2> {log}'
 
 rule create_seed_boundary:
     input:
@@ -59,9 +61,11 @@ rule create_seed_boundary:
             suffix="gmwmi.mif",
             **wildcards)
     group: groups.segmentation
-    benchmark:
-        'benchmarks/create_seed_boundary/{subject}.tsv'
+    resources:
+        runtime='00:00:05',
+        mem_mb=250
+    log: "logs/create_seed_boundary/{subject}.log"
     envmodules:
         "mrtrix/3.0.1"
     shell:
-        '5tt2gmwmi {input} {output}'
+        '5tt2gmwmi {input} {output} 2> {log}'

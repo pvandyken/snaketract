@@ -6,7 +6,7 @@ work = config['directories']['output']
 qc = config['directories']['qc']
 output = config['directories']['output']
 
-localrules: convert_dwi_to_mrtrix_format
+localrules: convert_dwi_to_mrtrix_format, convert_mask_to_mrtrix_format
 
 rule convert_dwi_to_mrtrix_format:
     input:
@@ -20,8 +20,9 @@ rule convert_dwi_to_mrtrix_format:
             **wildcards))
     envmodules:
         "mrtrix/3.0.1"
+    log: "logs/convert_dwi_to_mrtrix_format/{subject}.log"
     shell:
-        'mrconvert {input.dwi} {output} -fslgrad {input.bvec} {input.bval}'
+        'mrconvert {input.dwi} {output} -fslgrad {input.bvec} {input.bval} 2> {log}'
 
 rule convert_mask_to_mrtrix_format:
     input:
@@ -33,8 +34,10 @@ rule convert_mask_to_mrtrix_format:
             **wildcards))
     envmodules:
         "mrtrix/3.0.1"
+    log: "logs/convert_mask_to_mrtrix_format/{subject}.log"
     shell:
-        'mrconvert {input} {output}'
+        'mrconvert {input} {output} 2> {log}'
+
 
 rule generate_response_function:
     input:
@@ -65,14 +68,15 @@ rule generate_response_function:
                 **wildcards)
     group: groups.response_generation
     resources:
-        tmpdir=config['tmpdir']
-    benchmark:
-        'benchmarks/generate_response_function/{subject}.tsv'
+        tmpdir=config['tmpdir'],
+        runtime='00:02:00',
+        mem_mb=7000
+    log: "logs/generate_response_function/{subject}.log"
     envmodules:
         "mrtrix/3.0.1"
     shell:
         'dwi2response dhollander {input.dwi} {output.wm} {output.gm} {output.csf} '
-        '-voxels {output.voxels} -mask {input.mask} -scratch {resources.tmpdir}'
+        '-voxels {output.voxels} -mask {input.mask} -scratch {resources.tmpdir} 2> {log}'
 
 
 # rule compute_fiber_orientation_densities:
@@ -159,15 +163,17 @@ rule compute_fiber_orientation_densities:
                 suffix='csffod.mif',
                 **wildcards)
     group: groups.response_generation
-    threads: 8
+    threads: 32
+    resources:
+        mem_mb=7894,
+        runtime='00:25:54'
     envmodules:
         "mrtrix/3.0.1"
-    benchmark:
-        'benchmarks/compute_fiber_orientation_densities/{subject}.tsv'
+    log: "logs/compute_fiber_orientation_densities/{subject}.log"
     shell:
         'dwi2fod msmt_csd {input.dwi} '
         '{input.wm} {output.wm} {input.gm} {output.gm} {input.csf} {output.csf} '
-        '-mask {input.mask} -nthreads {threads}'
+        '-mask {input.mask} -nthreads {threads} 2> {log}'
 
 rule normalize_fiber_orientation_densities:
     input:
@@ -190,20 +196,26 @@ rule normalize_fiber_orientation_densities:
     output:
         wm=bids(root=work,
                 datatype='dwi',
-                suffix='wmfod_norm.mif',
+                desc='norm',
+                suffix='wmfod.mif',
                 **wildcards),
         gm=bids(root=work,
                 datatype='dwi',
-                suffix='gmfod_norm.mif',
+                desc='norm',
+                suffix='gmfod.mif',
                 **wildcards),
         csf=bids(root=work,
                 datatype='dwi',
-                suffix='csffod_norm.mif',
+                desc='norm',
+                suffix='csffod.mif',
                 **wildcards)
     group: groups.response_generation
-    benchmark:
-        'benchmarks/normalize_fiber_orientation_densities/{subject}.tsv'
+    resources:
+        mem_mb=450,
+        runtime='00:00:38'
+    log: "logs/normalize_fiber_orientation_densities/{subject}.log"
     envmodules:
         "mrtrix/3.0.1"
     shell:
-        'mtnormalise {input.wm} {output.wm} {input.gm} {output.gm} {input.csf} {output.csf} -mask {input.mask}'
+        'mtnormalise {input.wm} {output.wm} {input.gm} {output.gm} {input.csf} {output.csf} '
+        '-mask {input.mask} 2> {log}'

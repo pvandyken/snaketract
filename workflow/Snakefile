@@ -47,25 +47,24 @@ rule run_act:
             suffix='wmfod_norm.mif',
             **wildcards),
     output:
-        bids(root=output,
+        protected(bids(root=output,
             datatype='dwi',
             desc="tracks",
             suffix='10M.tck',
-            **wildcards)
+            **wildcards))
     params:
         maxlength=config['tractography']['maxlength'],
         cutoff=config['tractography']['cutoff'],
         num_tracts=config['tractography']['num_tracts']
     threads: 8
-    benchmark:
-        'benchmarks/run_act/{subject}.tsv'
+    log: "logs/run_act/{subject}.log"
     envmodules:
         "mrtrix/3.0.1"
     shell:
         'tckgen -act {input.act} -seed_gmwmi {input.gmwmi} '
         '-nthreads {threads} -backtrack '
         '-maxlength {params.maxlength} -cutoff {params.cutoff} -select {params.num_tracts} '
-        '{input.fod} {output}'
+        '{input.fod} {output} 2> {log}'
 
 rule generate_qc_FOD_image:
     input:
