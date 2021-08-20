@@ -42,7 +42,7 @@ rule run_act:
             datatype='anat',
             suffix="gmwmi.mif",
             **wildcards),
-        wm=bids(root=work,
+        fod=bids(root=work,
                 datatype='dwi',
                 desc='norm',
                 suffix='wmfod.mif',
