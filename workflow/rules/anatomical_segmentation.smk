@@ -38,8 +38,8 @@ rule segment_anatomical_image:
     group: groups.segmentation
     resources:
         tmpdir=config["tmpdir"],
-        mem_mb=9000,
-        runtime='20:00'
+        mem_mb=2500,
+        runtime=20
     log: "logs/segment_anatomical_image/{subject}.log"
     envmodules:
         "mrtrix/3.0.1",
