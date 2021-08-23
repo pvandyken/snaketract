@@ -38,7 +38,7 @@ rule segment_anatomical_image:
     resources:
         tmpdir=config["tmpdir"],
         mem_mb=2500,
-        runtime=20
+        runtime=40
     log: "logs/segment_anatomical_image/{subject}.log"
     envmodules:
         "mrtrix/3.0.1",
