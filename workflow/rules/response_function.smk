@@ -211,6 +211,8 @@ rule normalize_fiber_orientation_densities:
                 **wildcards)
     group: groups.response_generation
     log: "logs/normalize_fiber_orientation_densities/{subject}.log"
+    resources:
+        runtime=2
     envmodules:
         "mrtrix/3.0.1"
     shell:
