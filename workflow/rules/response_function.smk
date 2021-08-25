@@ -1,4 +1,5 @@
 from snakebids import bids
+from lib.shells import is_multi_shelled
 
 wildcards = config['input_wildcards']['preproc_dwi']
 

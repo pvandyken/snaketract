@@ -1,13 +1,13 @@
 from snakebids import bids, generate_inputs
 import groups
 
-configfile: 'config/config.yaml'
+configfile: 'config/config.yml'
 
 
 config.update(generate_inputs(
-    bids_dir=config['directories']['input'],
+    bids_dir=config['bids_dir'],
     pybids_inputs=config['pybids_inputs'],
-    derivatives=config['directories']['prepdwi']
+    derivatives=f"{config['derivatives']}/prepdwi_recon"
 ))
 
 include: 'rules/response_function.smk'
