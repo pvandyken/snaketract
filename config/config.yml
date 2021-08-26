@@ -1,11 +1,3 @@
-directories:
-  input: '../hcp1200'
-  prepdwi: '../hcp1200/derivatives/hcp_preproc'
-  output: '../hcp1200/derivatives/prepdwi_recon'
-  qc: '../hcp1200/derivatives/prepdwi_recon/qc'
-
-tmpdir: $SLURM_TMPDIR
-
 tractography:
   maxlength: 250
   cutoff: 0.06
@@ -94,4 +86,5 @@ parse_args:
   --preprocessed_data:
     help: 'Path(s) to a derivatives dataset, for folder(s) that contains multiple derivatives datasets (default: %(default)s) '
     default: False
+    type: Path
     nargs: '+'
