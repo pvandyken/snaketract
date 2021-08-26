@@ -185,7 +185,7 @@ rule compute_ms3t_fiber_orientation_densities:
     threads: 32
     resources:
         mem_mb=10000,
-        runtime=25,
+        runtime=45,
     envmodules:
         "mrtrix/3.0.1"
     log: "logs/compute_fiber_orientation_densities/{subject}.log"

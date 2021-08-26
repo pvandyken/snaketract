@@ -59,7 +59,7 @@ rule run_act:
         num_tracts=config['tractography']['num_tracts']
     threads: 32
     resources:
-        runtime=45,
+        runtime=90,
         mem_mb=4000
     log: "logs/run_act/{subject}.log"
     envmodules:
