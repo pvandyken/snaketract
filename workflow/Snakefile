@@ -3,21 +3,21 @@ import groups
 
 configfile: 'config/config.yml'
 
-
 config.update(generate_inputs(
     bids_dir=config['bids_dir'],
     pybids_inputs=config['pybids_inputs'],
-    derivatives=f"{config['derivatives']}/prepdwi_recon"
+    derivatives=config['preprocessed_data']
 ))
 
-include: 'rules/response_function.smk'
-include: 'rules/anatomical_segmentation.smk'
-
 wildcards = config['input_wildcards']['preproc_dwi']
+work = config['output_dir']
+qc = config['output_dir']
 
-work = config['directories']['output']
-qc = config['directories']['qc']
-output = config['directories']['output']
+output = config['output_dir']
+
+
+include: 'rules/anatomical_segmentation.smk'
+include: "rules/response_function.smk"
 
 localrules: all
 
