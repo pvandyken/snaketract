@@ -1,12 +1,5 @@
 from snakebids import bids
 
-wildcards = config['input_wildcards']['preproc_dwi']
-
-work = config['directories']['output']
-qc = config['directories']['qc']
-output = config['directories']['output']
-
-
 rule convert_t1_to_mrtrix_format:
     input:
         config['input_path']['t1']
@@ -36,7 +29,6 @@ rule segment_anatomical_image:
             **wildcards)
     group: groups.segmentation
     resources:
-        tmpdir=config["tmpdir"],
         mem_mb=2500,
         runtime=40
     log: "logs/segment_anatomical_image/{subject}.log"
