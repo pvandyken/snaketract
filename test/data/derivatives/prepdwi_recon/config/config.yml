@@ -1,0 +1,90 @@
+preprocessed_data:
+- /home/knavynde/projects/nimi/prepdwi_recon/workflow/test/data/derivatives/hcp_preproc
+bids_dir: /home/knavynde/projects/nimi/prepdwi_recon/workflow/test/data
+output_dir: /home/knavynde/projects/nimi/prepdwi_recon/workflow/test/data/derivatives/prepdwi_recon
+tmpdir: $SLURM_TMPDIR
+tractography:
+  maxlength: 250
+  cutoff: 0.06
+  num_tracts: 10000000
+pybids_inputs:
+  preproc_dwi:
+    filters:
+      suffix: dwi
+      extension: .nii.gz
+      datatype: dwi
+      desc: preproc
+    wildcards:
+    - subject
+  brainmask:
+    filters:
+      suffix: brainmask
+      extension: .nii.gz
+      datatype: dwi
+    wildcards:
+    - subject
+  bvec:
+    filters:
+      suffix: dwi
+      extension: bvec
+      datatype: dwi
+      desc: preproc
+    wildcards:
+    - subject
+  bval:
+    filters:
+      suffix: dwi
+      extension: bval
+      datatype: dwi
+      desc: preproc
+    wildcards:
+    - subject
+  t1:
+    filters:
+      suffix: T1w
+      extension: .nii.gz
+      datatype: anat
+      desc: preproc
+    wildcards:
+    - subject
+targets_by_analysis_level:
+  participant:
+  - ''
+analysis_levels: &id001
+- participant
+parse_args:
+  bids_dir:
+    help: The directory with the input dataset formatted according to the BIDS standard.
+  output_dir:
+    help: The directory where the output files should be stored. If you are running
+      group level analysis this folder should be prepopulated with the results of
+      the participant level analysis.
+  analysis_level:
+    help: Level of the analysis that will be performed.
+    choices: *id001
+  --participant_label:
+    help: The label(s) of the participant(s) that should be analyzed. The label corresponds
+      to sub-<participant_label> from the BIDS spec (so it does not include "sub-").
+      If this parameter is not provided all subjects should be analyzed. Multiple
+      participants can be specified with a space separated list.
+    nargs: +
+  --exclude_participant_label:
+    help: The label(s) of the participant(s) that should be excluded. The label corresponds
+      to sub-<participant_label> from the BIDS spec (so it does not include "sub-").
+      If this parameter is not provided all subjects should be analyzed. Multiple
+      participants can be specified with a space separated list.
+    nargs: +
+  --preprocessed_data:
+    help: 'Path(s) to a derivatives dataset, for folder(s) that contains multiple
+      derivatives datasets (default: %(default)s) '
+    default: false
+    type: !!python/name:pathlib.Path ''
+    nargs: +
+snakemake_dir: /home/knavynde/projects/nimi/prepdwi_recon
+snakefile: /home/knavynde/projects/nimi/prepdwi_recon/workflow/Snakefile
+help_snakemake: null
+analysis_level: participant
+participant_label: null
+exclude_participant_label: null
+snakemake_args:
+- -n
