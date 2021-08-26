@@ -1,13 +1,23 @@
 from snakebids import bids
 from lib.shells import is_multi_shelled
 
-wildcards = config['input_wildcards']['preproc_dwi']
+class FodAlgorithm:
+    def __init__(self, tissue):
+        self.tissue = tissue
 
-work = config['directories']['output']
-qc = config['directories']['qc']
-output = config['directories']['output']
-
-localrules: convert_mask_to_mrtrix_format, convert_dwi_to_mrtrix_format
+    
+    def __call__(self, wildcards):
+        sub = wildcards['subject']
+        bval = config['input_path']['bval'].format(subject=sub)
+        if is_multi_shelled(bval):
+            algorithm = 'ms3t'
+        else:
+            algorithm = 'ss3t'
+        return bids(root=work,
+                datatype='dwi',
+                desc=algorithm,
+                suffix=f"{self.tissue}fod.mif",
+                **wildcards)
 
 rule convert_dwi_to_mrtrix_format:
     input:
@@ -80,55 +90,7 @@ rule generate_response_function:
         '-voxels {output.voxels} -mask {input.mask} -scratch {resources.tmpdir} 2> {log}'
 
 
-# rule compute_fiber_orientation_densities:
-#     input:
-#         dwi=bids(root=work,
-#                 datatype='dwi',
-#                 suffix='dwi.mif',
-#                 **wildcards),
-#         wm=bids(root=work,
-#                 datatype='dwi',
-#                 suffix='wm.txt',
-#                 **wildcards),
-#         gm=bids(root=work,
-#                 datatype='dwi',
-#                 suffix='gm.txt',
-#                 **wildcards),
-#         csf=bids(root=work,
-#                 datatype='dwi',
-#                 suffix='csf.txt',
-#                 **wildcards),
-#         mask=bids(root=work,
-#             datatype='dwi',
-#             suffix="brainmask.mif",
-#             **wildcards)
-#     output: 
-#         wm=bids(root=work,
-#                 datatype='dwi',
-#                 suffix='wmfod.mif',
-#                 **wildcards),
-#         gm=bids(root=work,
-#                 datatype='dwi',
-#                 suffix='gmfod.mif',
-#                 **wildcards),
-#         csf=bids(root=work,
-#                 datatype='dwi',
-#                 suffix='csffod.mif',
-#                 **wildcards)
-#     group: groups.response_generation
-#     threads: 8
-#     resources:
-#         tmpdir=config['tmpdir']
-#     container:
-#         'docker://pennbbl/ss3t_beta:0.0.1'
-#     benchmark:
-#         'benchmarks/compute_fiber_orientation_densities/{subject}.tsv'
-#     shell:
-#         'ss3t_csd_beta1 {input.dwi} '
-#         '{input.wm} {output.wm} {input.gm} {output.gm} {input.csf} {output.csf} '
-#         '-mask {input.mask} -nthreads {threads} -scratch {resources.tmpdir}'
-
-rule compute_fiber_orientation_densities:
+rule compute_ss3t_fiber_orientation_densities:
     input:
         dwi=bids(root=work,
                 datatype='dwi',
@@ -153,14 +115,70 @@ rule compute_fiber_orientation_densities:
     output: 
         wm=bids(root=work,
                 datatype='dwi',
+                desc="ss3t",
                 suffix='wmfod.mif',
                 **wildcards),
         gm=bids(root=work,
                 datatype='dwi',
+                desc="ss3t",
                 suffix='gmfod.mif',
                 **wildcards),
         csf=bids(root=work,
                 datatype='dwi',
+                desc="ss3t",
+                suffix='csffod.mif',
+                **wildcards)
+    group: groups.response_generation
+    threads: 32
+    # This still needs to be benchmarked!!
+    resources:
+        mem_mb=10000,
+        runtime=25,
+    container:
+        'docker://pennbbl/ss3t_beta:0.0.1'
+    benchmark:
+        'benchmarks/compute_fiber_orientation_densities/{subject}.tsv'
+    shell:
+        'ss3t_csd_beta1 {input.dwi} '
+        '{input.wm} {output.wm} {input.gm} {output.gm} {input.csf} {output.csf} '
+        '-mask {input.mask} -nthreads {threads} -scratch {resources.tmpdir}'
+
+rule compute_ms3t_fiber_orientation_densities:
+    input:
+        dwi=bids(root=work,
+                datatype='dwi',
+                suffix='dwi.mif',
+                **wildcards),
+        wm=bids(root=work,
+                datatype='dwi',
+                suffix='wm.txt',
+                **wildcards),
+        gm=bids(root=work,
+                datatype='dwi',
+                suffix='gm.txt',
+                **wildcards),
+        csf=bids(root=work,
+                datatype='dwi',
+                suffix='csf.txt',
+                **wildcards),
+        mask=bids(root=work,
+            datatype='dwi',
+            suffix="brainmask.mif",
+            **wildcards)
+    output: 
+        wm=bids(root=work,
+                datatype='dwi',
+                desc="ms3t",
+                suffix='wmfod.mif',
+                **wildcards),
+        gm=bids(root=work,
+                datatype='dwi',
+                desc="ms3t",
+                suffix='gmfod.mif',
+                **wildcards),
+        csf=bids(root=work,
+                datatype='dwi',
+                desc="ms3t",
                 suffix='csffod.mif',
                 **wildcards)
     group: groups.response_generation
@@ -178,18 +196,9 @@ rule compute_fiber_orientation_densities:
 
 rule normalize_fiber_orientation_densities:
     input:
-        wm=bids(root=work,
-                datatype='dwi',
-                suffix='wmfod.mif',
-                **wildcards),
-        gm=bids(root=work,
-                datatype='dwi',
-                suffix='gmfod.mif',
-                **wildcards),
-        csf=bids(root=work,
-                datatype='dwi',
-                suffix='csffod.mif',
-                **wildcards),
+        wm=FodAlgorithm('wm'),
+        gm=FodAlgorithm('gm'),
+        csf=FodAlgorithm('csf'),
         mask=bids(root=work,
             datatype='dwi',
             suffix="brainmask.mif",
