@@ -1,7 +1,7 @@
 preprocessed_data:
-- /home/knavynde/projects/nimi/prepdwi_recon/workflow/test/data/derivatives/hcp_preproc
-bids_dir: /home/knavynde/projects/nimi/prepdwi_recon/workflow/test/data
-output_dir: /home/knavynde/projects/nimi/prepdwi_recon/workflow/test/data/derivatives/prepdwi_recon
+- /home/knavynde/projects/nimi/prepdwi_recon/test/data/derivatives/hcp_preproc
+bids_dir: /home/knavynde/projects/nimi/prepdwi_recon/test/data
+output_dir: /home/knavynde/projects/nimi/prepdwi_recon/test/data/derivatives/prepdwi_recon
 tmpdir: $SLURM_TMPDIR
 tractography:
   maxlength: 250
