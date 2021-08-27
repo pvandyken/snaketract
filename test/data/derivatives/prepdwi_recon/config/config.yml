@@ -50,13 +50,19 @@ analysis_levels: &id001
 parse_args:
   bids_dir:
     help: The directory with the input dataset formatted according to the BIDS standard.
+    nargs: '?'
+    default: ../hcp1200
   output_dir:
     help: The directory where the output files should be stored. If you are running
       group level analysis this folder should be prepopulated with the results of
       the participant level analysis.
+    nargs: '?'
+    default: ../hcp1200/derivatives
   analysis_level:
     help: Level of the analysis that will be performed.
     choices: *id001
+    nargs: '?'
+    default: participant
   --participant_label:
     help: The label(s) of the participant(s) that should be analyzed. The label corresponds
       to sub-<participant_label> from the BIDS spec (so it does not include "sub-").
@@ -72,9 +78,9 @@ parse_args:
   --preprocessed_data:
     help: 'Path(s) to a derivatives dataset, for folder(s) that contains multiple
       derivatives datasets (default: %(default)s) '
-    default: false
+    default: ../hcp1200/derivatives/hcp_preproc
     type: !!python/name:pathlib.Path ''
-    nargs: +
+    nargs: '?'
 snakemake_dir: /home/knavynde/projects/nimi/prepdwi_recon
 snakefile: /home/knavynde/projects/nimi/prepdwi_recon/workflow/Snakefile
 help_snakemake: null
@@ -83,7 +89,6 @@ output_dir: /home/knavynde/projects/nimi/prepdwi_recon/test/data/derivatives/pre
 analysis_level: participant
 participant_label: null
 exclude_participant_label: null
-preprocessed_data:
-- /home/knavynde/projects/nimi/prepdwi_recon/test/data/derivatives/hcp_preproc
+preprocessed_data: /home/knavynde/projects/nimi/prepdwi_recon/test/data/derivatives/hcp_preproc
 snakemake_args:
 - -n

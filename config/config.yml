@@ -56,16 +56,23 @@ parse_args:
   bids_dir:
     help: The directory with the input dataset formatted according
           to the BIDS standard.
+    nargs: "?"
+    default: '../hcp1200'
+
 
   output_dir:
     help: The directory where the output files
           should be stored. If you are running group level analysis
           this folder should be prepopulated with the results of the
           participant level analysis.
+    nargs: "?"
+    default: '../hcp1200/derivatives'
 
   analysis_level:
     help: Level of the analysis that will be performed.
     choices: *analysis_levels
+    nargs: "?"
+    default: "participant"
 
   --participant_label:
     help: The label(s) of the participant(s) that should be analyzed. The label
@@ -85,6 +92,6 @@ parse_args:
 
   --preprocessed_data:
     help: 'Path(s) to a derivatives dataset, for folder(s) that contains multiple derivatives datasets (default: %(default)s) '
-    default: False
+    default: '../hcp1200/derivatives/hcp_preproc'
     type: Path
-    nargs: '+'
+    nargs: '?'
