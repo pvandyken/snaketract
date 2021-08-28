@@ -30,25 +30,6 @@ rule all:
             **wildcards),
                 **config['input_lists']['preproc_dwi'])
 
-print(work)
-print(bids(root=work,
-            datatype='anat',
-            suffix="5tt.mif",
-            **wildcards))
-print(bids(root=work,
-            datatype='anat',
-            suffix="gmwmi.mif",
-            **wildcards))
-print(bids(root=work,
-                datatype='dwi',
-                desc='norm',
-                suffix='wmfod.mif',
-                **wildcards))
-print(bids(root=output,
-            datatype='dwi',
-            desc="tracks",
-            suffix='10M.tck',
-            **wildcards))
 
 rule run_act:
     input:
