@@ -31,7 +31,6 @@ rule all:
                 **config['input_lists']['preproc_dwi'])
 
 
-
 rule run_act:
     input:
         act=bids(root=work,
@@ -46,7 +45,7 @@ rule run_act:
                 datatype='dwi',
                 desc='norm',
                 suffix='wmfod.mif',
-                **wildcards),
+                **wildcards)
     output:
         protected(bids(root=output,
             datatype='dwi',
