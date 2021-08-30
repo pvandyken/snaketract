@@ -30,7 +30,7 @@ rule segment_anatomical_image:
     group: groups.segmentation
     resources:
         mem_mb=2500,
-        runtime=40
+        runtime=20
     log: "logs/segment_anatomical_image/{subject}.log"
     envmodules:
         "mrtrix/3.0.1",
