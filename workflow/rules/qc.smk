@@ -15,7 +15,7 @@ rule create_qc_reference_image:
     envmodules:
         "mrtrix/3.0.1"
     shell:
-        'mrconvert {input.dwi} {output} -fslgrad {input.bvec} {input.bval}'
+        'mrconvert {input.dwi} {output} -fslgrad {input.bvec} {input.bval} -quiet'
 
 rule generate_qc_FOD_image:
     input:
