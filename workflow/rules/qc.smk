@@ -2,6 +2,20 @@ from snakebids import bids
 
 wildcards = config['input_wildcards']['preproc_dwi']
 
+rule create_qc_reference_image:
+    input:
+        dwi=config['input_path']['preproc_dwi'],
+        bvec=config['input_path']['bvec'],
+        bval=config['input_path']['bval']
+    output:
+        bids(root=qc,
+            datatype='dwi',
+            suffix="dwi.mif",
+            **wildcards)
+    envmodules:
+        "mrtrix/3.0.1"
+    shell:
+        'mrconvert {input.dwi} {output} -fslgrad {input.bvec} {input.bval} 2> {log}'
 
 rule generate_qc_FOD_image:
     input:
@@ -51,7 +65,7 @@ rule extract_tractography_subset:
 
 rule generate_tractography_view_script:
     input:
-        dwi=bids(root=work,
+        dwi=bids(root=qc,
             datatype='dwi',
             suffix="dwi.mif",
             **wildcards),
@@ -70,7 +84,7 @@ rule generate_tractography_view_script:
 
 rule generate_5tt_qc_view_script:
     input:
-        dwi=bids(root=work,
+        dwi=bids(root=qc,
             datatype='dwi',
             suffix="dwi.mif",
             **wildcards),
