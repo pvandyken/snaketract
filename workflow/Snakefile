@@ -11,15 +11,16 @@ config.update(generate_inputs(
 
 wildcards = config['input_wildcards']['preproc_dwi']
 work = config['output_dir']
-qc = config['output_dir']
+qc = config['output_dir'] + "/qc"
 
 output = config['output_dir']
 
 
 include: 'rules/anatomical_segmentation.smk'
 include: "rules/response_function.smk"
+include: "rules/qc.smk"
 
-localrules: all
+localrules: all, qc
 
 rule all:
     input:
@@ -29,6 +30,15 @@ rule all:
             suffix='10M.tck',
             **wildcards),
                 **config['input_lists']['preproc_dwi'])
+
+rule qc:
+    input:
+        expand(bids(root=qc,
+            datatype='dwi',
+            suffix='{suffixes}',
+            **wildcards),
+                **config['input_lists']['preproc_dwi'],
+                suffixes=["viewTractography", "viewOdf", "viewInterface"])
 
 
 rule run_act:
@@ -70,55 +80,3 @@ rule run_act:
         '-maxlength {params.maxlength} -cutoff {params.cutoff} -select {params.num_tracts} '
         '{input.fod} {output} 2> {log}'
 
-rule generate_qc_FOD_image:
-    input:
-        wm=bids(root=work,
-                datatype='dwi',
-                suffix='wmfod.mif',
-                **wildcards),
-        gm=bids(root=work,
-                datatype='dwi',
-                suffix='gmfod.mif',
-                **wildcards),
-        csf=bids(root=work,
-                datatype='dwi',
-                suffix='csffod.mif',
-                **wildcards)
-    output:
-        bids(root=qc,
-            datatype='dwi',
-            suffix='vf.mif',
-            **wildcards)
-    shell:
-        'mrconvert -coord 3 0 {input.wm} - | mrcat {input.csf} {input.gm} - {output}'
-
-
-
-rule collect_gmwmi_image:
-    input:
-        bids(root=work,
-            datatype='anat',
-            suffix="gmwmi.mif",
-            **wildcards)
-    output:
-        bids(root=qc,
-            datatype='anat',
-            suffix="gmwmi.mif",
-            **wildcards)
-    shell:
-        'cp {input} {output}'
-
-rule generate_5tt_qc_view_script:
-    input:
-        dwi=config['input_path']['preproc_dwi'],
-        anat=bids(root=qc,
-            datatype='anat',
-            suffix="gmwmi.mif",
-            **wildcards)
-    output:
-        bids(root=qc,
-            datatype='anat',
-            suffix="viewinterface",
-            **wildcards)
-    shell:
-        'echo #!/bin/bash\nmrview $(realpath {input.dwi}) -overlay.load $(realpath {input.anat}) > {output} && chmod +x {output}'
