@@ -18,6 +18,7 @@ output = config['output_dir']
 
 include: 'rules/anatomical_segmentation.smk'
 include: "rules/response_function.smk"
+include: 'rules/reconstruction.smk'
 include: "rules/qc.smk"
 
 localrules: all, qc
@@ -41,42 +42,5 @@ rule qc:
                 suffixes=["viewTractography", "viewOdf", "viewInterface"])
 
 
-rule run_act:
-    input:
-        act=bids(root=work,
-            datatype='anat',
-            suffix="5tt.mif",
-            **wildcards),
-        gmwmi=bids(root=work,
-            datatype='anat',
-            suffix="gmwmi.mif",
-            **wildcards),
-        fod=bids(root=work,
-                datatype='dwi',
-                desc='norm',
-                suffix='wmfod.mif',
-                **wildcards)
-    output:
-        protected(bids(root=output,
-            datatype='dwi',
-            desc="tracks",
-            suffix='10M.tck',
-            **wildcards))
-    params:
-        maxlength=config['tractography']['maxlength'],
-        cutoff=config['tractography']['cutoff'],
-        num_tracts=config['tractography']['num_tracts']
-    threads: 32
-    resources:
-        runtime=90,
-        mem_mb=4000
-    log: "logs/run_act/{subject}.log"
-    envmodules:
-        "mrtrix/3.0.1"
-    group: 'act'
-    shell:
-        'tckgen -act {input.act} -seed_gmwmi {input.gmwmi} '
-        '-nthreads {threads} -backtrack '
-        '-maxlength {params.maxlength} -cutoff {params.cutoff} -select {params.num_tracts} '
-        '{input.fod} {output} 2> {log}'
+
 

@@ -54,14 +54,8 @@ rule convert_mask_to_mrtrix_format:
 
 rule generate_response_function:
     input:
-        dwi=bids(root=work,
-            datatype='dwi',
-            suffix="dwi.mif",
-            **wildcards),
-        mask=bids(root=work,
-            datatype='dwi',
-            suffix="brainmask.mif",
-            **wildcards)
+        dwi=rule.convert_dwi_to_mrtrix_format.output,
+        mask=rule.convert_mask_to_mrtrix_format.output
     output:
         wm=bids(root=work,
                 datatype='dwi',
@@ -92,26 +86,11 @@ rule generate_response_function:
 
 rule compute_ss3t_fiber_orientation_densities:
     input:
-        dwi=bids(root=work,
-                datatype='dwi',
-                suffix='dwi.mif',
-                **wildcards),
-        wm=bids(root=work,
-                datatype='dwi',
-                suffix='wm.txt',
-                **wildcards),
-        gm=bids(root=work,
-                datatype='dwi',
-                suffix='gm.txt',
-                **wildcards),
-        csf=bids(root=work,
-                datatype='dwi',
-                suffix='csf.txt',
-                **wildcards),
-        mask=bids(root=work,
-            datatype='dwi',
-            suffix="brainmask.mif",
-            **wildcards)
+        dwi=rule.convert_dwi_to_mrtrix_format.output,
+        wm=rule.generate_response_function.output.wm,
+        gm=rule.generate_response_function.output.gm,
+        csf=rule.generate_response_function.output.csf,
+        mask=rule.convert_mask_to_mrtrix_format.output
     output: 
         wm=bids(root=work,
                 datatype='dwi',
@@ -143,28 +122,14 @@ rule compute_ss3t_fiber_orientation_densities:
         '{input.wm} {output.wm} {input.gm} {output.gm} {input.csf} {output.csf} '
         '-mask {input.mask} -nthreads {threads} -scratch {resources.tmpdir}'
 
+
 rule compute_ms3t_fiber_orientation_densities:
     input:
-        dwi=bids(root=work,
-                datatype='dwi',
-                suffix='dwi.mif',
-                **wildcards),
-        wm=bids(root=work,
-                datatype='dwi',
-                suffix='wm.txt',
-                **wildcards),
-        gm=bids(root=work,
-                datatype='dwi',
-                suffix='gm.txt',
-                **wildcards),
-        csf=bids(root=work,
-                datatype='dwi',
-                suffix='csf.txt',
-                **wildcards),
-        mask=bids(root=work,
-            datatype='dwi',
-            suffix="brainmask.mif",
-            **wildcards)
+        dwi=rule.convert_dwi_to_mrtrix_format.output,
+        wm=rule.generate_response_function.output.wm,
+        gm=rule.generate_response_function.output.gm,
+        csf=rule.generate_response_function.output.csf,
+        mask=rule.convert_mask_to_mrtrix_format.output
     output: 
         wm=bids(root=work,
                 datatype='dwi',
@@ -194,15 +159,13 @@ rule compute_ms3t_fiber_orientation_densities:
         '{input.wm} {output.wm} {input.gm} {output.gm} {input.csf} {output.csf} '
         '-mask {input.mask} -nthreads {threads} 2> {log}'
 
+
 rule normalize_fiber_orientation_densities:
     input:
         wm=FodAlgorithm('wm'),
         gm=FodAlgorithm('gm'),
         csf=FodAlgorithm('csf'),
-        mask=bids(root=work,
-            datatype='dwi',
-            suffix="brainmask.mif",
-            **wildcards)
+        mask=rule.convert_mask_to_mrtrix_format.output
     output:
         wm=bids(root=work,
                 datatype='dwi',
@@ -220,11 +183,11 @@ rule normalize_fiber_orientation_densities:
                 suffix='csffod.mif',
                 **wildcards)
     group: groups.response_generation
-    log: "logs/normalize_fiber_orientation_densities/{subject}.log"
     resources:
         runtime=2
     envmodules:
         "mrtrix/3.0.1"
+    log: "logs/normalize_fiber_orientation_densities/{subject}.log"
     shell:
         'mtnormalise {input.wm} {output.wm} {input.gm} {output.gm} {input.csf} {output.csf} '
         '-mask {input.mask} 2> {log}'
