@@ -73,5 +73,6 @@ rule run_sift2:
         "benchmarks/run_sift2/threads-{threads}_sub-{subject}.tsv"
     group: "sift"
     shell: "tcksift2 "
+        "-nthreads {threads} "
         "-out_mu {output.mu} -out_coeffs {output.coeffs} "
         "{input.tracks} {input.fod} {output.weights}"
