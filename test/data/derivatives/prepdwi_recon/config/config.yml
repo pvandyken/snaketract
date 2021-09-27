@@ -92,3 +92,4 @@ exclude_participant_label: null
 preprocessed_data: /home/knavynde/projects/nimi/prepdwi_recon/test/data/derivatives/hcp_preproc
 snakemake_args:
 - -n
+- qc

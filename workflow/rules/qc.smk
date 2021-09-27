@@ -17,21 +17,9 @@ rule create_qc_reference_image:
 
 rule generate_qc_FOD_image:
     input:
-        wm=bids(root=work,
-                datatype='dwi',
-                desc="norm",
-                suffix='wmfod.mif',
-                **wildcards),
-        gm=bids(root=work,
-                datatype='dwi',
-                desc="norm",
-                suffix='gmfod.mif',
-                **wildcards),
-        csf=bids(root=work,
-                datatype='dwi',
-                desc="norm",
-                suffix='csffod.mif',
-                **wildcards)
+        wm=rules.normalize_fiber_orientation_densities.output.wm,
+        gm=rules.normalize_fiber_orientation_densities.output.gm,
+        csf=rules.normalize_fiber_orientation_densities.output.csf
     output:
         bids(root=qc,
             datatype='dwi',
@@ -44,12 +32,7 @@ rule generate_qc_FOD_image:
 
 
 rule extract_tractography_subset:
-    input:
-        bids(root=output,
-            datatype='dwi',
-            desc="tracks",
-            suffix='10M.tck',
-            **wildcards)
+    input: rules.run_act.output
     output:
         bids(root=qc,
             datatype='dwi',
@@ -63,15 +46,8 @@ rule extract_tractography_subset:
 
 rule generate_tractography_view_script:
     input:
-        dwi=bids(root=qc,
-            datatype='dwi',
-            suffix="dwi.mif",
-            **wildcards),
-        tracts=bids(root=qc,
-            datatype='dwi',
-            desc="tracks",
-            suffix='200k.tck',
-            **wildcards)
+        dwi=rules.create_qc_reference_image.output,
+        tracts=rules.extract_tractography_subset.output
     output:
         bids(root=qc,
             datatype='dwi',
@@ -82,14 +58,8 @@ rule generate_tractography_view_script:
 
 rule generate_5tt_qc_view_script:
     input:
-        dwi=bids(root=qc,
-            datatype='dwi',
-            suffix="dwi.mif",
-            **wildcards),
-        anat=bids(root=work,
-            datatype='anat',
-            suffix="gmwmi.mif",
-            **wildcards)
+        dwi=rules.create_qc_reference_image.output,
+        anat=rules.create_seed_boundary.output
     output:
         bids(root=qc,
             datatype='dwi',
@@ -100,15 +70,8 @@ rule generate_5tt_qc_view_script:
 
 rule generate_odf_qc_view_script:
     input:
-        vf=bids(root=qc,
-            datatype='dwi',
-            suffix='vf.mif',
-            **wildcards),
-        odf=bids(root=work,
-                datatype='dwi',
-                desc="norm",
-                suffix='wmfod.mif',
-                **wildcards)
+        vf=rules.generate_qc_FOD_image.output,
+        odf=rules.normalize_fiber_orientation_densities.output.wm
     output:
         bids(root=qc,
             datatype='dwi',

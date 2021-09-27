@@ -52,7 +52,6 @@ analysis_levels: &analysis_levels
  - participant
 
 parse_args:
-
   bids_dir:
     help: The directory with the input dataset formatted according
           to the BIDS standard.
