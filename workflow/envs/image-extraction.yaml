@@ -4,7 +4,8 @@ channels:
   - conda-forge
 dependencies:
   - python>=3.8,<3.10
-  - dipy>=1.4.1,<2.0.0
-  - fury>=0.7.1,<0.8.0
+  - pip
   - pip:
+    - dipy>=1.4.1,<2.0.0
+    - fury>=0.6.1,<0.8.0
     - snakebids==0.3.14
