@@ -69,6 +69,8 @@ rule run_sift2:
         mem_mb=4000,
         runtime=15
     log: "logs/run_sift2/{subject}.log"
+    benchmark:
+        "benchmarks/run_sift2/threads-{threads}_mem-{resources.mem_mb}_sub-{subject}.tsv"
     group: "sift"
     shell: "tcksift2 "
         "-out_mu {output.mu} -out_coeffs {output.coeffs} "
