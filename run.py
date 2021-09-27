@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 from snakebids.app import SnakeBidsApp
+import snakebids
 
 
 

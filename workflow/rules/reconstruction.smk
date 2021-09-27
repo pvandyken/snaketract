@@ -47,26 +47,26 @@ rule run_sift2:
         act=bids(root=work,
             datatype='anat',
             suffix="5tt.mif",
-            **wildcards),
+            **wildcards)
     output:
         weights=bids(root=output,
             datatype='dwi',
             desc="sift",
             suffix='weights.txt',
-            **wildcards)),
+            **wildcards),
         mu=bids(root=output,
             datatype='dwi',
-            desc="sift"
-            suffix='weights.txt',
-            **wildcards)),
+            desc="sift",
+            suffix='mu.txt',
+            **wildcards),
         coeffs=bids(root=output,
             datatype='dwi',
-            desc="sift"
+            desc="sift",
             suffix='coeffs.txt',
-            **wildcards))
+            **wildcards)
     threads: 32
     resources:
-        mem_mb=4000
+        mem_mb=4000,
         runtime=15
     log: "logs/run_sift2/{subject}.log"
     group: "sift"

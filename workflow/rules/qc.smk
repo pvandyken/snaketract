@@ -1,12 +1,10 @@
 from snakebids import bids
 
-wildcards = config['input_wildcards']['preproc_dwi']
-
 rule create_qc_reference_image:
     input:
-        dwi=config['input_path']['preproc_dwi'],
-        bvec=config['input_path']['bvec'],
-        bval=config['input_path']['bval']
+        dwi=input_paths['preproc_dwi'],
+        bvec=input_paths['bvec'],
+        bval=input_paths['bval']
     output:
         bids(root=qc,
             datatype='dwi',

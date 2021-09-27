@@ -3,34 +3,46 @@ import groups
 
 configfile: 'config/config.yml'
 
-config.update(generate_inputs(
+###
+# Input Globals
+###
+inputs = generate_inputs(
     bids_dir=config['bids_dir'],
     pybids_inputs=config['pybids_inputs'],
     derivatives=config['preprocessed_data']
-))
+)
 
-wildcards = config['input_wildcards']['preproc_dwi']
+wildcards = inputs['input_wildcards']['preproc_dwi']
+input_paths = inputs['input_path']
+
+###
+# Output Globals
+###
 work = config['output_dir']
 qc = config['output_dir'] + "/qc"
-
 output = config['output_dir']
 
-
+###
+# Inclusions
+###
 include: 'rules/anatomical_segmentation.smk'
 include: "rules/response_function.smk"
 include: 'rules/reconstruction.smk'
 include: "rules/qc.smk"
 
+###
+# Top level Rules
+###
 localrules: all, qc
 
 rule all:
     input:
         expand(bids(root=output,
             datatype='dwi',
-            desc="tracks",
-            suffix='10M.tck',
+            desc="sift",
+            suffix='weights.txt',
             **wildcards),
-                **config['input_lists']['preproc_dwi'])
+                **inputs['input_lists']['preproc_dwi'])
 
 rule qc:
     input:
@@ -38,9 +50,5 @@ rule qc:
             datatype='dwi',
             suffix='{suffixes}',
             **wildcards),
-                **config['input_lists']['preproc_dwi'],
+                **inputs['input_lists']['preproc_dwi'],
                 suffixes=["viewTractography", "viewOdf", "viewInterface"])
-
-
-
-

@@ -2,7 +2,7 @@ from snakebids import bids
 
 rule convert_t1_to_mrtrix_format:
     input:
-        config['input_path']['t1']
+        input_paths['t1']
     output:
         temp(bids(root=work,
             datatype='anat',
