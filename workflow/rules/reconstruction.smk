@@ -70,7 +70,7 @@ rule run_sift2:
         runtime=15
     log: "logs/run_sift2/{subject}.log"
     benchmark:
-        "benchmarks/run_sift2/threads-{threads}_sub-{subject}.tsv"
+        "benchmarks/run_sift2/sub-{subject}.tsv"
     group: "sift"
     shell: "tcksift2 "
         "-nthreads {threads} "
