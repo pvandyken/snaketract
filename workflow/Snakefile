@@ -41,18 +41,23 @@ localrules: all, qc
 
 rule all:
     input:
-        expand(bids(root=output,
-            datatype='dwi',
-            desc="sift",
-            suffix='weights.txt',
-            **wildcards),
-                **inputs['input_lists']['preproc_dwi'])
+        expand(
+            bids(root=output,
+                datatype='dwi',
+                desc="sift",
+                suffix='weights.txt',
+                **wildcards),
+            **inputs['input_lists']['preproc_dwi'])
 
 rule qc:
     input:
-        expand(bids(root=qc,
-            datatype='dwi',
-            suffix='{suffixes}',
-            **wildcards),
-                **inputs['input_lists']['preproc_dwi'],
-                suffixes=["viewTractography", "viewOdf", "viewInterface"])
+        expand(
+            bids(root=qc,
+                datatype='dwi',
+                suffix='{suffixes}',
+                **wildcards),
+            **inputs['input_lists']['preproc_dwi'],
+            suffixes=["viewTractography", "viewOdf", "viewInterface"]),
+        expand(
+            rules.create_tractography_png.output,
+            **inputs['input_lists']['preproc_dwi'])
