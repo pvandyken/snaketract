@@ -93,7 +93,7 @@ rule create_tractography_png:
             **wildcards
         ))
     conda:
-        "envs/image-extraction.yaml"
+        "../envs/image-extraction.yaml"
     shell:
         "./scripts/image_extraction.py "
         "--tractography {input.tracts} "
