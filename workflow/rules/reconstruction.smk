@@ -68,6 +68,8 @@ rule run_sift2:
     resources:
         mem_mb=125000,
         runtime=15
+    envmodules:
+        "mrtrix/3.0.1"
     log: "logs/run_sift2/{subject}.log"
     benchmark:
         "benchmarks/run_sift2/sub-{subject}.tsv"
