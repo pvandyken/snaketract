@@ -64,10 +64,10 @@ rule run_sift2:
             desc="sift",
             suffix='coeffs.txt',
             **wildcards)
-    threads: 32
+    threads: 16
     resources:
-        mem_mb=125000,
-        runtime=15
+        mem_mb=10000,
+        runtime=9
     envmodules:
         "mrtrix/3.0.1"
     log: "logs/run_sift2/{subject}.log"
