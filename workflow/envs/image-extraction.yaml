@@ -5,7 +5,7 @@ channels:
 dependencies:
   - python>=3.8,<3.10
   - pip
+  - dipy>=1.4.1,<2.0.0
+  - fury>=0.6.1,<0.8.0
   - pip:
-    - dipy>=1.4.1,<2.0.0
-    - fury>=0.6.1,<0.8.0
     - snakebids==0.3.14
