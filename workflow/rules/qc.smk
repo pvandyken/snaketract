@@ -79,3 +79,22 @@ rule generate_odf_qc_view_script:
             **wildcards)
     shell:
         'echo "#!/bin/bash\nmrview $(realpath {input.vf}) -odf.load_sh $(realpath {input.odf})" > {output} && chmod +x {output}'
+
+rule create_tractography_png:
+    input:
+        dwi=input_paths['preproc_dwi'],
+        tracts=rules.run_act.output
+    output:
+        directory(bids(
+            root=qc,
+            datatype='dwi',
+            desc="tracts",
+            suffix="imgs",
+            **wildcards
+        ))
+    conda:
+        "envs/image-extraction.yaml"
+    shell:
+        "./scripts/image_extraction.py "
+        "--tractography {input.tracts} "
+        "{input.dwi} {output}"

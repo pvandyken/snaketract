@@ -1,5 +1,6 @@
 import argparse
-from typing import Literal, Tuple, Optional, Union, List
+import sys
+from typing import Literal, Tuple, Optional, Union, List, TYPE_CHECKING
 import nibabel as nib
 from dipy.io.image import load_nifti
 from dipy.io.streamline import load_tractogram
@@ -8,6 +9,10 @@ from numpy import ndarray
 import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
+
+if TYPE_CHECKING:
+    from snakemake.jobs import Job
+    snakemake: Job
 
 Direction = Union[
     Literal["axial"],
@@ -26,7 +31,7 @@ def movie_calc(rotation, length):
     rotation_per_frame = rotation / num_frames
     return num_frames, rotation_per_frame
 
-px = 1/plt.rcParams['figure.dpi']
+px = 1/plt.rcParams['figure.dpi'] # type: ignore
 
 class SliceView:
     def __init__(self,
@@ -137,7 +142,7 @@ class SliceView:
         #return window.record(self.scene, out_path="mov/mov", n_frames=n_frames, size=size, az_ang=az_angle, path_numbering=True)
         return window.snapshot(scene, size=size)
 
-    def render_2d(self, img, view: Direction, size: Tuple[int, int]=(1000,1000), hue: Optional[int] = None):
+    def render_2d(self, img, view: Direction, size: Tuple[int, int]=(1000,1000)):
         scene = window.Scene()
         a = self.get_section(img.get_fdata(), img.affine, view)
         print(self.data.shape)
@@ -151,7 +156,7 @@ class SliceView:
         window.show(scene)
         return window.snapshot(scene, size=size)
 
-    def get_section(self, data, affine, view: Direction, hue: Optional[int] = None):
+    def get_section(self, data, affine, view: Direction, hue: Optional[float] = None):
         if hue:
             m = cmap.colormap_lookup_table(hue_range=(hue, hue), value_range=(0,1), scale_range=(np.min(data), np.max(data)))
         else:
@@ -169,10 +174,6 @@ class SliceView:
         return a
 
     def _get_section(self, data, view: Direction):
-        #new_shape = [s*4 for s in data.shape]
-        #print(new_shape)
-        #transformed = img.affine_transform(data, np.linalg.inv(affine), output_shape=new_shape)
-        #transformed = data
         i = mid(data, view)
         if view == "sagittal":
             return data[i, :, :, ...].T
@@ -183,15 +184,20 @@ class SliceView:
 
 
 
-    def save_fig(self, view: Direction):
+    def save_fig(self, view: Direction, size: Tuple[int, int]):
         if self.tractography:
             img_arr = self.render_3d(view)
         else:
             img_arr = self._get_section(self.data, view)
 
+        plt.subplots(figsize=(size[0]*px, size[1]*px))[1].set_axis_off()
         plt.imshow(img_arr, cmap='gray', origin='lower')
 
-        p = self.output_folder / (self.file_prefix + f"_{view}.png")
+        if self.file_prefix:
+            name = f"{view}.png"
+        else:
+            name = self.file_prefix + f"_{view}.png"
+        p = self.output_folder / name
         plt.savefig(p, bbox_inches="tight")
 
     def show_fig(self, view: Direction, size: Tuple[int, int]):
@@ -216,8 +222,35 @@ def mid(data, direction: Direction):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Extract png images from MRI")
-    parser.add_argument('input', type=Path)
-    parser.add_argument('outputFolder', type=Path)
-    parser.add_argument('--tractography', type=Path)
-    parser.add_argument('--file-prefix', type=str, help="String to prepend on file outputs")
+
+    if snakemake:
+        dwi = snakemake.input["dwi"]
+        tracts = snakemake.input["tracts"]
+        output = snakemake.output
+        prefix = ""
+
+    else:
+        parser = argparse.ArgumentParser(description="Extract png images from MRI")
+        parser.add_argument('input', type=Path)
+        parser.add_argument('outputFolder', type=Path)
+        parser.add_argument('--tractography', type=Path)
+        parser.add_argument('--file-prefix', type=str, help="String to prepend on file outputs")
+
+        parsed = parser.parse_args(sys.argv[1:])
+        dwi = parsed.input
+        tracts = parsed.tractography
+        output = parsed.outputFolder
+        prefix = parsed.filePrefix
+
+    view = SliceView(
+        dwi,
+        tractography=tracts,
+        output_folder=output,
+        file_prefix=prefix
+    )
+
+    for v in ["axial", "sagittal", "coronal"]:
+        view.save_fig(v, size=(1000, 1000))
+
+if __name__ == "__main__":
+    main()
