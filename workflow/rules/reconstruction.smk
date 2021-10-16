@@ -3,15 +3,15 @@ from lib.shells import is_multi_shelled
 
 rule run_act:
     input:
-        act=bids(root=work,
+        act=bids(root=output,
             datatype='anat',
             suffix="5tt.mif",
             **wildcards),
-        gmwmi=bids(root=work,
+        gmwmi=bids(root=output,
             datatype='anat',
             suffix="gmwmi.mif",
             **wildcards),
-        fod=bids(root=work,
+        fod=bids(root=output,
                 datatype='dwi',
                 desc='norm',
                 suffix='wmfod.mif',
@@ -44,7 +44,7 @@ rule run_sift2:
     input:
         tracks=rules.run_act.output,
         fod=rules.normalize_fiber_orientation_densities.output.wm,
-        act=bids(root=work,
+        act=bids(root=output,
             datatype='anat',
             suffix="5tt.mif",
             **wildcards)

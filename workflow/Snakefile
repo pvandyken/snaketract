@@ -49,6 +49,16 @@ rule all:
                 **wildcards),
             **inputs['input_lists']['preproc_dwi'])
 
+rule tractography:
+    input:
+        expand(
+            bids(root=output,
+                datatype='dwi',
+                desc="sift",
+                suffix='weights.txt',
+                **wildcards),
+            **inputs['input_lists']['preproc_dwi'])
+
 rule qc:
     input:
         expand(

@@ -4,7 +4,7 @@ rule convert_t1_to_mrtrix_format:
     input:
         input_paths['t1']
     output:
-        temp(bids(root=work,
+        temp(bids(root=output,
             datatype='anat',
             suffix="t1w.mif",
             **wildcards))
@@ -20,7 +20,7 @@ rule segment_anatomical_image:
     input:
         rules.convert_t1_to_mrtrix_format.output
     output:
-        bids(root=work,
+        bids(root=output,
             datatype='anat',
             suffix="5tt.mif",
             **wildcards)
@@ -41,7 +41,7 @@ rule create_seed_boundary:
     input:
         rules.segment_anatomical_image.output
     output:
-        bids(root=work,
+        bids(root=output,
             datatype='anat',
             suffix="gmwmi.mif",
             **wildcards)
