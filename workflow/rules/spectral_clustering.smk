@@ -1,10 +1,34 @@
 from pathlib import Path
+from functools import partial
+import re
 from snakebids import bids
 
 
-localrules: transform_clusters_to_subject_space
-
 uid = '.'.join(wildcards.values())
+output_dwi = partial(bids, root=output, datatype="dwi", **wildcards)
+
+localrules: 
+    transform_clusters_to_subject_space,
+    install_whitematteranalysis
+
+
+rule install_python:
+    output: 
+        venv=temp(directory(work+"/prepdwi_recon_venv")),
+        python=work+"/prepdwi_recon_venv/bin/python"
+    envmodules:
+        "python/3.7"
+    params:
+        flags=config["pip-flags"],
+        packages="git+https://github.com/SlicerDMRI/whitematteranalysis.git"
+    shell: 
+        (
+            "virtualenv --no-download {output.venv} && "
+            "{output.python} -m pip install --upgrade pip && "
+            "{output.python} -m pip install {params.flags} {params.packages}"
+        )
+    
+
 
 rule convert_tracts_to_vtk:
     input: 
@@ -17,179 +41,252 @@ rule convert_tracts_to_vtk:
     
     log: f"logs/convert_tracts_to_vtk/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/convert_tracts_to_vtk/{'.'.join(wildcards.values())}.tsv"
-    conda:
-    container:
-    envmodule:
-    group:
+
+    group: "spectral_clustering"
     threads: 1
     resources:
         mem_mb=1000,
-        runtime=2,
-    params:
-    shell: (
-        "tckconvert {input} {output}"
-    )
+        runtime=2
 
+    shell: "tckconvert {input} {output}"
+    
+
+registration_dir = work + f"/tractography_registration/{uid}"
+registration_files = registration_dir + f"/{uid}/output_tractography"
 
 rule tractography_registration:
     input: 
-        ata=rules.convert_tracts_to_vtk.output,
-        atlas=config['tract-segmentation']['atlas']
-    output: 
-        temp(directory(
-            work+"/tractography_registration"
-        ))
-    log: f"logs/tractography_registration/{'.'.join(wildcards.values())}.log"
-    benchmark: f"benchmarks/tractography_registration/{'.'.join(wildcards.values())}.tsv"
-    conda:
-    container:
-    envmodule:
-    group:
-    threads: 1
-    resources:
-        mem_mb=1000,
-        runtime=30,
-    params:
-    shell: (
-        "wm_register_to_atlas_new.py "
-        "-mode {mode} "
-        "{input.data} {input.atlas} {output}"
-    )
+        data=rules.convert_tracts_to_vtk.output[0],
+        atlas=config['tract-segmentation']['atlas'],
+        python=rules.install_python.output.python
 
-registration_files = rules.tractography_registration.output + f"/{uid}/output_tractography"
-rule collect_registration_output:
-    input:
+    output: 
+        main=temp(directory(registration_dir)),
+        # These are produced implicitely, but we make them explicit for use in future
+        # rules
         data=f"{registration_files}/{uid}_reg.vtk",
         inv_matrix=f"{registration_files}/itk_txform_{uid}.tfm",
         xfm=f"{registration_files}/vtk_txform_{uid}.tfm"
-    output:
-        data=bids(
-            root=output,
-            datatype='dwi',
-            desc="registered"
-            suffix="10M.vtk",
-            **wildcards
-        ),
-        inv_matrix=bids(
-            root=output,
-            datatype="dwi",
-            desc="inverse",
-            suffix="transform.tfm",
-            **wildcards
-        ),
-        xfm=bids(
-            root=output,
-            datatype="dwi",
-            desc
+
+    log: f"logs/tractography_registration/{'.'.join(wildcards.values())}.log"
+    benchmark: f"benchmarks/tractography_registration/{'.'.join(wildcards.values())}.tsv"
+
+    group: "spectral_clustering"
+    resources:
+        mem_mb=1000,
+        runtime=30,
+
+    params:
+        mode="rigid_affine_fast"
+    shell: 
+        (
+            "{input.python} wm_register_to_atlas_new.py "
+            "-mode {params.mode} "
+            "{input.data} {input.atlas} {output.main}"
         )
+
+
+rule collect_registration_output:
+    input:
+        data=rules.tractography_registration.output.data,
+        inv_matrix=rules.tractography_registration.output.inv_matrix,
+        xfm=rules.tractography_registration.output.xfm
+
+    output:
+        data=output_dwi(
+            desc="registered",
+            suffix="10M.vtk"
+        ),
+        inv_matrix=output_dwi(
+            desc="inverse",
+            suffix="transform.tfm"
+        ),
+        xfm=output_dwi(
+            desc="vtkTxform",
+            suffix="10M.xfm" 
+        )
+
     log: f"logs/collect_registration_output/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/collect_registration_output/{'.'.join(wildcards.values())}.tsv"
-    conda:
-    container:
-    envmodule:
-    group:
-    threads: 1
+
+    group: "spectral_clustering"
     resources:
         mem_mb=500,
         runtime=1,
-    shell: (
-        "cp {input.data} {ouput.data} && "
-        "cp {input.inv_matrix} {output.inv_matrix} && "
-        "cp {input.xfm} {output.xfm}"
-    )
 
+    shell: 
+        (
+            "cp {input.data} {output.data} && "
+            "cp {input.inv_matrix} {output.inv_matrix} && "
+            "cp {input.xfm} {output.xfm}"
+        )
+    
 
-registration_stem = Path(rules.collect_registration_output.output.data).stem()
 rule tractography_spectral_clustering:
     input: 
         data=rules.collect_registration_output.output.data,
-        atlas=config['tract-segmentation']['atlas']
+        atlas=config['tract-segmentation']['atlas'],
+        python=rules.install_python.output.python
     output: 
-        bids(
-            root=output,
-            datatype="dwi",
-            desc="clusters",
-            suffix="800",
-            **wildcards
-        )
+        directory(output_dwi(
+            suffix="800clusters"
+        ))
     log: f"logs/tractography_spectral_clustering/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/tractography_spectral_clustering/{'.'.join(wildcards.values())}.tsv"
-    conda:
-    container:
-    envmodule:
-    group:
-    threads: 1
+    group: "spectral_clustering"
+    threads: 32
     resources:
         mem_mb=1000,
         runtime=30,
     params:
-        work_folder="{resources.tmpdir}/tractography_clustering"
-    shell: (
-        "wm_cluster_from_atlas.py {input.data} {input.atlas} {params.work_folder} && "
-        f"mv {{params.work_folder}}/{registration_stem} {{output}}"
-    )
+        work_folder="tractography_clustering",
+        results_subfolder=Path(rules.collect_registration_output.output.data).stem
+    shell:
+        (
+            "{input.python} wm_cluster_from_atlas.py "
+            "-j {threads} -norender "
+            "{input.data} {input.atlas} {resources.tmpdir}{params.work_folder} && "
 
+            "mv {resources.tmpdir}/{params.work_folder}/"
+                "{params.results_subfolder} {output}"
+        )
+    
 
+rule remove_cluster_outliers:
+    input: 
+        data=rules.tractography_spectral_clustering.output,
+        atlas=config['tract-segmentation']['atlas'],
+        python=rules.install_python.output.python
+    output: 
+        directory(output_dwi(
+            desc="outliersRemoved",
+            suffix="800clusters"
+        ))
+    log: f"logs/remove_cluster_outliers/{'.'.join(wildcards.values())}.log"
+    benchmark: f"benchmarks/remove_cluster_outliers/{'.'.join(wildcards.values())}.tsv"
+    group: "spectral_clustering"
+    threads: 32
+    resources:
+        mem_mb=1000,
+        runtime=30,
+    params:
+        work_folder="tractography_outlier_removal",
+        results_subfolder=Path(rules.tractography_spectral_clustering.output[0]).stem
+    shell: 
+        (
+            "{input.python} wm_cluster_remove_outliers.py "
+            "-j {threads} "
+            "{input.data} {input.atlas} {resources.tmpdir}{params.work_folder} && "
 
+            "mv {resources.tmpdir}/{params.work_folder}/"
+                "{params.results_subfolder}_outlier_removed {output}"
+        )
+    
 
 rule assess_cluster_location_by_hemisphere:
     input: 
-        rules.tractography_spectral_clustering
+        data=rules.remove_cluster_outliers.output,
+        atlas=config['tract-segmentation']['atlas'],
+        python=rules.install_python.output.python
+
     output: 
-        output
+        output_dwi(
+            desc="assignedHemispheres",
+            suffix="800clusters"
+        )
+
     log: f"logs/assess_cluster_location_by_hemisphere/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/assess_cluster_location_by_hemisphere/{'.'.join(wildcards.values())}.tsv"
-    conda:
-    container:
-    envmodule:
-    group:
-    threads: 1
+
+    group: "spectral_clustering"
     resources:
         mem_mb=1000,
         runtime=30,
-    params:
-    shell: (
-        command
-    )
 
+    shell: 
+        (
+            "{input.python} wm_assess_cluster_location_by_hemisphere.py "
+            "{input.data} -clusterLocationFile {input.atlas} && "
 
+            "touch {output}"
+        )
+    
+    
 rule transform_clusters_to_subject_space:
-    input:
-    output:
-    log:
-    benchmark:
-    conda:
-    container:
-    envmodules:
-    group:
-    threads:
+    input: 
+        hemisphereAssignment=rules.assess_cluster_location_by_hemisphere.output,
+        data=rules.remove_cluster_outliers.output,
+        transform=rules.collect_registration_output.output.inv_matrix,
+        python=rules.install_python.output.python
+
+    output: 
+        temp(directory(work+"/transformed_clusters/" + uid + "/"))
+
+    log: f"logs/transform_clusters_to_subject_space/{'.'.join(wildcards.values())}.log"
+    benchmark: f"benchmarks/transform_clusters_to_subject_space/{'.'.join(wildcards.values())}.tsv"
+
+    container: "docker://slicer/slicer-base"
+    envmodules: "slicer/4.11.20210226"
+
+    threads: 32
     resources:
-    shell:
+        mem_mb=1000,
+        runtime=30,
+
+    shell: 
+        (
+            "{input.python} wm_harden_transform.py "
+            "-j {threads} -i -t {input.transform} "
+            "{input.data} {output} $(which Slicer)"
+        )
 
 
-rule separate_clusters_by_hemisphere:
-    input:
-    output:
-    log:
-    benchmark:
-    conda:
-    container:
-    envmodules:
-    group:
-    threads:
+rule separate_clusters_by_cluster:
+    input: 
+        data=rules.transform_clusters_to_subject_space.output,
+        python=rules.install_python.output.python
+
+    output: 
+        directory(output_dwi(
+            desc="sorted",
+            suffix="800clusters"
+        ))
+
+    log: f"logs/separate_clusters_by_cluster/{'.'.join(wildcards.values())}.log"
+    benchmark: f"benchmarks/separate_clusters_by_cluster/{'.'.join(wildcards.values())}.tsv"
+
+    group: "spectral_clustering"
     resources:
-    shell:
+        mem_mb=1000,
+        runtime=30,
 
+    shell: 
+        (
+            "{input.python} wm_separate_clusters_by_hemisphere.py {input.data} {output}"
+        )
+    
 
 rule assign_to_anatomical_tracts:
-    input:
-    output:
-    log:
-    benchmark:
-    conda:
-    container:
-    envmodules:
-    group:
-    threads:
+    input: 
+        data=rules.separate_clusters_by_cluster.output,
+        atlas=config["tract-segmentation"]["atlas"],
+        python=rules.install_python.output.python
+
+    output: 
+        directory(output_dwi(
+            suffix="73tracts"
+        ))
+
+    log: f"logs/assign_to_anatomical_tracts/{'.'.join(wildcards.values())}.log"
+    benchmark: f"benchmarks/assign_to_anatomical_tracts/{'.'.join(wildcards.values())}.tsv"
+
+    group: "spectral_clustering"
     resources:
+        mem_mb=1000,
+        runtime=30,
+
     shell:
+        (
+            "{input.python} wm_append_clusters_to_anatomical_tracts.py "
+            "{input.data} {input.atlas} {output}"
+        )

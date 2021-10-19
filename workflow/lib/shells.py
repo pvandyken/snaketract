@@ -1,4 +1,4 @@
-import toolz as tz
+from itertools import groupby
 from snakebids import bids
 
 class FodAlgorithm:
@@ -22,8 +22,11 @@ class FodAlgorithm:
 
 def is_multi_shelled(bval_file: str):
     with open(bval_file) as bval_s:
-        bvals = filter(None, tz.first(bval_s).split(" "))
-        ranks = tz.groupby(_shell_rank, bvals)
+        bvals = filter(None, next(bval_s).split(" "))
+        ranks = set()
+        for rank, _ in groupby(bvals, key=_shell_rank):
+            ranks.add(rank)
+
         return len(ranks) > 2
 
         

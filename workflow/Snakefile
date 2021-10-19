@@ -22,7 +22,7 @@ input_paths = inputs['input_path']
 ###
 # Output Globals
 ###
-work = config['output_dir']
+work = "tmp"
 qc = config['output_dir'] + "/qc"
 output = config['output_dir']
 
@@ -32,7 +32,8 @@ output = config['output_dir']
 include: 'rules/anatomical_segmentation.smk'
 include: "rules/response_function.smk"
 include: 'rules/reconstruction.smk'
-include: "rules/qc.smk"
+include: 'rules/spectral_clustering.smk'
+#include: "rules/qc.smk"
 
 ###
 # Top level Rules
@@ -42,12 +43,9 @@ localrules: all, qc
 rule all:
     input:
         expand(
-            bids(root=output,
-                datatype='dwi',
-                desc="sift",
-                suffix='weights.txt',
-                **wildcards),
-            **inputs['input_lists']['preproc_dwi'])
+            rules.assign_to_anatomical_tracts.output,
+            **inputs['input_lists']['preproc_dwi']
+        )
 
 rule tractography:
     input:
@@ -57,17 +55,18 @@ rule tractography:
                 desc="sift",
                 suffix='weights.txt',
                 **wildcards),
-            **inputs['input_lists']['preproc_dwi'])
+            **inputs['input_lists']['preproc_dwi']
+        )
 
-rule qc:
-    input:
-        expand(
-            bids(root=qc,
-                datatype='dwi',
-                suffix='{suffixes}',
-                **wildcards),
-            **inputs['input_lists']['preproc_dwi'],
-            suffixes=["viewTractography", "viewOdf", "viewInterface"]),
-        expand(
-            rules.create_tractography_png.output,
-            **inputs['input_lists']['preproc_dwi'])
+# rule qc:
+#     input:
+#         expand(
+#             bids(root=qc,
+#                 datatype='dwi',
+#                 suffix='{suffixes}',
+#                 **wildcards),
+#             **inputs['input_lists']['preproc_dwi'],
+#             suffixes=["viewTractography", "viewOdf", "viewInterface"]),
+#         expand(
+#             rules.create_tractography_png.output,
+#             **inputs['input_lists']['preproc_dwi'])

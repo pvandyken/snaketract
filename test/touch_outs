@@ -1,0 +1,4 @@
+#!/bin/bash
+OUTS=$(./run.py test/data test/data/derivatives participant --preprocessed_data test/data/derivatives/hcp_preproc -n $1 | grep output | sed 's/.*output:\s//' | xargs -n 1 echo | sed 's/\,//')
+echo $OUTS | xargs -L 1 dirname | xargs mkdir -p
+echo $OUTS | xargs touch

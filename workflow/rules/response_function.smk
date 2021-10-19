@@ -18,11 +18,11 @@ rule convert_dwi_to_mrtrix_format:
     
     envmodules:
         "mrtrix/3.0.1"
-    log: f"logs/convert_dwi_to_mrtrix_format/{*wildcards.values()}.log"
+    log: f"logs/convert_dwi_to_mrtrix_format/{'.'.join(wildcards.values())}.log"
     group: "response_generation"
-    shell: (
+    shell: 
         'mrconvert {input.dwi} {output} -fslgrad {input.bvec} {input.bval} 2> {log}'
-    )
+
 
 rule convert_mask_to_mrtrix_format:
     input:
