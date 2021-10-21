@@ -1,0 +1,15 @@
+sub-(\d+)/anat/sub-(\d+)_5tt.mif             sub-\1/anat/sub-\1_space-individual_5tt.mif              
+sub-(\d+)/anat/sub-(\d+)_gmwmInterface.mif   sub-\1/anat/sub-\1_space-individual_gmwmi.mif            
+sub-(\d+)/dwi/sub-(\d+)_brainmask.mif        sub-\1/dwi/sub-\1_space-individual_brainmask.mif         
+sub-(\d+)/dwi/sub-(\d+)_desc-norm_csffod.mif sub-\1/dwi/sub-\1_space-individual_desc-fodNorm_csf.mif  
+sub-(\d+)/dwi/sub-(\d+)_desc-norm_gmfod.mif  sub-\1/dwi/sub-\1_space-individual_desc-fodNorm_gm.mif   
+sub-(\d+)/dwi/sub-(\d+)_desc-norm_wmfod.mif  sub-\1/dwi/sub-\1_space-individual_desc-fodNorm_wm.mif   
+sub-(\d+)/dwi/sub-(\d+)_desc-ms3t_csffod.mif sub-\1/dwi/sub-\1_space-individual_desc-fodMs3t_csf.mif  
+sub-(\d+)/dwi/sub-(\d+)_desc-ms3t_gmfod.mif  sub-\1/dwi/sub-\1_space-individual_desc-fodMs3t_gm.mif   
+sub-(\d+)/dwi/sub-(\d+)_desc-ms3t_wmfod.mif  sub-\1/dwi/sub-\1_space-individual_desc-fodMs3t_wm.mif   
+sub-(\d+)/dwi/sub-(\d+)_csf.txt              sub-\1/dwi/sub-\1_space-individual_desc-fod_csf.txt      
+sub-(\d+)/dwi/sub-(\d+)_gm.txt               sub-\1/dwi/sub-\1_space-individual_desc-fod_gm.txt       
+sub-(\d+)/dwi/sub-(\d+)_voxels.mif           sub-\1/dwi/sub-\1_space-individual_desc-fod_voxels.mif   
+sub-(\d+)/dwi/sub-(\d+)_wm.txt               sub-\1/dwi/sub-\1_space-individual_desc-fod_wm.txt       
+sub-(\d+)/dwi/sub-(\d+)_desc-tracks_10M.tck  sub-\1/dwi/sub-\1_space-individual_desc-tracks_10M.tck   
+sub-(\d+)/dwi/sub-(\d+)_dwi.mif              sub-\1/dwi/sub-\1_space-individual_dwi.mif               
