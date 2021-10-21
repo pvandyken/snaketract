@@ -1,0 +1,5 @@
+#!/bin/bash
+rm -rf /tmp/prepdwi-recon
+rm -rf test/data/derivatives/prepdwi_recon
+test/touch_outs
+tree /tmp/prepdwi-recon > tree.out && tree test/data/derivatives/prepdwi_recon >> tree.out
