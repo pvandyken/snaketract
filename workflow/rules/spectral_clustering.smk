@@ -42,12 +42,12 @@ rule convert_tracts_to_vtk:
     benchmark: f"benchmarks/convert_tracts_to_vtk/{'.'.join(wildcards.values())}.tsv"
 
     group: "spectral_clustering"
-    threads: 1
+    threads: 32
     resources:
         mem_mb=1000,
         runtime=2
 
-    shell: "tckconvert {input} {output}"
+    shell: "tckconvert -nthreads {threads} {input} {output}"
     
 
 # Including {uid} at the end of registration_dir will lead to it appearing twice in the
