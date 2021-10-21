@@ -2,6 +2,8 @@
 
 
 """
+import os, tempfile
+from functools import partial
 from snakebids import bids, generate_inputs
 import groups
 
@@ -13,7 +15,8 @@ configfile: 'config/config.yml'
 inputs = generate_inputs(
     bids_dir=config['bids_dir'],
     pybids_inputs=config['pybids_inputs'],
-    derivatives=config['preprocessed_data']
+    derivatives=config['preprocessed_data'],
+    participant_label=config.get("participant_label", None)
 )
 
 wildcards = inputs['input_wildcards']['preproc_dwi']
@@ -22,9 +25,18 @@ input_paths = inputs['input_path']
 ###
 # Output Globals
 ###
-work = "tmp"
-qc = config['output_dir'] + "/qc"
-output = config['output_dir']
+work = os.environ.get(config.get('tmpdir', ""), tempfile.gettempdir())  + '/prepdwi-recon'
+output = config['output_dir'] + "/prepdwi_recon"
+qc = output + "/qc"
+
+# Unique ID for easy naming in temporary files
+uid = '.'.join(wildcards.values())
+
+###
+# bids Partials
+###
+bids_output_dwi = partial(bids, root=output, space="individual", datatype="dwi", **wildcards)
+bids_output_anat = partial(bids, root=output, space="individual", datatype="anat", **wildcards)
 
 ###
 # Inclusions
@@ -40,6 +52,7 @@ include: 'rules/spectral_clustering.smk'
 ###
 localrules: all, qc
 
+
 rule all:
     input:
         expand(
@@ -47,14 +60,13 @@ rule all:
             **inputs['input_lists']['preproc_dwi']
         )
 
+
+
+
 rule tractography:
     input:
         expand(
-            bids(root=output,
-                datatype='dwi',
-                desc="sift",
-                suffix='weights.txt',
-                **wildcards),
+            rules.run_sift2.output.weights,
             **inputs['input_lists']['preproc_dwi']
         )
 

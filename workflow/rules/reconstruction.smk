@@ -3,25 +3,14 @@ from lib.shells import is_multi_shelled
 
 rule run_act:
     input:
-        act=bids(root=output,
-            datatype='anat',
-            suffix="5tt.mif",
-            **wildcards),
-        gmwmi=bids(root=output,
-            datatype='anat',
-            suffix="gmwmi.mif",
-            **wildcards),
-        fod=bids(root=output,
-                datatype='dwi',
-                desc='norm',
-                suffix='wmfod.mif',
-                **wildcards)
+        act=rules.segment_anatomical_image.output,
+        gmwmi=rules.create_seed_boundary.output,
+        fod=rules.normalize_fiber_orientation_densities.output.wm
     output:
-        protected(bids(root=output,
-            datatype='dwi',
-            desc="tracks",
-            suffix='10M.tck',
-            **wildcards))
+        protected(bids_output_dwi(
+            desc="tracts",
+            suffix='10M.tck'
+        ))
     params:
         maxlength=config['tractography']['maxlength'],
         cutoff=config['tractography']['cutoff'],
@@ -44,26 +33,20 @@ rule run_sift2:
     input:
         tracks=rules.run_act.output,
         fod=rules.normalize_fiber_orientation_densities.output.wm,
-        act=bids(root=output,
-            datatype='anat',
-            suffix="5tt.mif",
-            **wildcards)
+        act=rules.segment_anatomical_image.output
     output:
-        weights=bids(root=output,
-            datatype='dwi',
+        weights=bids_output_dwi(
             desc="sift",
-            suffix='weights.txt',
-            **wildcards),
-        mu=bids(root=output,
-            datatype='dwi',
+            suffix='weights.txt'
+        ),
+        mu=bids_output_dwi(
             desc="sift",
-            suffix='mu.txt',
-            **wildcards),
-        coeffs=bids(root=output,
-            datatype='dwi',
+            suffix='mu.txt'
+        ),
+        coeffs=bids_output_dwi(
             desc="sift",
-            suffix='coeffs.txt',
-            **wildcards)
+            suffix='coeffs.txt'
+        )
     threads: 16
     resources:
         mem_mb=10000,

@@ -1,7 +1,8 @@
 pip-flags: "--no-index -f ~/projects/ctb-akhanf/knavynde/wheels/"
 
-tract-segmentation:
-  atlas: "../atlas"
+atlases:
+  registration_atlas: ../../atlas
+  cluster_atlas: ../../atlas
 
 tractography:
   maxlength: 250

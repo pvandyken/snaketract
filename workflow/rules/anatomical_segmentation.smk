@@ -4,10 +4,10 @@ rule convert_t1_to_mrtrix_format:
     input:
         input_paths['t1']
     output:
-        temp(bids(root=output,
-            datatype='anat',
-            suffix="t1w.mif",
-            **wildcards))
+        temp(bids_output_anat(
+            root=output,
+            suffix="t1w.mif"
+        ))
     group: groups.segmentation
     log: "logs/convert_t1_to_mrtrix_format/{subject}.log"
     envmodules:
@@ -20,10 +20,9 @@ rule segment_anatomical_image:
     input:
         rules.convert_t1_to_mrtrix_format.output
     output:
-        bids(root=output,
-            datatype='anat',
+        bids_output_anat(
             suffix="5tt.mif",
-            **wildcards)
+        )
     group: groups.segmentation
     resources:
         mem_mb=2500,
@@ -41,10 +40,9 @@ rule create_seed_boundary:
     input:
         rules.segment_anatomical_image.output
     output:
-        bids(root=output,
-            datatype='anat',
-            suffix="gmwmi.mif",
-            **wildcards)
+        bids_output_anat(
+            suffix="gmwmInterface.mif",
+        )
     group: groups.segmentation
     log: "logs/create_seed_boundary/{subject}.log"
     envmodules:

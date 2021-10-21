@@ -9,11 +9,8 @@ rule convert_dwi_to_mrtrix_format:
         bval=input_paths['bval']
 
     output:
-        temp(bids(
-            root=output,
-            datatype='dwi',
-            suffix="dwi.mif",
-            **wildcards
+        temp(bids_output_dwi(
+            suffix="dwi.mif"
         ))
     
     envmodules:
@@ -28,10 +25,9 @@ rule convert_mask_to_mrtrix_format:
     input:
         input_paths['brainmask']
     output:
-        temp(bids(root=output,
-            datatype='dwi',
-            suffix="brainmask.mif",
-            **wildcards))
+        temp(bids_output_dwi(
+            suffix="brainmask.mif"
+        ))
     envmodules:
         "mrtrix/3.0.1"
     log: "logs/convert_mask_to_mrtrix_format/{subject}.log"
@@ -45,22 +41,22 @@ rule generate_response_function:
         dwi=rules.convert_dwi_to_mrtrix_format.output,
         mask=rules.convert_mask_to_mrtrix_format.output
     output:
-        wm=bids(root=output,
-                datatype='dwi',
-                suffix='wm.txt',
-                **wildcards),
-        gm=bids(root=output,
-                datatype='dwi',
-                suffix='gm.txt',
-                **wildcards),
-        csf=bids(root=output,
-                datatype='dwi',
-                suffix='csf.txt',
-                **wildcards),
-        voxels=bids(root=output,
-                datatype='dwi',
-                suffix='voxels.mif',
-                **wildcards)
+        wm=bids_output_dwi(
+            desc="fod",
+            suffix='wm.txt'
+        ),
+        gm=bids_output_dwi(
+            desc="fod",
+            suffix='gm.txt'
+        ),
+        csf=bids_output_dwi(
+            desc="fod",
+            suffix='csf.txt'
+        ),
+        voxels=bids_output_dwi(
+            desc="fod",
+            suffix='voxels.mif'
+        )
     group: "response_generation"
     log: "logs/generate_response_function/{subject}.log"
     resources:
@@ -80,21 +76,18 @@ rule compute_ss3t_fiber_orientation_densities:
         csf=rules.generate_response_function.output.csf,
         mask=rules.convert_mask_to_mrtrix_format.output
     output:
-        wm=bids(root=output,
-                datatype='dwi',
-                desc="ss3t",
-                suffix='wmfod.mif',
-                **wildcards),
-        gm=bids(root=output,
-                datatype='dwi',
-                desc="ss3t",
-                suffix='gmfod.mif',
-                **wildcards),
-        csf=bids(root=output,
-                datatype='dwi',
-                desc="ss3t",
-                suffix='csffod.mif',
-                **wildcards)
+        wm=bids_output_dwi(
+            desc="fodSs3t",
+            suffix='wm.mif'
+        ),
+        gm=bids_output_dwi(
+            desc="fodSs3t",
+            suffix='gm.mif'
+        ),
+        csf=bids_output_dwi(
+            desc="fodSs3t",
+            suffix='csf.mif'
+        )
     group: "response_generation"
     threads: 32
     # This still needs to be benchmarked!!
@@ -119,21 +112,18 @@ rule compute_ms3t_fiber_orientation_densities:
         csf=rules.generate_response_function.output.csf,
         mask=rules.convert_mask_to_mrtrix_format.output
     output:
-        wm=bids(root=output,
-                datatype='dwi',
-                desc="ms3t",
-                suffix='wmfod.mif',
-                **wildcards),
-        gm=bids(root=output,
-                datatype='dwi',
-                desc="ms3t",
-                suffix='gmfod.mif',
-                **wildcards),
-        csf=bids(root=output,
-                datatype='dwi',
-                desc="ms3t",
-                suffix='csffod.mif',
-                **wildcards)
+        wm=bids_output_dwi(
+            desc="fodMs3t",
+            suffix='wm.mif'
+        ),
+        gm=bids_output_dwi(
+            desc="fodMs3t",
+            suffix='gm.mif'
+        ),
+        csf=bids_output_dwi(
+            desc="fodMs3t",
+            suffix='csf.mif'
+        )
     group: "response_generation"
     threads: 32
     resources:
@@ -167,21 +157,18 @@ rule normalize_fiber_orientation_densities:
         ),
         mask=rules.convert_mask_to_mrtrix_format.output
     output:
-        wm=bids(root=output,
-                datatype='dwi',
-                desc='norm',
-                suffix='wmfod.mif',
-                **wildcards),
-        gm=bids(root=output,
-                datatype='dwi',
-                desc='norm',
-                suffix='gmfod.mif',
-                **wildcards),
-        csf=bids(root=output,
-                datatype='dwi',
-                desc='norm',
-                suffix='csffod.mif',
-                **wildcards)
+        wm=bids_output_dwi(
+            desc='fodNorm',
+            suffix='wm.mif'
+        ),
+        gm=bids_output_dwi(
+            desc='fodNorm',
+            suffix='gm.mif'
+        ),
+        csf=bids_output_dwi(
+            desc='fodNorm',
+            suffix='csf.mif'
+        )
     group: "response_generation"
     resources:
         runtime=2

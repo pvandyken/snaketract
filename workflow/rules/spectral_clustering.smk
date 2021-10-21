@@ -3,9 +3,8 @@ from functools import partial
 import re
 from snakebids import bids
 
+from lib.utils import xvfb_run
 
-uid = '.'.join(wildcards.values())
-output_dwi = partial(bids, root=output, datatype="dwi", **wildcards)
 
 localrules: 
     transform_clusters_to_subject_space,
@@ -20,10 +19,10 @@ rule install_python:
         "python/3.7"
     params:
         flags=config["pip-flags"],
-        packages="git+https://github.com/SlicerDMRI/whitematteranalysis.git"
+        packages="whitematteranalysis"
     shell: 
         (
-            "virtualenv --no-download {output.venv} && "
+            "virtualenv --no-download {output.venv}  "
             "{output.python} -m pip install --upgrade pip && "
             "{output.python} -m pip install {params.flags} {params.packages}"
         )
@@ -51,13 +50,16 @@ rule convert_tracts_to_vtk:
     shell: "tckconvert {input} {output}"
     
 
+# Including {uid} at the end of registration_dir will lead to it appearing twice in the
+# path, but this is necessary because Snakemake wants every output to have the wildcards
+# at least once. (Main, below, needs wildcards)
 registration_dir = work + f"/tractography_registration/{uid}"
 registration_files = registration_dir + f"/{uid}/output_tractography"
 
 rule tractography_registration:
     input: 
         data=rules.convert_tracts_to_vtk.output[0],
-        atlas=config['tract-segmentation']['atlas'],
+        atlas=config['atlases']['registration_atlas'],
         python=rules.install_python.output.python
 
     output: 
@@ -66,7 +68,7 @@ rule tractography_registration:
         # rules
         data=f"{registration_files}/{uid}_reg.vtk",
         inv_matrix=f"{registration_files}/itk_txform_{uid}.tfm",
-        xfm=f"{registration_files}/vtk_txform_{uid}.tfm"
+        xfm=f"{registration_files}/vtk_txform_{uid}.xfm"
 
     log: f"logs/tractography_registration/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/tractography_registration/{'.'.join(wildcards.values())}.tsv"
@@ -93,17 +95,20 @@ rule collect_registration_output:
         xfm=rules.tractography_registration.output.xfm
 
     output:
-        data=output_dwi(
-            desc="registered",
+        data=bids_output_dwi(
+            space="ORG",
+            desc="tracts",
             suffix="10M.vtk"
         ),
-        inv_matrix=output_dwi(
-            desc="inverse",
-            suffix="transform.tfm"
+        inv_matrix=bids_output_dwi(
+            space="ORG",
+            desc="tracts10M",
+            suffix="inverseTransform.tfm"
         ),
-        xfm=output_dwi(
-            desc="vtkTxform",
-            suffix="10M.xfm" 
+        xfm=bids_output_dwi(
+            space="ORG",
+            desc="tracts10M",
+            suffix="vtkTxform.xfm" 
         )
 
     log: f"logs/collect_registration_output/{'.'.join(wildcards.values())}.log"
@@ -125,11 +130,12 @@ rule collect_registration_output:
 rule tractography_spectral_clustering:
     input: 
         data=rules.collect_registration_output.output.data,
-        atlas=config['tract-segmentation']['atlas'],
+        atlas=config['atlases']['cluster_atlas'],
         python=rules.install_python.output.python
     output: 
-        directory(output_dwi(
-            suffix="800clusters"
+        directory(bids_output_dwi(
+            space="ORG",
+            desc="clusters800"
         ))
     log: f"logs/tractography_spectral_clustering/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/tractography_spectral_clustering/{'.'.join(wildcards.values())}.tsv"
@@ -138,13 +144,14 @@ rule tractography_spectral_clustering:
     resources:
         mem_mb=1000,
         runtime=30,
+        xvfb_run="$([[ -n \"{resources.x11_srv}\"]] && echo xvfb-run)"
     params:
         work_folder="tractography_clustering",
         results_subfolder=Path(rules.collect_registration_output.output.data).stem
     shell:
         (
-            "{input.python} wm_cluster_from_atlas.py "
-            "-j {threads} -norender "
+            f"{xvfb_run(config)}  {{input.python}} wm_cluster_from_atlas.py "
+            "-j {threads} "
             "{input.data} {input.atlas} {resources.tmpdir}{params.work_folder} && "
 
             "mv {resources.tmpdir}/{params.work_folder}/"
@@ -155,12 +162,13 @@ rule tractography_spectral_clustering:
 rule remove_cluster_outliers:
     input: 
         data=rules.tractography_spectral_clustering.output,
-        atlas=config['tract-segmentation']['atlas'],
+        atlas=config['atlases']['cluster_atlas'],
         python=rules.install_python.output.python
     output: 
-        directory(output_dwi(
-            desc="outliersRemoved",
-            suffix="800clusters"
+        directory(bids_output_dwi(
+            space="ORG",
+            desc="clusters800",
+            suffix="outliersRemoved"
         ))
     log: f"logs/remove_cluster_outliers/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/remove_cluster_outliers/{'.'.join(wildcards.values())}.tsv"
@@ -186,13 +194,14 @@ rule remove_cluster_outliers:
 rule assess_cluster_location_by_hemisphere:
     input: 
         data=rules.remove_cluster_outliers.output,
-        atlas=config['tract-segmentation']['atlas'],
+        atlas=config['atlases']['cluster_atlas'],
         python=rules.install_python.output.python
 
     output: 
-        output_dwi(
-            desc="assignedHemispheres",
-            suffix="800clusters"
+        bids_output_dwi(
+            space="ORG",
+            desc="clusters800",
+            suffix="assignedHemispheres.complete"
         )
 
     log: f"logs/assess_cluster_location_by_hemisphere/{'.'.join(wildcards.values())}.log"
@@ -235,7 +244,7 @@ rule transform_clusters_to_subject_space:
 
     shell: 
         (
-            "{input.python} wm_harden_transform.py "
+            f"{xvfb_run(config)} {{input.python}} wm_harden_transform.py "
             "-j {threads} -i -t {input.transform} "
             "{input.data} {output} $(which Slicer)"
         )
@@ -247,9 +256,10 @@ rule separate_clusters_by_cluster:
         python=rules.install_python.output.python
 
     output: 
-        directory(output_dwi(
-            desc="sorted",
-            suffix="800clusters"
+        directory(bids_output_dwi(
+            space="individual",
+            desc="clusters800",
+            suffix="sorted"
         ))
 
     log: f"logs/separate_clusters_by_cluster/{'.'.join(wildcards.values())}.log"
@@ -269,12 +279,14 @@ rule separate_clusters_by_cluster:
 rule assign_to_anatomical_tracts:
     input: 
         data=rules.separate_clusters_by_cluster.output,
-        atlas=config["tract-segmentation"]["atlas"],
+        atlas=config["atlases"]["cluster_atlas"],
         python=rules.install_python.output.python
 
     output: 
-        directory(output_dwi(
-            suffix="73tracts"
+        directory(bids_output_dwi(
+            space="individual",
+            desc="tracts",
+            suffix="73"
         ))
 
     log: f"logs/assign_to_anatomical_tracts/{'.'.join(wildcards.values())}.log"
