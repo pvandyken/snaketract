@@ -8,7 +8,7 @@ from lib.utils import xvfb_run
 
 localrules: 
     transform_clusters_to_subject_space,
-    install_whitematteranalysis
+    install_python
 
 
 rule install_python:
