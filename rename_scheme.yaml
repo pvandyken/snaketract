@@ -1,0 +1,18 @@
+wildcards:
+  subject: \d+
+files:
+- sub-{subject}/anat/sub-{subject}_5tt.mif             sub-{subject}/anat/sub-{subject}_space-individual_5tt.mif              
+- sub-{subject}/anat/sub-{subject}_gmwmInterface.mif   sub-{subject}/anat/sub-{subject}_space-individual_gmwmi.mif            
+- sub-{subject}/dwi/sub-{subject}_brainmask.mif        sub-{subject}/dwi/sub-{subject}_space-individual_brainmask.mif         
+- sub-{subject}/dwi/sub-{subject}_desc-norm_csffod.mif sub-{subject}/dwi/sub-{subject}_space-individual_desc-fodNorm_csf.mif  
+- sub-{subject}/dwi/sub-{subject}_desc-norm_gmfod.mif  sub-{subject}/dwi/sub-{subject}_space-individual_desc-fodNorm_gm.mif   
+- sub-{subject}/dwi/sub-{subject}_desc-norm_wmfod.mif  sub-{subject}/dwi/sub-{subject}_space-individual_desc-fodNorm_wm.mif   
+- sub-{subject}/dwi/sub-{subject}_desc-ms3t_csffod.mif sub-{subject}/dwi/sub-{subject}_space-individual_desc-fodMs3t_csf.mif  
+- sub-{subject}/dwi/sub-{subject}_desc-ms3t_gmfod.mif  sub-{subject}/dwi/sub-{subject}_space-individual_desc-fodMs3t_gm.mif   
+- sub-{subject}/dwi/sub-{subject}_desc-ms3t_wmfod.mif  sub-{subject}/dwi/sub-{subject}_space-individual_desc-fodMs3t_wm.mif   
+- sub-{subject}/dwi/sub-{subject}_csf.txt              sub-{subject}/dwi/sub-{subject}_space-individual_desc-fod_csf.txt      
+- sub-{subject}/dwi/sub-{subject}_gm.txt               sub-{subject}/dwi/sub-{subject}_space-individual_desc-fod_gm.txt       
+- sub-{subject}/dwi/sub-{subject}_voxels.mif           sub-{subject}/dwi/sub-{subject}_space-individual_desc-fod_voxels.mif   
+- sub-{subject}/dwi/sub-{subject}_wm.txt               sub-{subject}/dwi/sub-{subject}_space-individual_desc-fod_wm.txt       
+- sub-{subject}/dwi/sub-{subject}_space-individual_desc-tracts_10M.tck  sub-{subject}/dwi/sub-{subject}_space-individual_desc-tracts_10M.tck   
+- sub-{subject}/dwi/sub-{subject}_dwi.mif              sub-{subject}/dwi/sub-{subject}_space-individual_dwi.mif               
