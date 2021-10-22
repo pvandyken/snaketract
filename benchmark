@@ -6,14 +6,14 @@ import sys
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('--mem', nargs=1, default="64G")
-parser.add_argument('--runtime', nargs=1, default='12:00')
-parser.add_argument('--cores', nargs="+", type=int)
+parser.add_argument('--mem',  default="64G")
+parser.add_argument('--runtime', default='12:00')
+parser.add_argument('--cores', nargs="+", type=str)
 parser.add_argument('--rules', nargs="+", type=str)
-parser.add_argument('-subjects', nargs="+", type=str)
+parser.add_argument('--subjects', nargs="+", type=str)
 parser.add_argument('--snakemake-args', nargs="*")
 
-args = parser.parse_args(sys.argv)
+args = parser.parse_args(sys.argv[1:])
 
 for core, subject in zip(args.cores, args.subjects):
     print(" ".join([

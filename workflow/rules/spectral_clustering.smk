@@ -251,7 +251,7 @@ rule transform_clusters_to_subject_space:
         )
 
 
-rule separate_clusters_by_cluster:
+rule separate_clusters_by_hemisphere:
     input: 
         data=rules.transform_clusters_to_subject_space.output,
         python=rules.install_python.output.python
@@ -279,7 +279,7 @@ rule separate_clusters_by_cluster:
 
 rule assign_to_anatomical_tracts:
     input: 
-        data=rules.separate_clusters_by_cluster.output,
+        data=rules.separate_clusters_by_hemisphere.output,
         atlas=config["atlases"]["cluster_atlas"],
         python=rules.install_python.output.python
 
