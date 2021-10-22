@@ -1,10 +1,18 @@
 #!/usr/bin/env python3
 import argparse
+import yaml
 import itertools as it
 import os
 from pathlib import Path
 import re
 import sys
+
+def reverse_split(s: str, reverse: bool = False):
+    if reverse:
+        l = s.split()
+        l.reverse()
+        return l
+    return s.split()
 
 def main():
     parser = argparse.ArgumentParser()
@@ -16,19 +24,27 @@ def main():
 
     args = parser.parse_args(sys.argv[1:])
     with args.pattern_file.open() as f:
-        patterns = f.read()
-        lines = patterns.split("\n")
+        scheme = yaml.load(f)
 
+    templates = [reverse_split(template, args.reverse) for template in scheme["files"]]
+    wildcards = {
+        name: f"({match})" for name, match in scheme.get("wildcards", {}).items() 
+    }
+
+    sub_tags = {
+        name: f"\\1{i+1}" for name, i in enumerate()
+    }
+    print([
+        ( regex.format(**wildcards), sub.format(**wildcards) )
+        for regex, sub in templates
+    ])
+    exit()
+
+    patterns = [
+        ( re.compile(regex.format(**wildcards)), sub.format(**wildcards) )
+        for regex, sub in templates
+    ]
     os.chdir(args.directory)
-
-    def sp(s: str):
-        if args.reverse:
-            l = s.split()
-            l.reverse()
-            return l
-        return s.split()
-
-    patterns = [(re.compile(sp(line)[0]), sp(line)[1]) for line in filter(None, lines)]
 
     for path, (regex, replace) in it.product(Path().rglob("*"), patterns):
         if regex.match(str(path)):

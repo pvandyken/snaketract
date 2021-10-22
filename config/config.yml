@@ -100,3 +100,7 @@ parse_args:
     default: '../hcp1200/derivatives/hcp_preproc'
     type: Path
     nargs: '?'
+resources
+└── ORG-Atlases-1.1.1
+    ├── ORG-800FC-100HCP
+    └── ORG-RegAtlas-100HCP
