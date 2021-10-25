@@ -16,18 +16,20 @@ parser.add_argument('--snakemake-args', nargs="*")
 args = parser.parse_args(sys.argv[1:])
 
 for core, subject in zip(args.cores, args.subjects):
-    print(" ".join([
+    subprocess.run([
         "kbatch",
         core,
         args.mem,
         args.runtime,
         "snakemake",
         "--profile",
-        "single"
+        "single",
         "--max-threads",
         core,
         "--cores",
         core,
         "--config",
-        f"participant_label={subject}"
-    ]))
+        f"participant_label={subject}",
+        "--configfile",
+        "config/hcp1200.yml",
+    ])
