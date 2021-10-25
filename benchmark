@@ -30,6 +30,7 @@ for core, subject in zip(args.cores, args.subjects):
         core,
         "--config",
         f"participant_label={subject}",
+        "tmpdir=\"SLURM_TMPDIR\"",
         "--configfile",
         "config/hcp1200.yml",
     ])

@@ -41,6 +41,8 @@ rule convert_tracts_to_vtk:
     log: f"logs/convert_tracts_to_vtk/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/convert_tracts_to_vtk/{'.'.join(wildcards.values())}.tsv"
 
+    envmodules: "mrtrix/3.0.1"
+
     group: "spectral_clustering"
     threads: 32
     resources:
