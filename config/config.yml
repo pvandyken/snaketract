@@ -1,8 +1,8 @@
 pip-flags: "--no-index -f ~/projects/ctb-akhanf/knavynde/wheels/"
 
 atlases:
-  registration_atlas: ../../atlas
-  cluster_atlas: ../../atlas
+  registration_atlas: resources/ORG-Atlases-1.1.1/ORG-RegAtlas-100HCP/registration_atlas.vtk
+  cluster_atlas: resources/ORG-Atlases-1.1.1/ORG-800FC-100HCP
 
 tractography:
   maxlength: 250
@@ -100,7 +100,3 @@ parse_args:
     default: '../hcp1200/derivatives/hcp_preproc'
     type: Path
     nargs: '?'
-resources
-└── ORG-Atlases-1.1.1
-    ├── ORG-800FC-100HCP
-    └── ORG-RegAtlas-100HCP
