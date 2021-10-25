@@ -22,7 +22,7 @@ rule install_python:
         packages="whitematteranalysis"
     shell: 
         (
-            "virtualenv --no-download {output.venv}  "
+            "virtualenv --no-download {output.venv} && "
             "{output.python} -m pip install --upgrade pip && "
             "{output.python} -m pip install {params.flags} {params.packages}"
         )
