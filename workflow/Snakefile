@@ -43,7 +43,7 @@ bids_output_anat = partial(bids, root=output, space="individual", datatype="anat
 ###
 include: 'rules/anatomical_segmentation.smk'
 include: "rules/response_function.smk"
-include: 'rules/reconstruction.smk'
+include: 'rules/reconstruction/reconstruction.smk'
 include: 'rules/spectral_clustering.smk'
 #include: "rules/qc.smk"
 
