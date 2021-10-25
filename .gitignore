@@ -5,3 +5,6 @@ logs
 .vscode
 env.yaml
 resources
+
+config/
+!config/config.yml
