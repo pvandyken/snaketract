@@ -80,6 +80,7 @@ rule tractography_registration:
     resources:
         mem_mb=1000,
         runtime=30,
+        python=rules.install_python.params.script,
 
     params:
         mode="rigid_affine_fast",
