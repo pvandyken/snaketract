@@ -150,20 +150,18 @@ rule tractography_spectral_clustering:
     resources:
         mem_mb=1000,
         runtime=30,
-        xvfb_run="$([[ -n \"{resources.x11_srv}\"]] && echo xvfb-run)",
         python=rules.install_python.params.script,
     
     params:
-        work_folder="tractography_clustering",
+        work_folder=work + "/tractography_clustering",
         results_subfolder=Path(rules.collect_registration_output.output.data).stem
     shell:
         (
             f"{xvfb_run(config)}  {{resources.python}}wm_cluster_from_atlas.py "
             "-j {threads} "
-            "{input.data} {input.atlas} {resources.tmpdir}{params.work_folder} && "
+            "{input.data} {input.atlas} {params.work_folder} && "
 
-            "mv {resources.tmpdir}/{params.work_folder}/"
-                "{params.results_subfolder} {output}"
+            "mv {params.work_folder}/{params.results_subfolder} {output}"
         )
     
 
@@ -187,16 +185,16 @@ rule remove_cluster_outliers:
         runtime=30,
         python=rules.install_python.params.script,
     params:
-        work_folder="tractography_outlier_removal",
+        work_folder=work + "/tractography_outlier_removal",
         results_subfolder=Path(rules.tractography_spectral_clustering.output[0]).stem
     shell: 
         (
             "{resources.python}wm_cluster_remove_outliers.py "
             "-j {threads} "
-            "{input.data} {input.atlas} {resources.tmpdir}{params.work_folder} && "
+            "{input.data} {input.atlas} {params.work_folder} && "
 
-            "mv {resources.tmpdir}/{params.work_folder}/"
-                "{params.results_subfolder}_outlier_removed {output}"
+            "mv "
+            "{params.work_folder}/{params.results_subfolder}_outlier_removed {output}"
         )
     
 
