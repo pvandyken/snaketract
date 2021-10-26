@@ -64,7 +64,6 @@ rule tractography_registration:
     input: 
         data=rules.convert_tracts_to_vtk.output[0],
         atlas=config['atlases']['registration_atlas'],
-        python=rules.install_python.params.script,
 
     output: 
         main=temp(directory(registration_dir)),
@@ -81,12 +80,13 @@ rule tractography_registration:
     resources:
         mem_mb=1000,
         runtime=30,
+        python=rules.install_python.params.script,
 
     params:
-        mode="rigid_affine_fast"
+        mode="rigid_affine_fast",
     shell: 
         (
-            "{input.python}wm_register_to_atlas_new.py "
+            "{resources.python}wm_register_to_atlas_new.py "
             "-mode {params.mode} "
             "{input.data} {input.atlas} {output.main}"
         )
