@@ -13,7 +13,7 @@ localrules:
 
 rule install_python:
     output: 
-        venv=directory(work+"/prepdwi_recon_venv"),
+        venv=temp(directory(work+"/prepdwi_recon_venv")),
         python=work+"/prepdwi_recon_venv/bin/python",
         
     envmodules:
@@ -64,6 +64,7 @@ rule tractography_registration:
     input: 
         data=rules.convert_tracts_to_vtk.output[0],
         atlas=config['atlases']['registration_atlas'],
+        python=rules.install_python.output.venv,
 
     output: 
         main=temp(directory(registration_dir)),
@@ -94,6 +95,7 @@ rule tractography_registration:
 
 rule collect_registration_output:
     input:
+        main=rules.tractography_registration.output.main,
         data=rules.tractography_registration.output.data,
         inv_matrix=rules.tractography_registration.output.inv_matrix,
         xfm=rules.tractography_registration.output.xfm
@@ -135,6 +137,7 @@ rule tractography_spectral_clustering:
     input: 
         data=rules.collect_registration_output.output.data,
         atlas=config['atlases']['cluster_atlas'],
+        python=rules.install_python.output.venv,
     output: 
         directory(bids_output_dwi(
             space="ORG",
@@ -168,6 +171,7 @@ rule remove_cluster_outliers:
     input: 
         data=rules.tractography_spectral_clustering.output,
         atlas=config['atlases']['cluster_atlas'],
+        python=rules.install_python.output.venv,
     output: 
         directory(bids_output_dwi(
             space="ORG",
@@ -200,6 +204,7 @@ rule assess_cluster_location_by_hemisphere:
     input: 
         data=rules.remove_cluster_outliers.output,
         atlas=config['atlases']['cluster_atlas'],
+        python=rules.install_python.output.venv,
 
     output: 
         bids_output_dwi(
@@ -232,6 +237,7 @@ rule transform_clusters_to_subject_space:
         hemisphereAssignment=rules.assess_cluster_location_by_hemisphere.output,
         data=rules.remove_cluster_outliers.output,
         transform=rules.collect_registration_output.output.inv_matrix,
+        python=rules.install_python.output.venv,
 
     output: 
         temp(directory(work+"/transformed_clusters/" + uid + "/"))
@@ -259,6 +265,7 @@ rule transform_clusters_to_subject_space:
 rule separate_clusters_by_hemisphere:
     input: 
         data=rules.transform_clusters_to_subject_space.output,
+        python=rules.install_python.output.venv,
 
     output: 
         directory(bids_output_dwi(
@@ -286,6 +293,7 @@ rule assign_to_anatomical_tracts:
     input: 
         data=rules.separate_clusters_by_hemisphere.output,
         atlas=config["atlases"]["cluster_atlas"],
+        python=rules.install_python.output.venv,
 
     output: 
         directory(bids_output_dwi(
