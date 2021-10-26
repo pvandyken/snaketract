@@ -80,7 +80,6 @@ rule tractography_registration:
     resources:
         mem_mb=1000,
         runtime=30,
-        python=rules.install_python.params.script,
 
     params:
         mode="rigid_affine_fast",
@@ -135,7 +134,6 @@ rule tractography_spectral_clustering:
     input: 
         data=rules.collect_registration_output.output.data,
         atlas=config['atlases']['cluster_atlas'],
-        python=rules.install_python.output.python,
     output: 
         directory(bids_output_dwi(
             space="ORG",
@@ -148,13 +146,15 @@ rule tractography_spectral_clustering:
     resources:
         mem_mb=1000,
         runtime=30,
-        xvfb_run="$([[ -n \"{resources.x11_srv}\"]] && echo xvfb-run)"
+        xvfb_run="$([[ -n \"{resources.x11_srv}\"]] && echo xvfb-run)",
+        python=rules.install_python.params.script,
+    
     params:
         work_folder="tractography_clustering",
         results_subfolder=Path(rules.collect_registration_output.output.data).stem
     shell:
         (
-            f"{xvfb_run(config)}  {{input.python}} wm_cluster_from_atlas.py "
+            f"{xvfb_run(config)}  {{resources.python}}wm_cluster_from_atlas.py "
             "-j {threads} "
             "{input.data} {input.atlas} {resources.tmpdir}{params.work_folder} && "
 
@@ -167,7 +167,6 @@ rule remove_cluster_outliers:
     input: 
         data=rules.tractography_spectral_clustering.output,
         atlas=config['atlases']['cluster_atlas'],
-        python=rules.install_python.output.python,
     output: 
         directory(bids_output_dwi(
             space="ORG",
@@ -181,12 +180,13 @@ rule remove_cluster_outliers:
     resources:
         mem_mb=1000,
         runtime=30,
+        python=rules.install_python.params.script,
     params:
         work_folder="tractography_outlier_removal",
         results_subfolder=Path(rules.tractography_spectral_clustering.output[0]).stem
     shell: 
         (
-            "{input.python} wm_cluster_remove_outliers.py "
+            "{resources.python}wm_cluster_remove_outliers.py "
             "-j {threads} "
             "{input.data} {input.atlas} {resources.tmpdir}{params.work_folder} && "
 
@@ -199,7 +199,6 @@ rule assess_cluster_location_by_hemisphere:
     input: 
         data=rules.remove_cluster_outliers.output,
         atlas=config['atlases']['cluster_atlas'],
-        python=rules.install_python.output.python,
 
     output: 
         bids_output_dwi(
@@ -215,10 +214,11 @@ rule assess_cluster_location_by_hemisphere:
     resources:
         mem_mb=1000,
         runtime=30,
+        python=rules.install_python.params.script,
 
     shell: 
         (
-            "{input.python} wm_assess_cluster_location_by_hemisphere.py "
+            "{resources.python} wm_assess_cluster_location_by_hemisphere.py "
             "{input.data} -clusterLocationFile "
             "{input.atlas}/cluster_hemisphere_location.txt && "
 
@@ -231,7 +231,6 @@ rule transform_clusters_to_subject_space:
         hemisphereAssignment=rules.assess_cluster_location_by_hemisphere.output,
         data=rules.remove_cluster_outliers.output,
         transform=rules.collect_registration_output.output.inv_matrix,
-        python=rules.install_python.output.python,
 
     output: 
         temp(directory(work+"/transformed_clusters/" + uid + "/"))
@@ -246,10 +245,11 @@ rule transform_clusters_to_subject_space:
     resources:
         mem_mb=1000,
         runtime=30,
+        python=rules.install_python.params.script,
 
     shell: 
         (
-            f"{xvfb_run(config)} {{input.python}} wm_harden_transform.py "
+            f"{xvfb_run(config)} {{resources.python}}wm_harden_transform.py "
             "-j {threads} -i -t {input.transform} "
             "{input.data} {output} $(which Slicer)"
         )
@@ -258,7 +258,6 @@ rule transform_clusters_to_subject_space:
 rule separate_clusters_by_hemisphere:
     input: 
         data=rules.transform_clusters_to_subject_space.output,
-        python=rules.install_python.output.python,
 
     output: 
         directory(bids_output_dwi(
@@ -274,10 +273,11 @@ rule separate_clusters_by_hemisphere:
     resources:
         mem_mb=1000,
         runtime=30,
+        python=rules.install_python.params.script,
 
     shell: 
         (
-            "{input.python} wm_separate_clusters_by_hemisphere.py {input.data} {output}"
+            "{resources.python}wm_separate_clusters_by_hemisphere.py {input.data} {output}"
         )
     
 
@@ -285,7 +285,6 @@ rule assign_to_anatomical_tracts:
     input: 
         data=rules.separate_clusters_by_hemisphere.output,
         atlas=config["atlases"]["cluster_atlas"],
-        python=rules.install_python.output.python,
 
     output: 
         directory(bids_output_dwi(
@@ -301,9 +300,10 @@ rule assign_to_anatomical_tracts:
     resources:
         mem_mb=1000,
         runtime=30,
+        python=rules.install_python.params.script,
 
     shell:
         (
-            "{input.python} wm_append_clusters_to_anatomical_tracts.py "
+            "{resources.python}wm_append_clusters_to_anatomical_tracts.py "
             "{input.data} {input.atlas} {output}"
         )
