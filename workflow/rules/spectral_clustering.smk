@@ -13,7 +13,7 @@ localrules:
 
 rule install_python:
     output: 
-        venv=ancient(temp(directory(work+"/prepdwi_recon_venv"))),
+        venv=temp(directory(work+"/prepdwi_recon_venv")),
         python=work+"/prepdwi_recon_venv/bin/python",
         
     envmodules:
@@ -64,7 +64,7 @@ rule tractography_registration:
     input: 
         data=rules.convert_tracts_to_vtk.output[0],
         atlas=config['atlases']['registration_atlas'],
-        python=rules.install_python.output.venv,
+        python=ancient(rules.install_python.output.venv),
 
     output: 
         main=temp(directory(registration_dir)),
@@ -81,7 +81,7 @@ rule tractography_registration:
     resources:
         mem_mb=1000,
         runtime=30,
-        python=rules.install_python.params.script,
+        python=ancient(rules.install_python.params.script),
 
     params:
         mode="rigid_affine_fast",
@@ -137,7 +137,7 @@ rule tractography_spectral_clustering:
     input: 
         data=rules.collect_registration_output.output.data,
         atlas=config['atlases']['cluster_atlas'],
-        python=rules.install_python.output.venv,
+        python=ancient(rules.install_python.output.venv),
     output: 
         directory(bids_output_dwi(
             space="ORG",
@@ -169,7 +169,7 @@ rule remove_cluster_outliers:
     input: 
         data=rules.tractography_spectral_clustering.output,
         atlas=config['atlases']['cluster_atlas'],
-        python=rules.install_python.output.venv,
+        python=ancient(rules.install_python.output.venv),
     output: 
         directory(bids_output_dwi(
             space="ORG",
@@ -286,7 +286,6 @@ rule separate_clusters_by_hemisphere:
             "{resources.python}wm_separate_clusters_by_hemisphere.py {input.data} {output}"
         )
     
-
 rule assign_to_anatomical_tracts:
     input: 
         data=rules.separate_clusters_by_hemisphere.output,
