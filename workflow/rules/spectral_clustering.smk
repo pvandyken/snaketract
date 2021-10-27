@@ -13,7 +13,7 @@ localrules:
 
 rule install_python:
     output: 
-        venv=temp(directory(work+"/prepdwi_recon_venv")),
+        venv=ancient(temp(directory(work+"/prepdwi_recon_venv"))),
         python=work+"/prepdwi_recon_venv/bin/python",
         
     envmodules:
