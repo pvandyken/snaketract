@@ -222,7 +222,7 @@ rule assess_cluster_location_by_hemisphere:
 
     shell: 
         (
-            "{resources.python} wm_assess_cluster_location_by_hemisphere.py "
+            "{resources.python}wm_assess_cluster_location_by_hemisphere.py "
             "{input.data} -clusterLocationFile "
             "{input.atlas}/cluster_hemisphere_location.txt && "
 
