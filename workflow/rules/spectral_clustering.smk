@@ -64,7 +64,7 @@ rule tractography_registration:
     input: 
         data=rules.convert_tracts_to_vtk.output[0],
         atlas=config['atlases']['registration_atlas'],
-        python=ancient(rules.install_python.output.venv),
+        python=rules.install_python.output.venv,
 
     output: 
         main=temp(directory(registration_dir)),
