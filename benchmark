@@ -12,16 +12,18 @@ parser.add_argument('--cores', nargs="+", type=str)
 parser.add_argument('--rules', nargs="+", type=str)
 parser.add_argument('--subjects', nargs="+", type=str)
 parser.add_argument('--snakemake-args', nargs="*")
+parser.add_argument('--dry', '-n', action="store_true")
 
 args = parser.parse_args(sys.argv[1:])
-
+func = (lambda a: print(" ".join(a))) if args.dry else subprocess.run
 for core, subject in zip(args.cores, args.subjects):
-    subprocess.run([
-        "kbatch",
+    func([
+        'kbatch',
         core,
         args.mem,
         args.runtime,
         "snakemake",
+        "--nolock",
         "--profile",
         "single",
         "--max-threads",
@@ -31,6 +33,7 @@ for core, subject in zip(args.cores, args.subjects):
         "--config",
         f"participant_label={subject}",
         "tmpdir=\"SLURM_TMPDIR\"",
+        "x11_srv=true",
         "--configfile",
         "config/hcp1200.yml",
     ])
