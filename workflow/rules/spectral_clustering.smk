@@ -11,6 +11,25 @@ localrules:
     install_python
 
 
+# group tract_registration:
+#   num_components: 32
+#   total_runtime: 3:00
+#   total_mem_mb: 480,000
+#   cores: 32
+
+# group spectral_clustering:
+#   num_components: 24
+#   total_runtime: 12:00
+#   total_mem_mb: 500,000
+#   cores: 32
+
+# group cluster_postprocess:
+#   num_components: 160
+#   total_runtime: 12:00
+#   total_mem_mb: 16,000
+#   cores: 32
+
+
 rule install_python:
     output: 
         venv=temp(directory(work+"/prepdwi_recon_venv")),
@@ -30,7 +49,6 @@ rule install_python:
         )
     
 
-
 rule convert_tracts_to_vtk:
     input: 
         rules.run_act.output
@@ -45,13 +63,12 @@ rule convert_tracts_to_vtk:
 
     envmodules: "mrtrix/3.0.1"
 
-    group: "spectral_clustering"
-    threads: 32
+    group: "tract_registration"
     resources:
-        mem_mb=1000,
-        runtime=2
+        mem_mb=500,
+        runtime=30 # for 10M fibres
 
-    shell: "tckconvert -nthreads {threads} {input} {output}"
+    shell: "tckconvert {input} {output}"
     
 
 # Including {uid} at the end of registration_dir will lead to it appearing twice in the
@@ -77,10 +94,10 @@ rule tractography_registration:
     log: f"logs/tractography_registration/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/tractography_registration/{'.'.join(wildcards.values())}.tsv"
 
-    group: "spectral_clustering"
+    group: "tract_registration""
     resources:
-        mem_mb=1000,
-        runtime=30,
+        mem_mb=40000,
+        runtime=44,
         python=ancient(rules.install_python.params.script),
 
     params:
@@ -120,9 +137,9 @@ rule collect_registration_output:
     log: f"logs/collect_registration_output/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/collect_registration_output/{'.'.join(wildcards.values())}.tsv"
 
-    group: "spectral_clustering"
+    group: "tract_registration"
     resources:
-        mem_mb=500,
+        mem_mb=100,
         runtime=1,
 
     shell: 
@@ -145,11 +162,12 @@ rule tractography_spectral_clustering:
         ))
     log: f"logs/tractography_spectral_clustering/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/tractography_spectral_clustering/{'.'.join(wildcards.values())}.tsv"
+
     group: "spectral_clustering"
-    threads: 32
+    threads: 16
     resources:
-        mem_mb=1000,
-        runtime=30,
+        mem_mb=250000,
+        runtime=60,
         python=rules.install_python.params.script,
     
     params:
@@ -178,11 +196,12 @@ rule remove_cluster_outliers:
         ))
     log: f"logs/remove_cluster_outliers/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/remove_cluster_outliers/{'.'.join(wildcards.values())}.tsv"
-    group: "spectral_clustering"
+
+    group: "cluster_postprocess"
     threads: 32
     resources:
-        mem_mb=1000,
-        runtime=30,
+        mem_mb=10000,
+        runtime=4,
         python=rules.install_python.params.script,
     params:
         work_folder=work + "/tractography_outlier_removal",
@@ -214,10 +233,10 @@ rule assess_cluster_location_by_hemisphere:
     log: f"logs/assess_cluster_location_by_hemisphere/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/assess_cluster_location_by_hemisphere/{'.'.join(wildcards.values())}.tsv"
 
-    group: "spectral_clustering"
+    group: "cluster_postprocess"
     resources:
-        mem_mb=1000,
-        runtime=30,
+        mem_mb=500,
+        runtime=13,
         python=rules.install_python.params.script,
 
     shell: 
@@ -246,16 +265,16 @@ rule transform_clusters_to_subject_space:
     container: "docker://slicer/slicer-base"
     envmodules: "slicer/4.11.20210226"
 
-    threads: 32
+    group: "cluster_postprocess"
     resources:
-        mem_mb=1000,
-        runtime=30,
+        mem_mb=500,
+        runtime=1,
         python=rules.install_python.params.script,
 
     shell: 
         (
             f"{xvfb_run(config)} {{resources.python}}wm_harden_transform.py "
-            "-j {threads} -i -t {input.transform} "
+            "-i -t {input.transform} "
             "{input.data} {output} $(which Slicer)"
         )
 
@@ -275,10 +294,10 @@ rule separate_clusters_by_hemisphere:
     log: f"logs/separate_clusters_by_cluster/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/separate_clusters_by_cluster/{'.'.join(wildcards.values())}.tsv"
 
-    group: "spectral_clustering"
+    group: "cluster_postprocess"
     resources:
-        mem_mb=1000,
-        runtime=30,
+        mem_mb=100,
+        runtime=1,
         python=rules.install_python.params.script,
 
     shell: 
@@ -302,10 +321,10 @@ rule assign_to_anatomical_tracts:
     log: f"logs/assign_to_anatomical_tracts/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/assign_to_anatomical_tracts/{'.'.join(wildcards.values())}.tsv"
 
-    group: "spectral_clustering"
+    group: "cluster_postprocess"
     resources:
-        mem_mb=1000,
-        runtime=30,
+        mem_mb=500,
+        runtime=1,
         python=rules.install_python.params.script,
 
     shell:
