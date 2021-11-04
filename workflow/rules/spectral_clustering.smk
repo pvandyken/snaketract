@@ -7,7 +7,6 @@ from lib.utils import xvfb_run
 
 
 localrules: 
-    transform_clusters_to_subject_space,
     install_python
 
 
@@ -81,7 +80,7 @@ rule tractography_registration:
     input: 
         data=rules.convert_tracts_to_vtk.output[0],
         atlas=config['atlases']['registration_atlas'],
-        python=rules.install_python.output.venv,
+        python=ancient(rules.install_python.output.venv),
 
     output: 
         main=temp(directory(registration_dir)),
@@ -94,7 +93,7 @@ rule tractography_registration:
     log: f"logs/tractography_registration/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/tractography_registration/{'.'.join(wildcards.values())}.tsv"
 
-    group: "tract_registration""
+    group: "tract_registration"
     resources:
         mem_mb=40000,
         runtime=44,
@@ -221,7 +220,7 @@ rule assess_cluster_location_by_hemisphere:
     input: 
         data=rules.remove_cluster_outliers.output,
         atlas=config['atlases']['cluster_atlas'],
-        python=rules.install_python.output.venv,
+        python=ancient(rules.install_python.output.venv),
 
     output: 
         bids_output_dwi(
@@ -254,7 +253,7 @@ rule transform_clusters_to_subject_space:
         hemisphereAssignment=rules.assess_cluster_location_by_hemisphere.output,
         data=rules.remove_cluster_outliers.output,
         transform=rules.collect_registration_output.output.inv_matrix,
-        python=rules.install_python.output.venv,
+        python=ancient(rules.install_python.output.venv),
 
     output: 
         temp(directory(work+"/transformed_clusters/" + uid + "/"))
@@ -282,7 +281,7 @@ rule transform_clusters_to_subject_space:
 rule separate_clusters_by_hemisphere:
     input: 
         data=rules.transform_clusters_to_subject_space.output,
-        python=rules.install_python.output.venv,
+        python=ancient(rules.install_python.output.venv),
 
     output: 
         directory(bids_output_dwi(
@@ -309,7 +308,7 @@ rule assign_to_anatomical_tracts:
     input: 
         data=rules.separate_clusters_by_hemisphere.output,
         atlas=config["atlases"]["cluster_atlas"],
-        python=rules.install_python.output.venv,
+        python=ancient(rules.install_python.output.venv),
 
     output: 
         directory(bids_output_dwi(
