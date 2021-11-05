@@ -4,6 +4,7 @@ import re
 from snakebids import bids
 
 from lib.utils import xvfb_run
+from lib.pipenv import PipEnv
 
 
 localrules: 
@@ -28,24 +29,14 @@ localrules:
 #   total_mem_mb: 16,000
 #   cores: 32
 
-
-rule install_python:
-    output: 
-        venv=temp(directory(work+"/prepdwi_recon_venv")),
-        python=work+"/prepdwi_recon_venv/bin/python",
-        
-    envmodules:
-        "python/3.7"
-    params:
-        flags=config["pip-flags"],
-        packages="whitematteranalysis",
-        script=f"{work}/prepdwi_recon_venv/bin/python {work}/prepdwi_recon_venv/bin/"
-    shell: 
-        (
-            "virtualenv --no-download {output.venv} && "
-            "{output.python} -m pip install {params.flags} --upgrade pip && "
-            "{output.python} -m pip install {params.flags} {params.packages}"
-        )
+wma_env = PipEnv(
+    packages = [
+        'whitematteranalysis'
+    ],
+    flags = "--flag",
+    name = "wma",
+    root = Path("/tmp/")
+)
     
 
 rule convert_tracts_to_vtk:
@@ -80,7 +71,6 @@ rule tractography_registration:
     input: 
         data=rules.convert_tracts_to_vtk.output[0],
         atlas=config['atlases']['registration_atlas'],
-        python=ancient(rules.install_python.output.venv),
 
     output: 
         main=temp(directory(registration_dir)),
@@ -97,7 +87,7 @@ rule tractography_registration:
     resources:
         mem_mb=40000,
         runtime=44,
-        python=ancient(rules.install_python.params.script),
+        python=wma_env.script,
 
     params:
         mode="rigid_affine_fast",
@@ -153,7 +143,6 @@ rule tractography_spectral_clustering:
     input: 
         data=rules.collect_registration_output.output.data,
         atlas=config['atlases']['cluster_atlas'],
-        python=ancient(rules.install_python.output.venv),
     output: 
         directory(bids_output_dwi(
             space="ORG",
@@ -167,7 +156,7 @@ rule tractography_spectral_clustering:
     resources:
         mem_mb=250000,
         runtime=60,
-        python=rules.install_python.params.script,
+        python=wma_env.script,
     
     params:
         work_folder=work + "/tractography_clustering",
@@ -186,7 +175,6 @@ rule remove_cluster_outliers:
     input: 
         data=rules.tractography_spectral_clustering.output,
         atlas=config['atlases']['cluster_atlas'],
-        python=ancient(rules.install_python.output.venv),
     output: 
         directory(bids_output_dwi(
             space="ORG",
@@ -201,7 +189,7 @@ rule remove_cluster_outliers:
     resources:
         mem_mb=10000,
         runtime=4,
-        python=rules.install_python.params.script,
+        python=wma_env.script,
     params:
         work_folder=work + "/tractography_outlier_removal",
         results_subfolder=Path(rules.tractography_spectral_clustering.output[0]).stem
@@ -220,7 +208,6 @@ rule assess_cluster_location_by_hemisphere:
     input: 
         data=rules.remove_cluster_outliers.output,
         atlas=config['atlases']['cluster_atlas'],
-        python=ancient(rules.install_python.output.venv),
 
     output: 
         bids_output_dwi(
@@ -236,7 +223,7 @@ rule assess_cluster_location_by_hemisphere:
     resources:
         mem_mb=500,
         runtime=13,
-        python=rules.install_python.params.script,
+        python=wma_env.script,
 
     shell: 
         (
@@ -253,7 +240,6 @@ rule transform_clusters_to_subject_space:
         hemisphereAssignment=rules.assess_cluster_location_by_hemisphere.output,
         data=rules.remove_cluster_outliers.output,
         transform=rules.collect_registration_output.output.inv_matrix,
-        python=ancient(rules.install_python.output.venv),
 
     output: 
         temp(directory(work+"/transformed_clusters/" + uid + "/"))
@@ -268,7 +254,7 @@ rule transform_clusters_to_subject_space:
     resources:
         mem_mb=500,
         runtime=1,
-        python=rules.install_python.params.script,
+        python=wma_env.script,
 
     shell: 
         (
@@ -281,7 +267,6 @@ rule transform_clusters_to_subject_space:
 rule separate_clusters_by_hemisphere:
     input: 
         data=rules.transform_clusters_to_subject_space.output,
-        python=ancient(rules.install_python.output.venv),
 
     output: 
         directory(bids_output_dwi(
@@ -297,7 +282,7 @@ rule separate_clusters_by_hemisphere:
     resources:
         mem_mb=100,
         runtime=1,
-        python=rules.install_python.params.script,
+        python=wma_env.script,
 
     shell: 
         (
@@ -308,7 +293,6 @@ rule assign_to_anatomical_tracts:
     input: 
         data=rules.separate_clusters_by_hemisphere.output,
         atlas=config["atlases"]["cluster_atlas"],
-        python=ancient(rules.install_python.output.venv),
 
     output: 
         directory(bids_output_dwi(
@@ -324,7 +308,7 @@ rule assign_to_anatomical_tracts:
     resources:
         mem_mb=500,
         runtime=1,
-        python=rules.install_python.params.script,
+        python=wma_env.script,
 
     shell:
         (
