@@ -10,3 +10,4 @@ resources
 config/
 !config/config.yml
 results
+.python-version

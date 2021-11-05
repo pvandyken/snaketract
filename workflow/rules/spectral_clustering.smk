@@ -92,8 +92,8 @@ rule tractography_registration:
     params:
         mode="rigid_affine_fast",
     shell: 
-        (
-            "{resources.python}wm_register_to_atlas_new.py "
+        wma_env.script(
+            "wm_register_to_atlas_new.py "
             "-mode {params.mode} "
             "{input.data} {input.atlas} {output.main}"
         )
@@ -164,11 +164,13 @@ rule tractography_spectral_clustering:
     shell:
         xvfb_run(
             config,
-            "{resources.python}wm_cluster_from_atlas.py "
-            "-j {threads} "
-            "{input.data} {input.atlas} {params.work_folder} && "
+            wma_env.script(
+                "wm_cluster_from_atlas.py "
+                "-j {threads} "
+                "{input.data} {input.atlas} {params.work_folder} && "
 
-            "mv {params.work_folder}/{params.results_subfolder} {output}"
+                "mv {params.work_folder}/{params.results_subfolder} {output}"
+            )
         )
     
 
@@ -195,8 +197,8 @@ rule remove_cluster_outliers:
         work_folder=work + "/tractography_outlier_removal",
         results_subfolder=Path(rules.tractography_spectral_clustering.output[0]).stem
     shell: 
-        (
-            "{resources.python}wm_cluster_remove_outliers.py "
+        wma_env.script(
+            "wm_cluster_remove_outliers.py "
             "-j {threads} "
             "{input.data} {input.atlas} {params.work_folder} && "
 
@@ -227,8 +229,8 @@ rule assess_cluster_location_by_hemisphere:
         python=wma_env.script,
 
     shell: 
-        (
-            "{resources.python}wm_assess_cluster_location_by_hemisphere.py "
+        wma_env.script(
+            "wm_assess_cluster_location_by_hemisphere.py "
             "{input.data} -clusterLocationFile "
             "{input.atlas}/cluster_hemisphere_location.txt && "
 
@@ -260,9 +262,11 @@ rule transform_clusters_to_subject_space:
     shell: 
         xvfb_run(
             config,
-            f"{{resources.python}}wm_harden_transform.py "
-            "-i -t {input.transform} "
-            "{input.data} {output} $(which Slicer)"
+            wma_env.script(
+                "wm_harden_transform.py "
+                "-i -t {input.transform} "
+                "{input.data} {output} $(which Slicer)"
+            )
         )
 
 
@@ -287,8 +291,8 @@ rule separate_clusters_by_hemisphere:
         python=wma_env.script,
 
     shell: 
-        (
-            "{resources.python}wm_separate_clusters_by_hemisphere.py {input.data} {output}"
+        wma_env.script(
+            "wm_separate_clusters_by_hemisphere.py {input.data} {output}"
         )
     
 rule assign_to_anatomical_tracts:
@@ -313,7 +317,7 @@ rule assign_to_anatomical_tracts:
         python=wma_env.script,
 
     shell:
-        (
-            "{resources.python}wm_append_clusters_to_anatomical_tracts.py "
+        wma_env.script(
+            "wm_append_clusters_to_anatomical_tracts.py "
             "{input.data} {input.atlas} {output}"
         )

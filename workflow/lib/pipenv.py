@@ -6,25 +6,44 @@ class PipEnv:
         self,
         name: str,
         packages: List[str],
+        requirements: List[str],
         root: Path,
         flags: str,
         
     ):
-        self.venv = root/name/"venv"
-        self.python = self.venv/"bin"/"python"
-        self.flags = flags
-        self.packages = ' '.join(packages)
+        self._venv = root/name/"venv"
+        self._python = self._venv/"bin"/"python"
+        self._flags = flags
+        self._packages = ' '.join(packages)
+        self._requirements = '-r ' + ' -r '.join(requirements) if requirements else ""
+        
 
     @property
-    def script(self):
+    def get_venv(self):
+        install_prefix = f"{self._python} -m pip install {self._flags}"
+        install_cmd = " && ".join(
+            filter(None, [
+                f"{install_prefix} --upgrade pip"
+                f"{install_prefix} {self._packages}" if self._packages else "",
+                f"{install_prefix} {self._requirements}" if self._requirements else ""
+            ])
+        )
         return (
             "("
-                f"[[ -x {self.python} ]] || ( "
-                    f"virtualenv --no-download {self.venv} && "
-                    f"{self.python} -m pip install {self.flags} --upgrade pip && "
-                    f"{self.python} -m pip install {self.flags} {self.packages} "
+                f"[[ -x {self._python} ]] || ( "
+                    f"virtualenv --no-download {self._venv} && "
+                    f"{install_cmd}"
                 ")"
-            f") && {self.python} {self.venv}/bin/"
+            ")"
         )
+
+    def python(self, cmd: str):
+        return f"{self.get_venv} && {self._python}"
+
+    def script(self, cmd: str):
+        stripped = cmd.strip()
+        return f"{self.python(cmd)} {self._venv}/bin/{stripped}"
+
+        
 
 
