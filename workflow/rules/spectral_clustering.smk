@@ -35,7 +35,7 @@ wma_env = PipEnv(
     ],
     flags = config["pip-flags"],
     name = "wma",
-    root = Path(config["tmpdir"])
+    root = Path(work:)
 )
     
 
@@ -164,7 +164,7 @@ rule tractography_spectral_clustering:
     shell:
         xvfb_run(
             config,
-            f"{{resources.python}}wm_cluster_from_atlas.py "
+            "{resources.python}wm_cluster_from_atlas.py "
             "-j {threads} "
             "{input.data} {input.atlas} {params.work_folder} && "
 
