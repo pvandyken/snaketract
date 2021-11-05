@@ -1,5 +1,6 @@
 *__pycache__*
 .snakemake
+.snakebids
 benchmarks
 logs
 .vscode
@@ -8,3 +9,4 @@ resources
 
 config/
 !config/config.yml
+results
