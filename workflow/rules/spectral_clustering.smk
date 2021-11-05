@@ -35,7 +35,7 @@ wma_env = PipEnv(
     ],
     flags = config["pip-flags"],
     name = "wma",
-    root = Path(work:)
+    root = Path(work)
 )
     
 
