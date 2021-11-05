@@ -162,8 +162,9 @@ rule tractography_spectral_clustering:
         work_folder=work + "/tractography_clustering",
         results_subfolder=Path(rules.collect_registration_output.output.data).stem
     shell:
-        (
-            f"{xvfb_run(config)}  {{resources.python}}wm_cluster_from_atlas.py "
+        xvfb_run(
+            config,
+            f"{{resources.python}}wm_cluster_from_atlas.py "
             "-j {threads} "
             "{input.data} {input.atlas} {params.work_folder} && "
 
@@ -257,8 +258,9 @@ rule transform_clusters_to_subject_space:
         python=wma_env.script,
 
     shell: 
-        (
-            f"{xvfb_run(config)} {{resources.python}}wm_harden_transform.py "
+        xvfb_run(
+            config,
+            f"{{resources.python}}wm_harden_transform.py "
             "-i -t {input.transform} "
             "{input.data} {output} $(which Slicer)"
         )

@@ -1,4 +1,8 @@
-def xvfb_run(config):
+from typing import Dict
+
+
+def xvfb_run(config: Dict, cmd: str):
     if config.get('x11_srv', False):
-        return "xvfb-run -a"
-    return ""
+        escaped = cmd.replace("'", "'\"'\"'")
+        return f"echo '{escaped}' | x11-run -a bash"
+    return cmd
