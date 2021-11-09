@@ -7,7 +7,7 @@ from lib.utils import xvfb_run
 from lib.pipenv import PipEnv
 
 
-localrules: 
+localrules:
     install_python
 
 
@@ -37,17 +37,17 @@ wma_env = PipEnv(
     name = "wma",
     root = Path(work)
 )
-    
+
 
 rule convert_tracts_to_vtk:
-    input: 
+    input:
         rules.run_act.output
-    
-    output: 
+
+    output:
         temp(
             work+f"/tractography/{uid}.vtk"
         )
-    
+
     log: f"logs/convert_tracts_to_vtk/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/convert_tracts_to_vtk/{'.'.join(wildcards.values())}.tsv"
 
@@ -59,7 +59,7 @@ rule convert_tracts_to_vtk:
         runtime=30 # for 10M fibres
 
     shell: "tckconvert {input} {output}"
-    
+
 
 # Including {uid} at the end of registration_dir will lead to it appearing twice in the
 # path, but this is necessary because Snakemake wants every output to have the wildcards
@@ -68,11 +68,11 @@ registration_dir = work + f"/tractography_registration/{uid}"
 registration_files = registration_dir + f"/{uid}/output_tractography"
 
 rule tractography_registration:
-    input: 
+    input:
         data=rules.convert_tracts_to_vtk.output[0],
         atlas=config['atlases']['registration_atlas'],
 
-    output: 
+    output:
         main=temp(directory(registration_dir)),
         # These are produced implicitely, but we make them explicit for use in future
         # rules
@@ -87,11 +87,10 @@ rule tractography_registration:
     resources:
         mem_mb=40000,
         runtime=44,
-        python=wma_env.script,
 
     params:
         mode="rigid_affine_fast",
-    shell: 
+    shell:
         wma_env.script(
             "wm_register_to_atlas_new.py "
             "-mode {params.mode} "
@@ -120,7 +119,7 @@ rule collect_registration_output:
         xfm=bids_output_dwi(
             space="ORG",
             desc="tracts10M",
-            suffix="vtkTxform.xfm" 
+            suffix="vtkTxform.xfm"
         )
 
     log: f"logs/collect_registration_output/{'.'.join(wildcards.values())}.log"
@@ -131,19 +130,19 @@ rule collect_registration_output:
         mem_mb=100,
         runtime=1,
 
-    shell: 
+    shell:
         (
             "cp {input.data} {output.data} && "
             "cp {input.inv_matrix} {output.inv_matrix} && "
             "cp {input.xfm} {output.xfm}"
         )
-    
+
 
 rule tractography_spectral_clustering:
-    input: 
+    input:
         data=rules.collect_registration_output.output.data,
         atlas=config['atlases']['cluster_atlas'],
-    output: 
+    output:
         directory(bids_output_dwi(
             space="ORG",
             desc="clusters800"
@@ -156,8 +155,7 @@ rule tractography_spectral_clustering:
     resources:
         mem_mb=250000,
         runtime=60,
-        python=wma_env.script,
-    
+
     params:
         work_folder=work + "/tractography_clustering",
         results_subfolder=Path(rules.collect_registration_output.output.data).stem
@@ -172,13 +170,13 @@ rule tractography_spectral_clustering:
                 "mv {params.work_folder}/{params.results_subfolder} {output}"
             )
         )
-    
+
 
 rule remove_cluster_outliers:
-    input: 
+    input:
         data=rules.tractography_spectral_clustering.output,
         atlas=config['atlases']['cluster_atlas'],
-    output: 
+    output:
         directory(bids_output_dwi(
             space="ORG",
             desc="clusters800",
@@ -192,11 +190,10 @@ rule remove_cluster_outliers:
     resources:
         mem_mb=10000,
         runtime=4,
-        python=wma_env.script,
     params:
         work_folder=work + "/tractography_outlier_removal",
         results_subfolder=Path(rules.tractography_spectral_clustering.output[0]).stem
-    shell: 
+    shell:
         wma_env.script(
             "wm_cluster_remove_outliers.py "
             "-j {threads} "
@@ -205,14 +202,14 @@ rule remove_cluster_outliers:
             "mv "
             "{params.work_folder}/{params.results_subfolder}_outlier_removed {output}"
         )
-    
+
 
 rule assess_cluster_location_by_hemisphere:
-    input: 
+    input:
         data=rules.remove_cluster_outliers.output,
         atlas=config['atlases']['cluster_atlas'],
 
-    output: 
+    output:
         bids_output_dwi(
             space="ORG",
             desc="clusters800",
@@ -226,9 +223,8 @@ rule assess_cluster_location_by_hemisphere:
     resources:
         mem_mb=500,
         runtime=13,
-        python=wma_env.script,
 
-    shell: 
+    shell:
         wma_env.script(
             "wm_assess_cluster_location_by_hemisphere.py "
             "{input.data} -clusterLocationFile "
@@ -236,15 +232,15 @@ rule assess_cluster_location_by_hemisphere:
 
             "touch {output}"
         )
-    
-    
+
+
 rule transform_clusters_to_subject_space:
-    input: 
+    input:
         hemisphereAssignment=rules.assess_cluster_location_by_hemisphere.output,
         data=rules.remove_cluster_outliers.output,
         transform=rules.collect_registration_output.output.inv_matrix,
 
-    output: 
+    output:
         temp(directory(work+"/transformed_clusters/" + uid + "/"))
 
     log: f"logs/transform_clusters_to_subject_space/{'.'.join(wildcards.values())}.log"
@@ -257,9 +253,8 @@ rule transform_clusters_to_subject_space:
     resources:
         mem_mb=500,
         runtime=1,
-        python=wma_env.script,
 
-    shell: 
+    shell:
         xvfb_run(
             config,
             wma_env.script(
@@ -271,10 +266,10 @@ rule transform_clusters_to_subject_space:
 
 
 rule separate_clusters_by_hemisphere:
-    input: 
+    input:
         data=rules.transform_clusters_to_subject_space.output,
 
-    output: 
+    output:
         directory(bids_output_dwi(
             space="individual",
             desc="clusters800",
@@ -288,19 +283,18 @@ rule separate_clusters_by_hemisphere:
     resources:
         mem_mb=100,
         runtime=1,
-        python=wma_env.script,
 
-    shell: 
+    shell:
         wma_env.script(
             "wm_separate_clusters_by_hemisphere.py {input.data} {output}"
         )
-    
+
 rule assign_to_anatomical_tracts:
-    input: 
+    input:
         data=rules.separate_clusters_by_hemisphere.output,
         atlas=config["atlases"]["cluster_atlas"],
 
-    output: 
+    output:
         directory(bids_output_dwi(
             space="individual",
             desc="tracts",
@@ -314,7 +308,6 @@ rule assign_to_anatomical_tracts:
     resources:
         mem_mb=500,
         runtime=1,
-        python=wma_env.script,
 
     shell:
         wma_env.script(

@@ -6,6 +6,8 @@ import os, tempfile
 from functools import partial
 from snakebids import bids, generate_inputs
 import groups
+from lib.pipenv import PipEnv
+from pathlib import Path
 
 configfile: 'config/config.yml'
 
@@ -53,6 +55,17 @@ include: 'rules/spectral_clustering.smk'
 localrules: all, qc
 
 
+test_env = PipEnv(
+    packages = [
+        'colorama',
+        'numpy',
+        'black'
+    ],
+    flags = config["pip-flags"],
+    name = "wma",
+    root = Path(work)
+)
+
 rule all:
     input:
         expand(
@@ -60,6 +73,13 @@ rule all:
             **inputs['input_lists']['preproc_dwi']
         )
 
+rule make_pipenv:
+    output:
+        work + "/{i}.out"
+    shell: test_env.script("black --help > {output}")
+
+rule pipenv:
+    input: expand(rules.make_pipenv.output, i=range(10))
 
 
 
