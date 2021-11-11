@@ -12,7 +12,7 @@ class PipEnv:
         name: str,
         packages: List[str],
         root: Path,
-        flags: str,
+        flags: str = "",
         requirements: List[str] = [],
 
     ):
@@ -20,7 +20,13 @@ class PipEnv:
         self._venv_lock = root/name/".venv_lock"
         self._venv = root/name/"venv"
         self._python = self._venv/"bin"/"python"
-        self._flags = flags
+        if not flags:
+            self._flags = ""
+        else:
+            self._flags = flags
+            if not isinstance(flags, str):
+                raise TypeError("flags attribute in PipEnv must be a string")
+
         self._packages = ' '.join(packages)
         self._requirements = '-r ' + ' -r '.join(requirements) if requirements else ""
 
@@ -36,29 +42,15 @@ class PipEnv:
             ])
         )
         return (
-            "("
-                f"[[ -d {self._dir} ]] || mkdir {self._dir}"
-            ") && ("
-                f"[[ -x {self._python} ]] || ("
-                    f"[[ ! -e {self._venv_lock} ]] && ( "
-                        "("
-                            f"touch {self._venv_lock} &&"
-                            f"virtualenv --no-download {self._venv} && "
-                            f"{install_cmd} && "
-                            f"rm {self._venv_lock}"
-                        ") || ("
-                            f"echo '{PYTHON_VENV_CREATE_ERR}' 1>&2 && exit 1"
-                        ") "
-                    ") || ("
-                        f"echo 'while [[ -e {self._venv_lock} ]]; do sleep 5; done' | "
-                            "timeout 15m bash || "
-                        "("
-                            f"echo '{TIMED_OUT_ERR}' 1>&2 && "
-                            "exit 1"
-                        ")"
-                    ")"
-                ")"
-            ") && "
+            f"mkdir -p {self._dir} && ("
+                f" echo '[[ -x {self._python} ]] ||"
+                "("
+                    f"virtualenv --no-download {self._venv} && "
+                    f"{install_cmd}"
+                ") || ("
+                    f"echo '\"'\"'{PYTHON_VENV_CREATE_ERR}'\"'\"' 1>&2 && exit 1"
+                f")' | flock {self._dir} bash "
+            ") &&"
         )
 
     def python(self, cmd: str):
