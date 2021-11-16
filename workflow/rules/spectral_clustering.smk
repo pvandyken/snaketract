@@ -12,10 +12,10 @@ localrules:
 
 
 # group tract_registration:
-#   num_components: 32
+#   num_components: 16
 #   total_runtime: 3:00
 #   total_mem_mb: 480,000
-#   cores: 32
+#   cores: 16
 
 # group spectral_clustering:
 #   num_components: 24
@@ -85,7 +85,7 @@ rule tractography_registration:
 
     group: "tract_registration"
     resources:
-        mem_mb=40000,
+        mem_mb=60000,
         runtime=44,
 
     params:
