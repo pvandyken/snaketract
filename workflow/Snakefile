@@ -29,7 +29,7 @@ input_paths = inputs['input_path']
 ###
 work = os.environ.get(config.get('tmpdir', ""), tempfile.gettempdir())  + '/prepdwi-recon'
 output = config['output_dir'] + "/prepdwi_recon"
-qc = output + "/qc"
+qc = Path(output)/"qc"
 
 # Unique ID for easy naming in temporary files
 uid = '.'.join(wildcards.values())
@@ -47,6 +47,7 @@ include: 'rules/anatomical_segmentation.smk'
 include: "rules/response_function.smk"
 include: 'rules/reconstruction/reconstruction.smk'
 include: 'rules/spectral_clustering.smk'
+include: 'rules/spectral_clustering/qc.smk'
 #include: "rules/qc.smk"
 
 ###
