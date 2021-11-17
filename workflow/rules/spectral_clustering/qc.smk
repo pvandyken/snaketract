@@ -54,7 +54,7 @@ rule qc_tractography_clusters_initial:
         xvfb_run(
             config,
             wma_env.script(
-                "wma_quality_control_tractography.py {input} {output}"
+                "wm_quality_control_tractography.py {input} {output}"
             )
         )
 
@@ -76,7 +76,7 @@ rule qc_tractography_clusters_outliers_removed:
         xvfb_run(
             config,
             wma_env.script(
-                "wma_quality_control_tractography.py {input} {output}"
+                "wm_quality_control_tractography.py {input} {output}"
             )
         )
 
@@ -98,7 +98,7 @@ rule qc_tractography_anatomical_tracts:
         xvfb_run(
             config,
             wma_env.script(
-                "wma_quality_control_tractography {input} {output}"
+                "wm_quality_control_tractography {input} {output}"
             )
         )
 
@@ -112,7 +112,7 @@ def qc_spectral_clustering_collector(*_):
             rules.qc_tractography_unregistered_overlap.output,
             rules.qc_tractography_clusters_initial.output,
             rules.qc_tractography_clusters_outliers_removed.output,
-            rules.qc_tractography_anatomical_tracts.output,
+            #rules.qc_tractography_anatomical_tracts.output,
         ]))
     ]
     return ret
