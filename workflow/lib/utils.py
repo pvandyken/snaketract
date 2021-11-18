@@ -61,8 +61,19 @@ class Tar:
         output_pre, output_posts = [*zip(
             *(
                 (
+                    f"( [[ ! -e {dest_stowed} ]] || ("
+                        "echo "
+                            "\"Found stashed tar file: "
+                            f"'{dest_stowed}' "
+                            "while atempting to generate the output: "
+                            f"'{dest}' "
+                            "Please rename this file, remove it, or manually change "
+                            "its extension back to .tar.gz. If this file should not "
+                            "have been processed, you may with to run `snakemake "
+                            "--touch` to enforce correct timestamps for files\" && "
+                        "false"
+                    ")) && "
                     f"{_rm_if_exists(dest)} && "
-                    f"{_rm_if_exists(dest_stowed)} && "
                     f"{_rm_if_exists(tmpdir, True)} && "
                     f"mkdir -p {tmpdir} && "
                     f"ln -s {tmpdir} {dest}",
@@ -70,7 +81,7 @@ class Tar:
                     f"{self._save_tar(dest, tmpdir)}"
 
                 ) for dest in outputs if (
-                    (dest_stowed := f"{dest}.__unpacked") and
+                    (dest_stowed := self._stowed(dest)) and
                     (tmpdir := f"{self.root}/{self._hash_name(dest)}")
                 )
             )
