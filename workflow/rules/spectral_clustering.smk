@@ -3,7 +3,7 @@ from functools import partial
 import re
 from snakebids import bids
 
-from lib.utils import XvfbRun, Tar
+from lib.utils import XvfbRun, Tar, display
 from lib.pipenv import PipEnv
 
 
@@ -147,10 +147,10 @@ rule tractography_spectral_clustering:
         data=rules.collect_registration_output.output.data,
         atlas=config['atlases']['cluster_atlas'],
     output:
-        directory(bids_output_dwi(
+        bids_output_dwi(
             space="ORG",
-            desc="clusters800"
-        ))
+            desc="clusters800.tar.gz"
+        )
     log: f"logs/tractography_spectral_clustering/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/tractography_spectral_clustering/{'.'.join(wildcards.values())}.tsv"
 
@@ -165,14 +165,16 @@ rule tractography_spectral_clustering:
         results_subfolder=Path(rules.collect_registration_output.output.data).stem
     shell:
         xvfb_run(
-        wma_env.script(
-            "wm_cluster_from_atlas.py "
-            "-j {threads} "
-            "{input.data} {input.atlas} {params.work_folder} && "
+        tar(
+            outputs=["{output}"],
+            cmd=wma_env.script(
+                "wm_cluster_from_atlas.py "
+                "-j {threads} "
+                "{input.data} {input.atlas} {params.work_folder} && "
 
-            "mv {params.work_folder}/{params.results_subfolder} {output}"
-        )
-        )
+                "mv {params.work_folder}/{params.results_subfolder} {output}"
+            )
+        ))
 
 
 rule remove_cluster_outliers:
@@ -198,6 +200,7 @@ rule remove_cluster_outliers:
         results_subfolder=Path(rules.tractography_spectral_clustering.output[0]).stem
     shell:
         tar(
+            inputs = ["{input.data}"],
             outputs = ["{output}"],
             cmd = wma_env.script(
                 "wm_cluster_remove_outliers.py "
@@ -296,7 +299,7 @@ rule separate_clusters_by_hemisphere:
 
     shell:
         tar(
-            output=["{output}"],
+            outputs=["{output}"],
             cmd=wma_env.script(
                 "wm_separate_clusters_by_hemisphere.py {input} {output}"
             )
@@ -311,7 +314,7 @@ rule assign_to_anatomical_tracts:
         bids_output_dwi(
             space="individual",
             desc="tracts",
-            suffix="73"
+            suffix="73.tar.gz"
         )
 
     log: f"logs/assign_to_anatomical_tracts/{'.'.join(wildcards.values())}.log"
@@ -326,8 +329,8 @@ rule assign_to_anatomical_tracts:
         tar(
             inputs=["{input.data}"],
             outputs=["{output}"],
-            wma_env.script(
+            cmd=wma_env.script(display(
                 "wm_append_clusters_to_anatomical_tracts.py "
                 "{input.data} {input.atlas} {output}"
-            )
+            ))
         )

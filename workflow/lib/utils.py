@@ -83,7 +83,7 @@ class Tar:
                     f"{self._save_tar(tar, tmpdir)}",
                     self._close_tar(tar)
 
-                ) for tar in outputs if (
+                ) for tar in modify if (
                     (tmpdir := f"{self.root}/{self._hash_name(tar)}")
                 )
             )
@@ -142,3 +142,8 @@ class Tar:
 
     def _stowed(self, tar: str):
         return tar + ".__unpacked"
+
+def display(cmd: str):
+    return (
+        f"$(: \033[1A\033[K\n\033[K\n\033[0;32m Command:\033[K\n\033[K\033[1;36m){cmd}$(: \n\033[1;30m)"
+    )
