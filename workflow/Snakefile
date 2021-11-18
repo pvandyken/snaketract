@@ -56,7 +56,6 @@ include: 'rules/spectral_clustering/qc.smk'
 ###
 localrules: all, qc
 
-tar = Tar("tmp/prepdwi_tar_files")
 
 test_env = PipEnv(
     packages = [
