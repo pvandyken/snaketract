@@ -34,6 +34,4 @@ for core, subject in zip(args.cores, args.subjects):
         f"participant_label={subject}",
         "tmpdir=\"SLURM_TMPDIR\"",
         "x11_srv=true",
-        "--configfile",
-        "config/hcp1200.yml",
     ])

@@ -1,38 +1,35 @@
-pip-flags: "--no-index -f ~/projects/ctb-akhanf/knavynde/wheels/"
-
+pip-flags: --no-index -f ~/projects/ctb-akhanf/knavynde/wheels/
 atlases:
   registration_atlas: resources/ORG-Atlases-1.1.1/ORG-RegAtlas-100HCP/registration_atlas.vtk
   cluster_atlas: resources/ORG-Atlases-1.1.1/ORG-800FC-100HCP
-
 tractography:
   maxlength: 250
   cutoff: 0.06
   num_tracts: 10000000
-
 pybids_inputs:
   preproc_dwi:
     filters:
       suffix: dwi
       extension: .nii.gz
       datatype: dwi
-      desc: "preproc"
+      desc: preproc
     wildcards:
-      - subject
+    - subject
   brainmask:
     filters:
       suffix: brainmask
-      extension: '.nii.gz'
+      extension: .nii.gz
       datatype: dwi
     wildcards:
-      - subject
+    - subject
   bvec:
     filters:
       suffix: dwi
       extension: bvec
       datatype: dwi
-      desc: "preproc"
+      desc: preproc
     wildcards:
-      - subject
+    - subject
   bval:
     filters:
       suffix: dwi
@@ -40,7 +37,7 @@ pybids_inputs:
       datatype: dwi
       desc: preproc
     wildcards:
-      - subject
+    - subject
   t1:
     filters:
       suffix: T1w
@@ -48,55 +45,57 @@ pybids_inputs:
       datatype: anat
       desc: preproc
     wildcards:
-      - subject
-
+    - subject
 targets_by_analysis_level:
   participant:
-    - ''  # if '', then the first rule of the Snakefile will be run
-
-analysis_levels: &analysis_levels
- - participant
-
+  - ''
+analysis_levels: &id001
+- participant
 parse_args:
   bids_dir:
-    help: The directory with the input dataset formatted according
-          to the BIDS standard.
-    nargs: "?"
-    default: '../hcp1200'
-
-
+    help: The directory with the input dataset formatted according to the BIDS standard.
+    nargs: '?'
+    default: ../hcp1200
   output_dir:
-    help: The directory where the output files
-          should be stored. If you are running group level analysis
-          this folder should be prepopulated with the results of the
-          participant level analysis.
-    nargs: "?"
-    default: '../hcp1200/derivatives'
-
+    help: The directory where the output files should be stored. If you are running
+      group level analysis this folder should be prepopulated with the results of
+      the participant level analysis.
+    nargs: '?'
+    default: ../hcp1200/derivatives
   analysis_level:
     help: Level of the analysis that will be performed.
-    choices: *analysis_levels
-    nargs: "?"
-    default: "participant"
-
-  --participant_label:
-    help: The label(s) of the participant(s) that should be analyzed. The label
-          corresponds to sub-<participant_label> from the BIDS spec
-          (so it does not include "sub-"). If this parameter is not
-          provided all subjects should be analyzed. Multiple
-          participants can be specified with a space separated list.
-    nargs: '+'
-
-  --exclude_participant_label:
-    help: The label(s) of the participant(s) that should be excluded. The label
-          corresponds to sub-<participant_label> from the BIDS spec
-          (so it does not include "sub-"). If this parameter is not
-          provided all subjects should be analyzed. Multiple
-          participants can be specified with a space separated list.
-    nargs: '+'
-
-  --preprocessed_data:
-    help: 'Path(s) to a derivatives dataset, for folder(s) that contains multiple derivatives datasets (default: %(default)s) '
-    default: '../hcp1200/derivatives/hcp_preproc'
-    type: Path
+    choices: *id001
     nargs: '?'
+    default: participant
+  --participant_label:
+    help: The label(s) of the participant(s) that should be analyzed. The label corresponds
+      to sub-<participant_label> from the BIDS spec (so it does not include "sub-").
+      If this parameter is not provided all subjects should be analyzed. Multiple
+      participants can be specified with a space separated list.
+    nargs: +
+  --exclude_participant_label:
+    help: The label(s) of the participant(s) that should be excluded. The label corresponds
+      to sub-<participant_label> from the BIDS spec (so it does not include "sub-").
+      If this parameter is not provided all subjects should be analyzed. Multiple
+      participants can be specified with a space separated list.
+    nargs: +
+  --preprocessed_data:
+    help: 'Path(s) to a derivatives dataset, for folder(s) that contains multiple
+      derivatives datasets (default: %(default)s) '
+    default: ../hcp1200/derivatives/hcp_preproc
+    type: !!python/name:pathlib.Path ''
+    nargs: '?'
+snakemake_dir: /scratch/knavynde/prepdwi-recon
+snakefile: /scratch/knavynde/prepdwi-recon/workflow/Snakefile
+workflow_mode: true
+force_conversion: false
+retrofit: false
+help_snakemake: null
+bids_dir: /scratch/knavynde/hcp1200
+output_dir: /scratch/knavynde/hcp1200/derivatives/prepdwi_recon/results
+analysis_level: participant
+participant_label: null
+exclude_participant_label: null
+preprocessed_data: /scratch/knavynde/hcp1200/derivatives/hcp_preproc
+snakemake_args:
+- -n
