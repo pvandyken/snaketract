@@ -1,6 +1,6 @@
 from pathlib import Path
 from lib.pipenv import PipEnv
-from lib.utils import xvfb_run
+from lib.utils import XvfbRun
 import itertools as it
 
 wma_env = PipEnv(
@@ -11,6 +11,8 @@ wma_env = PipEnv(
     name = "wma",
     root = Path(work)
 )
+
+xvfb_run = XvfbRun(config.get('x11_srv', False))
 
 wma_qc = qc/"whitematteranalysis"
 
@@ -31,7 +33,6 @@ rule qc_tractography_unregistered_overlap:
         runtime=30,
     shell:
         xvfb_run(
-            config,
             wma_env.script(
                 "wm_quality_control_tract_overlap.py "
                 "{input.atlas} {input.data} {output}"
@@ -52,7 +53,6 @@ rule qc_tractography_clusters_initial:
         runtime=30,
     shell:
         xvfb_run(
-            config,
             wma_env.script(
                 "wm_quality_control_tractography.py {input} {output}"
             )
@@ -74,7 +74,6 @@ rule qc_tractography_clusters_outliers_removed:
     params:
     shell:
         xvfb_run(
-            config,
             wma_env.script(
                 "wm_quality_control_tractography.py {input} {output}"
             )
@@ -96,7 +95,6 @@ rule qc_tractography_anatomical_tracts:
     params:
     shell:
         xvfb_run(
-            config,
             wma_env.script(
                 "wm_quality_control_tractography {input} {output}"
             )
