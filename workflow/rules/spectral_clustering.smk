@@ -197,7 +197,7 @@ rule remove_cluster_outliers:
         runtime=4,
     params:
         work_folder=work + "/tractography_outlier_removal",
-        results_subfolder=Path(rules.tractography_spectral_clustering.output[0]).stem
+        results_subfolder=Path(rules.tractography_spectral_clustering.output[0]).name
     shell:
         tar(
             inputs = ["{input.data}"],
