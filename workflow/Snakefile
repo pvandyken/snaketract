@@ -96,6 +96,17 @@ rule read_gitignore:
             cmd="cat {input}/.gitignore && touch {output}"
         )
 
+rule add_gitignore:
+    input:
+        rules.make_pipenv.output
+    output:
+        "gitignore.added"
+    shell:
+        tar(
+            modify=["{input}"],
+            cmd="echo .pyenv >> {input}/.gitignore && touch {output}"
+        )
+
 rule read_pipenv:
     input:
         pip=rules.make_pipenv.output,
@@ -107,7 +118,7 @@ rule read_pipenv:
         )
 
 rule pipenv:
-    input: rules.make_pipenv.output
+    input: rules.add_gitignore.output
 
 
 

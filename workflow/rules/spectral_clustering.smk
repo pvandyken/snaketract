@@ -235,7 +235,7 @@ rule assess_cluster_location_by_hemisphere:
 
     shell:
         tar(
-            modify=["{input}"],
+            modify=["{input.data}"],
             cmd = wma_env.script(
                 "wm_assess_cluster_location_by_hemisphere.py "
                 "{input.data} -clusterLocationFile "
