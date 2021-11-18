@@ -56,7 +56,7 @@ class Tar:
 
                 ) for src in inputs
             )
-        )] if inputs else ( tuple[str](), tuple[str]() )
+        )] if inputs else ( tuple(), tuple() )
 
         output_pre, output_posts = [*zip(
             *(
@@ -74,7 +74,7 @@ class Tar:
                     (tmpdir := f"{self.root}/{self._hash_name(dest)}")
                 )
             )
-        )] if outputs else (tuple[str](), tuple[str]())
+        )] if outputs else (tuple(), tuple())
 
         modify_pre, modify_success, modify_fail = [*zip(
             *(
@@ -87,7 +87,7 @@ class Tar:
                     (tmpdir := f"{self.root}/{self._hash_name(tar)}")
                 )
             )
-        )] if modify else (tuple[str](), tuple[str](), tuple[str]())
+        )] if modify else (tuple(), tuple(), tuple())
 
         pre_script = " && ".join((
             *input_pre,
