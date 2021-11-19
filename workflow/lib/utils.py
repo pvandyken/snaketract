@@ -124,7 +124,7 @@ class Tar:
         return f"{pre_script} && {cmd} {post_success} {post_fail}"
 
     def _hash_name(self, name: str):
-        return f"$(pwd '{_quote_escape(name)}' | md5sum | awk '{{{{print $1}}}}')"
+        return f"$(realpath '{_quote_escape(name)}' | md5sum | awk '{{{{print $1}}}}')"
 
     def _open_tar(self, tar: str, mount: str):
         stowed = self._stowed(tar)
@@ -140,7 +140,7 @@ class Tar:
                     f"tar -xzf {tar} -C {mount} && "
                     f"{_silent_mv(tar, stowed)} "
                 "))"
-            ")) &&"
+            ")) && "
             f"ln -s {mount} {tar} && {_cp_timestamp(stowed, tar)}"
         )
 
