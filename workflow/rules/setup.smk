@@ -5,7 +5,7 @@ import functools as ft
 from snakebids import bids, generate_inputs
 
 from lib.pipenv import PipEnv
-from lib.utils import Tar
+from lib.utils import Tar, XvfbRun
 from pathlib import Path
 
 
