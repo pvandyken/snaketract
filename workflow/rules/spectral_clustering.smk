@@ -208,7 +208,7 @@ rule remove_cluster_outliers:
                 "{input.data} {input.atlas} {params.work_folder} && "
 
                 "mv "
-                "{params.work_folder}/{params.results_subfolder}_outlier_removed {output}"
+                "{params.work_folder}/{params.results_subfolder}_outlier_removed/* {output}/"
             )
         )
 

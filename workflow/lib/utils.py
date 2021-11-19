@@ -134,9 +134,11 @@ class Tar:
             ") || ("
                 f"mkdir -p {mount} && "
                 f"([[ -e {stowed} ]] && ("
+                    f"echo \"Found stowed tarfile: '{stowed}''. Extracting...\" && "
                     f"tar -xzf {stowed} -C {mount} && "
                     f"{_rm_if_exists(tar)}"
                 ") || ("
+                    f"echo \"Extracting and stowing tarfile: '{tar}'\" && "
                     f"tar -xzf {tar} -C {mount} && "
                     f"{_silent_mv(tar, stowed)} "
                 "))"
@@ -149,7 +151,12 @@ class Tar:
 
     def _save_tar(self, tar: str, mount: str):
         stowed = self._stowed(tar)
-        return f"rm {tar} && tar -czf {tar} -C {mount} . && {_rm_if_exists(stowed)}"
+        return (
+            f"rm {tar} && "
+            f"echo \"Packing tar file: {tar}\" && "
+            f"tar -czf {tar} -C {mount} . && "
+            f"{_rm_if_exists(stowed)}"
+        )
 
     def _stowed(self, tar: str):
         return tar + ".__unpacked"
