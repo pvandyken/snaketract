@@ -8,7 +8,7 @@ rule convert_t1_to_mrtrix_format:
             root=output,
             suffix="t1w.mif"
         ))
-    group: groups.segmentation
+    group: "segmentation"
     log: "logs/convert_t1_to_mrtrix_format/{subject}.log"
     envmodules:
         "mrtrix/3.0.1"
@@ -23,7 +23,7 @@ rule segment_anatomical_image:
         bids_output_anat(
             suffix="5tt.mif",
         )
-    group: groups.segmentation
+    group: "segmentation"
     resources:
         mem_mb=2500,
         runtime=20
@@ -43,7 +43,7 @@ rule create_seed_boundary:
         bids_output_anat(
             suffix="gmwmInterface.mif",
         )
-    group: groups.segmentation
+    group: "segmentation"
     log: "logs/create_seed_boundary/{subject}.log"
     envmodules:
         "mrtrix/3.0.1"

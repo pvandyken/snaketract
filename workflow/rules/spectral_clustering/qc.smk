@@ -109,7 +109,7 @@ def qc_spectral_clustering_collector(*_):
             rules.qc_tractography_unregistered_overlap.output,
             rules.qc_tractography_clusters_initial.output,
             rules.qc_tractography_clusters_outliers_removed.output,
-            #rules.qc_tractography_anatomical_tracts.output,
+            rules.qc_tractography_anatomical_tracts.output,
         ]))
     ]
     return ret
