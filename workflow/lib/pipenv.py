@@ -1,5 +1,6 @@
 from typing import List
 from pathlib import Path
+import hashlib
 
 
 PYTHON_VENV_CREATE_ERR = "[ERROR] (jobid={jobid}): Error creating python environment"
@@ -15,8 +16,9 @@ class PipEnv:
         requirements: List[str] = [],
 
     ):
-        name = str(hash(str(sorted(packages)) + str(sorted(requirements))))
-        self._dir = root/'__snakemake_venvs__'/name
+        encoded = (str(sorted(packages)) + str(sorted(requirements))).encode('utf-8')
+        m = hashlib.md5(encoded).hexdigest()
+        self._dir = root/'__snakemake_venvs__'/m
         self._venv_lock = self._dir/".venv_lock"
         self.venv = self._dir/"venv"
         self.bin = self.venv/"bin"
