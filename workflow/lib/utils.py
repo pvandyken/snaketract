@@ -30,12 +30,18 @@ def _cp_timestamp(src: str, dest: str):
         f"touch -hd \"$timestamp\" {dest}"
     )
 
+
+def hash_name(name: str):
+        return f"$(realpath '{_quote_escape(name)}' | md5sum | awk '{{{{print $1}}}}')"
+
+
 def _rm_if_exists(path: str, recursive=False):
     if recursive:
         flag = "-rf"
     else:
         flag = ""
     return f"( [[ ! -e {path} ]] || rm {flag} {path} )"
+
 
 class Tar:
     def __init__(self, root: str):
@@ -51,12 +57,12 @@ class Tar:
         input_pre, input_posts = [*zip(
             *(
                 (
-                    self._open_tar(src, f"{self.root}/{self._hash_name(src)}"),
+                    self._open_tar(src, f"{self.root}/{hash_name(src)}"),
                     self._close_tar(src)
 
                 ) for src in inputs
             )
-        )] if inputs else ( tuple(), tuple() )
+        )] if inputs else ( [], [] )
 
         output_pre, output_posts = [*zip(
             *(
@@ -82,10 +88,10 @@ class Tar:
 
                 ) for dest in outputs if (
                     (dest_stowed := self._stowed(dest)) and
-                    (tmpdir := f"{self.root}/{self._hash_name(dest)}")
+                    (tmpdir := f"{self.root}/{hash_name(dest)}")
                 )
             )
-        )] if outputs else (tuple(), tuple())
+        )] if outputs else ([], [])
 
         modify_pre, modify_success, modify_fail = [*zip(
             *(
@@ -95,10 +101,10 @@ class Tar:
                     self._close_tar(tar)
 
                 ) for tar in modify if (
-                    (tmpdir := f"{self.root}/{self._hash_name(tar)}")
+                    (tmpdir := f"{self.root}/{hash_name(tar)}")
                 )
             )
-        )] if modify else (tuple(), tuple(), tuple())
+        )] if modify else ([], [], [])
 
         pre_script = " && ".join((
             *input_pre,
@@ -123,8 +129,7 @@ class Tar:
 
         return f"{pre_script} && {cmd} {post_success} {post_fail}"
 
-    def _hash_name(self, name: str):
-        return f"$(realpath '{_quote_escape(name)}' | md5sum | awk '{{{{print $1}}}}')"
+
 
     def _open_tar(self, tar: str, mount: str):
         stowed = self._stowed(tar)

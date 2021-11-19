@@ -8,7 +8,6 @@ wma_env = PipEnv(
         'whitematteranalysis'
     ],
     flags = config["pip-flags"],
-    name = "wma",
     root = Path(work)
 )
 

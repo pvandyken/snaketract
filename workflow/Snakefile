@@ -64,7 +64,6 @@ test_env = PipEnv(
         'black'
     ],
     flags = config["pip-flags"],
-    name = "wma",
     root = Path(work)
 )
 

@@ -34,7 +34,6 @@ wma_env = PipEnv(
         'whitematteranalysis'
     ],
     flags = config["pip-flags"],
-    name = "wma",
     root = Path(work)
 )
 
@@ -270,8 +269,9 @@ rule transform_clusters_to_subject_space:
         xvfb_run(
         tar(
             inputs=["{input.data}"],
-            cmd=wma_env.script(
-                "wm_harden_transform.py "
+            cmd=wma_env.make_venv(
+                f"export PATH={wma_env.bin}:$PATH && "
+                f"{wma_env.bin}/wm_harden_transform.py "
                 "-i -t {input.transform} "
                 "{input.data} {output} $(which Slicer)"
             )
