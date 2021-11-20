@@ -7,7 +7,7 @@ include: 'rules/setup.smk'
 include: 'rules/anatomical_segmentation.smk'
 include: "rules/response_function.smk"
 include: 'rules/reconstruction/reconstruction.smk'
-include: 'rules/spectral_clustering.smk'
+include: 'rules/spectral_clustering/spectral_clustering.smk'
 include: 'rules/spectral_clustering/qc.smk'
 include: 'rules/tests.smk'
 #include: "rules/qc.smk"

@@ -54,7 +54,7 @@ rule qc_tractography_clusters_initial:
         xvfb_run(
         tar(
             inputs=["{input}"],
-            wma_env.script(
+            cmd=wma_env.script(
                 "wm_quality_control_tractography.py {input} {output}"
             )
         ))
@@ -101,7 +101,7 @@ rule qc_tractography_anatomical_tracts:
         tar(
             inputs=["{input}"],
             cmd=wma_env.script(
-                "wm_quality_control_tractography {input} {output}"
+                "wm_quality_control_tractography.py {input} {output}"
             )
         ))
 
