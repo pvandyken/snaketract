@@ -53,9 +53,11 @@ if __name__ == "__main__":
     assert isinstance(args.output, list) and len(args.output) == 1, (
         "Incorrect number of outputs provided"
     )
-    output = args.output[0]
+    output = Path(args.output[0])
+    if not output.exists():
+        output.mkdir()
 
     for path in paths:
         wma.io.transform_polydata_from_disk_using_transform_object(
-            path, transform, output
+            str(path), transform, str(output/path.name)
         )
