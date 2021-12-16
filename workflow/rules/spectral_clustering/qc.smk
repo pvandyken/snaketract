@@ -52,9 +52,8 @@ rule qc_tractography_clusters_initial:
         runtime=30,
     shell:
         xvfb_run(
-        tar(
-            inputs=["{input}"],
-            cmd=wma_env.script(
+        tar.using(inputs=["{input}"])(
+            wma_env.script(
                 "wm_quality_control_tractography.py {input} {output}"
             )
         ))
@@ -75,9 +74,8 @@ rule qc_tractography_clusters_outliers_removed:
     params:
     shell:
         xvfb_run(
-        tar(
-            inputs=["{input}"],
-            cmd=wma_env.script(
+        tar.using(inputs=["{input}"])(
+            wma_env.script(
                 "wm_quality_control_tractography.py {input} {output}"
             )
         ))
@@ -98,17 +96,16 @@ rule qc_tractography_anatomical_tracts:
     params:
     shell:
         xvfb_run(
-        tar(
-            inputs=["{input}"],
-            cmd=wma_env.script(
+        tar.using(inputs=["{input}"])(
+            wma_env.script(
                 "wm_quality_control_tractography.py {input} {output}"
             )
         ))
 
 
 def qc_spectral_clustering_collector(*_):
-    ret = [
-        *it.chain(*(expand(
+    ret = [*it.chain(
+        *(expand(
             r,
             **inputs['input_lists']['preproc_dwi']
         ) for r in [
@@ -116,8 +113,8 @@ def qc_spectral_clustering_collector(*_):
             rules.qc_tractography_clusters_initial.output,
             rules.qc_tractography_clusters_outliers_removed.output,
             rules.qc_tractography_anatomical_tracts.output,
-        ]))
-    ]
+        ])
+    )]
     return ret
 
 rule qc_spectral_clustering:

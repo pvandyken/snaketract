@@ -1,5 +1,6 @@
 from typing import Dict, List
 from uuid import uuid4
+from collections import UserList
 
 
 class XvfbRun:

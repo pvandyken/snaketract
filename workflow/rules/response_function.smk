@@ -12,12 +12,12 @@ rule convert_dwi_to_mrtrix_format:
         temp(bids_output_dwi(
             suffix="dwi.mif"
         ))
-    
+
     envmodules:
         "mrtrix/3.0.1"
     log: f"logs/convert_dwi_to_mrtrix_format/{'.'.join(wildcards.values())}.log"
     group: "response_generation"
-    shell: 
+    shell:
         'mrconvert {input.dwi} {output} -fslgrad {input.bvec} {input.bval} 2> {log}'
 
 

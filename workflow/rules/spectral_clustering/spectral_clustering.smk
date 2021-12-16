@@ -152,9 +152,8 @@ rule tractography_spectral_clustering:
         results_subfolder=Path(rules.collect_registration_output.output.data).stem
     shell:
         xvfb_run(
-        tar(
-            outputs=["{output}"],
-            cmd=wma_env.script(
+        tar.using(outputs=["{output}"])(
+            wma_env.script(
                 "wm_cluster_from_atlas.py "
                 "-j {threads} "
                 "{input.data} {input.atlas} {params.work_folder} && "
@@ -186,10 +185,8 @@ rule remove_cluster_outliers:
         work_folder=work + "/tractography_outlier_removal",
         results_subfolder=Path(rules.tractography_spectral_clustering.output[0]).name
     shell:
-        tar(
-            inputs = ["{input.data}"],
-            outputs = ["{output}"],
-            cmd = wma_env.script(
+        tar.using(inputs = ["{input.data}"], outputs = ["{output}"])(
+            wma_env.script(
                 "wm_cluster_remove_outliers.py "
                 "-j {threads} "
                 "{input.data} {input.atlas} {params.work_folder} && "
@@ -221,9 +218,8 @@ rule assess_cluster_location_by_hemisphere:
         runtime=13,
 
     shell:
-        tar(
-            modify=["{input.data}"],
-            cmd = wma_env.script(
+        tar.using(modify=["{input.data}"])(
+            wma_env.script(
                 "wm_assess_cluster_location_by_hemisphere.py "
                 "{input.data} -clusterLocationFile "
                 "{input.atlas}/cluster_hemisphere_location.txt && "
@@ -255,9 +251,8 @@ rule transform_clusters_to_subject_space:
 
     shell:
         xvfb_run(
-        tar(
-            inputs=["{input.data}"],
-            cmd=wma_env.make_venv(
+        tar.using(inputs=["{input.data}"])(
+            wma_env.make_venv(
                 f"export PATH={wma_env.bin}:$PATH && "
                 f"{wma_env.bin}/wm_harden_transform.py "
                 "-i -t {input.transform} "
@@ -286,9 +281,8 @@ rule separate_clusters_by_hemisphere:
         runtime=1,
 
     shell:
-        tar(
-            outputs=["{output}"],
-            cmd=wma_env.script(
+        tar.using(outputs=["{output}"])(
+            wma_env.script(
                 "wm_separate_clusters_by_hemisphere.py {input} {output}"
             )
         )
@@ -314,10 +308,8 @@ rule assign_to_anatomical_tracts:
         runtime=1,
 
     shell:
-        tar(
-            inputs=["{input.data}"],
-            outputs=["{output}"],
-            cmd=wma_env.script(display(
+        tar.using(inputs=["{input.data}"], outputs=["{output}"])(
+            wma_env.script(display(
                 "wm_append_clusters_to_anatomical_tracts.py "
                 "{input.data} {input.atlas} {output}"
             ))
