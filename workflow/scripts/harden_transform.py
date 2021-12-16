@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Union, Any
 from pathlib import Path
+from glob import glob
 
 import whitematteranalysis as wma
 from snakeboost import snakemake_args
@@ -45,6 +46,7 @@ if __name__ == "__main__":
     )
 
     data = args.input["data"]
+    paths = data.glob("*.vtp")
     transform_path = args.input["transform"]
     transform = open_transform(transform_path, inverse=True)
 
@@ -53,4 +55,7 @@ if __name__ == "__main__":
     )
     output = args.output[0]
 
-    wma.io.transform_polydata_from_disk_using_transform_object(data, transform, output)
+    for path in paths:
+        wma.io.transform_polydata_from_disk_using_transform_object(
+            path, transform, output
+        )
