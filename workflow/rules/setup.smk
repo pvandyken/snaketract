@@ -4,10 +4,8 @@ import functools as ft
 
 from snakebids import bids, generate_inputs
 
-from lib.pipenv import PipEnv
-from lib.utils import XvfbRun
 from pathlib import Path
-from snakeboost import Tar, Pyscript, ScriptDict
+from snakeboost import Tar, Pyscript, ScriptDict, XvfbRun, PipEnv, pipe
 
 
 ###
@@ -42,7 +40,7 @@ bids_output_anat = ft.partial(bids, root=output, space="individual", datatype="a
 ###
 # Utility functions
 ###
-tar = Tar("tmp/prepdwi_tarfolders")
+tar = Tar(work)
 xvfb_run = XvfbRun(config.get('x11_srv', False))
 
 ###
@@ -51,7 +49,8 @@ xvfb_run = XvfbRun(config.get('x11_srv', False))
 wma_env = PipEnv(
     packages = [
         'whitematteranalysis',
-        'vtk==8.1.2'
+        'vtk==8.1.2',
+        '/scratch/knavynde/snakeboost'
     ],
     flags = config["pip-flags"],
     root = Path(work)
