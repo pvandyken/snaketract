@@ -42,7 +42,7 @@ rule test_pipenv_creation:
     shell:
         test_env.script("black -h")
 
-test_script = Pyscript(test_env)
+test_script = Pyscript(config["snakemake_dir"], test_env)
 rule test_pyscript:
     output:
         **test_script.output(
