@@ -41,7 +41,7 @@ def open_transform(filename: Union[Path, str], inverse: bool = False):
 
 if __name__ == "__main__":
     args = snakemake_args()
-    assert isinstance(args.input, dict) and len(args.output) == 2, (
+    assert isinstance(args.input, dict) and len(args.input) == 2, (
         "Incorrect number of inputs provided"
     )
 

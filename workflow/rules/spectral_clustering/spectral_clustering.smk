@@ -1,14 +1,4 @@
 from pathlib import Path
-from functools import partial
-import re
-from snakebids import bids
-
-from lib.utils import XvfbRun, Tar, display
-from lib.pipenv import PipEnv
-
-
-localrules:
-    install_python
 
 
 # group tract_registration:
@@ -151,8 +141,9 @@ rule tractography_spectral_clustering:
         work_folder=work + "/tractography_clustering",
         results_subfolder=Path(rules.collect_registration_output.output.data).stem
     shell:
-        xvfb_run(
-        tar.using(outputs=["{output}"])(
+        pipe(
+            xvfb_run,
+            tar.using(outputs=["{output}"]),
             wma_env.script(
                 "wm_cluster_from_atlas.py "
                 "-j {threads} "
@@ -160,7 +151,7 @@ rule tractography_spectral_clustering:
 
                 "mv {params.work_folder}/{params.results_subfolder} {output}"
             )
-        ))
+        )
 
 
 rule remove_cluster_outliers:
@@ -185,7 +176,8 @@ rule remove_cluster_outliers:
         work_folder=work + "/tractography_outlier_removal",
         results_subfolder=Path(rules.tractography_spectral_clustering.output[0]).name
     shell:
-        tar.using(inputs = ["{input.data}"], outputs = ["{output}"])(
+        pipe(
+            tar.using(inputs = ["{input.data}"], outputs = ["{output}"]),
             wma_env.script(
                 "wm_cluster_remove_outliers.py "
                 "-j {threads} "
@@ -218,7 +210,8 @@ rule assess_cluster_location_by_hemisphere:
         runtime=13,
 
     shell:
-        tar.using(modify=["{input.data}"])(
+        pipe(
+            tar.using(modify=["{input.data}"]),
             wma_env.script(
                 "wm_assess_cluster_location_by_hemisphere.py "
                 "{input.data} -clusterLocationFile "
@@ -227,7 +220,6 @@ rule assess_cluster_location_by_hemisphere:
                 "touch {output}"
             )
         )
-
 
 rule transform_clusters_to_subject_space:
     input:
@@ -250,15 +242,14 @@ rule transform_clusters_to_subject_space:
         runtime=1,
 
     shell:
-        xvfb_run(
-        tar.using(inputs=["{input.data}"])(
-            wma_env.make_venv(
-                f"export PATH={wma_env.bin}:$PATH && "
-                f"{wma_env.bin}/wm_harden_transform.py "
-                "-i -t {input.transform} "
-                "{input.data} {output} $(which Slicer)"
+        pipe(
+            xvfb_run,
+            tar.using(inputs=["{input.data}"]),
+            Pyscript(config['snakemake_dir'], wma_env)(
+                input=["data", "transform"],
+                script="workflow/scripts/harden_transform.py"
             )
-        ))
+        )
 
 
 rule separate_clusters_by_hemisphere:
@@ -281,11 +272,13 @@ rule separate_clusters_by_hemisphere:
         runtime=1,
 
     shell:
-        tar.using(outputs=["{output}"])(
+        pipe(
+            tar.using(outputs=["{output}"]),
             wma_env.script(
                 "wm_separate_clusters_by_hemisphere.py {input} {output}"
             )
         )
+
 
 rule assign_to_anatomical_tracts:
     input:
@@ -308,9 +301,10 @@ rule assign_to_anatomical_tracts:
         runtime=1,
 
     shell:
-        tar.using(inputs=["{input.data}"], outputs=["{output}"])(
-            wma_env.script(display(
+        pipe(
+            tar.using(inputs=["{input.data}"], outputs=["{output}"]),
+            wma_env.script(
                 "wm_append_clusters_to_anatomical_tracts.py "
                 "{input.data} {input.atlas} {output}"
-            ))
+            )
         )
