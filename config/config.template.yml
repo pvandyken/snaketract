@@ -17,7 +17,7 @@ pybids_inputs:
     - subject
   brainmask:
     filters:
-      suffix: brainmask
+      suffix: mask
       extension: .nii.gz
       datatype: dwi
     wildcards:
@@ -43,6 +43,7 @@ pybids_inputs:
       suffix: T1w
       extension: .nii.gz
       datatype: anat
+      space: orig
       desc: preproc
     wildcards:
     - subject

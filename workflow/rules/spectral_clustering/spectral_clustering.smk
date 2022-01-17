@@ -21,13 +21,9 @@ from pathlib import Path
 
 
 rule convert_tracts_to_vtk:
-    input:
-        rules.run_act.output
+    input: rules.run_act.output
 
-    output:
-        temp(
-            work+f"/tractography/{uid}.vtk"
-        )
+    output: temp(work/f"tractography/{uid}.vtk")
 
     log: f"logs/convert_tracts_to_vtk/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/convert_tracts_to_vtk/{'.'.join(wildcards.values())}.tsv"
@@ -39,14 +35,14 @@ rule convert_tracts_to_vtk:
         mem_mb=500,
         runtime=30 # for 10M fibres
 
-    shell: "tckconvert {input} {output}"
+    shell: datalad("tckconvert {input} {output}")
 
 
 # Including {uid} at the end of registration_dir will lead to it appearing twice in the
 # path, but this is necessary because Snakemake wants every output to have the wildcards
 # at least once. (Main, below, needs wildcards)
-registration_dir = work + f"/tractography_registration/{uid}"
-registration_files = registration_dir + f"/{uid}/output_tractography"
+registration_dir = work/"tractography_registration"/uid
+registration_files = registration_dir/uid/"output_tractography"
 
 rule tractography_registration:
     input:
@@ -54,15 +50,26 @@ rule tractography_registration:
         atlas=config['atlases']['registration_atlas'],
 
     output:
-        main=temp(directory(registration_dir)),
-        # These are produced implicitely, but we make them explicit for use in future
-        # rules
-        data=f"{registration_files}/{uid}_reg.vtk",
-        inv_matrix=f"{registration_files}/itk_txform_{uid}.tfm",
-        xfm=f"{registration_files}/vtk_txform_{uid}.xfm"
+        data=bids_output_dwi(
+            space="ORG",
+            suffix="tractography.vtk"
+        ),
+        transform_tfm=bids_output_dwi(
+            _from="T1w",
+            to="ORG",
+            mode="points",
+            suffix="xfm.tfm"
+        ),
+        transform_xfm=bids_output_dwi(
+            _from="T1w",
+            to="ORG",
+            mode="points",
+            suffix="xfm.xfm"
+        )
 
     log: f"logs/tractography_registration/{'.'.join(wildcards.values())}.log"
-    benchmark: f"benchmarks/tractography_registration/{'.'.join(wildcards.values())}.tsv"
+    benchmark:
+        f"benchmarks/tractography_registration/{'.'.join(wildcards.values())}.tsv"
 
     group: "tract_registration"
     resources:
@@ -71,62 +78,37 @@ rule tractography_registration:
 
     params:
         mode="rigid_affine_fast",
+
+        # Temporary files
+        main=registration_dir,
+        transformed_data=f"{registration_files}/{uid}_reg.vtk",
+        transform_tfm=f"{registration_files}/itk_txform_{uid}.tfm",
+        transform_xfm=f"{registration_files}/vtk_txform_{uid}.xfm"
     shell:
-        wma_env.script(
-            "wm_register_to_atlas_new.py "
-            "-mode {params.mode} "
-            "{input.data} {input.atlas} {output.main}"
-        )
+        boost(
+            datalad.msg("Register tractography to ORG atlas"),
+            wma_env.script,
+            (
+                "wm_register_to_atlas_new.py "
+                "-mode {params.mode} "
+                "{input.data} {input.atlas} {params.main} && "
 
-
-rule collect_registration_output:
-    input:
-        main=rules.tractography_registration.output.main,
-        data=rules.tractography_registration.output.data,
-        inv_matrix=rules.tractography_registration.output.inv_matrix,
-        xfm=rules.tractography_registration.output.xfm
-
-    output:
-        data=bids_output_dwi(
-            space="ORG",
-            desc="tracts",
-            suffix="10M.vtk"
-        ),
-        inv_matrix=bids_output_dwi(
-            space="ORG",
-            desc="tracts10M",
-            suffix="inverseTransform.tfm"
-        ),
-        xfm=bids_output_dwi(
-            space="ORG",
-            desc="tracts10M",
-            suffix="vtkTxform.xfm"
-        )
-
-    log: f"logs/collect_registration_output/{'.'.join(wildcards.values())}.log"
-    benchmark: f"benchmarks/collect_registration_output/{'.'.join(wildcards.values())}.tsv"
-
-    group: "tract_registration"
-    resources:
-        mem_mb=100,
-        runtime=1,
-
-    shell:
-        (
-            "cp {input.data} {output.data} && "
-            "cp {input.inv_matrix} {output.inv_matrix} && "
-            "cp {input.xfm} {output.xfm}"
+                "cp {params.transformed_data} {output.data} && "
+                "cp {params.transform_tfm} {output.transform_tfm} && "
+                "cp {params.transform_xfm} {output.transform_xfm}"
+            )
         )
 
 
 rule tractography_spectral_clustering:
     input:
-        data=rules.collect_registration_output.output.data,
+        data=rules.tractography_registration.output.data,
         atlas=config['atlases']['cluster_atlas'],
     output:
         bids_output_dwi(
             space="ORG",
-            desc="clusters800.tar.gz"
+            atlas="ORG",
+            suffix="clusters.tar.gz"
         )
     log: f"logs/tractography_spectral_clustering/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/tractography_spectral_clustering/{'.'.join(wildcards.values())}.tsv"
@@ -138,10 +120,11 @@ rule tractography_spectral_clustering:
         runtime=60,
 
     params:
-        work_folder=work + "/tractography_clustering",
-        results_subfolder=Path(rules.collect_registration_output.output.data).stem
+        work_folder=work/"tractography_clustering",
+        results_subfolder=Path(rules.tractography_registration.output.data).stem
     shell:
-        pipe(
+        boost(
+            datalad.msg("Cluster tracts with spectral clustering"),
             xvfb_run,
             tar.using(outputs=["{output}"]),
             wma_env.script(
@@ -161,8 +144,9 @@ rule remove_cluster_outliers:
     output:
         bids_output_dwi(
             space="ORG",
-            desc="clusters800",
-            suffix="outliersRemoved.tar.gz"
+            atlas="ORG",
+            desc="outliersRemoved",
+            suffix="clusters.tar.gz"
         )
     log: f"logs/remove_cluster_outliers/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/remove_cluster_outliers/{'.'.join(wildcards.values())}.tsv"
@@ -173,10 +157,11 @@ rule remove_cluster_outliers:
         mem_mb=10000,
         runtime=4,
     params:
-        work_folder=work + "/tractography_outlier_removal",
+        work_folder=work/"tractography_outlier_removal",
         results_subfolder=Path(rules.tractography_spectral_clustering.output[0]).name
     shell:
-        pipe(
+        boost(
+            datalad.msg("Remove outliers from clusters"),
             tar.using(inputs = ["{input.data}"], outputs = ["{output}"]),
             wma_env.script(
                 "wm_cluster_remove_outliers.py "
@@ -196,9 +181,8 @@ rule assess_cluster_location_by_hemisphere:
 
     output:
         bids_output_dwi(
-            space="ORG",
-            desc="clusters800",
-            suffix="assignedHemispheres.complete"
+            desc="assignedClustersToHemispheres",
+            suffix="task.complete"
         )
 
     log: f"logs/assess_cluster_location_by_hemisphere/{'.'.join(wildcards.values())}.log"
@@ -210,7 +194,8 @@ rule assess_cluster_location_by_hemisphere:
         runtime=13,
 
     shell:
-        pipe(
+        boost(
+            datalad.msg("Assign cluster locations (left v right hem)"),
             tar.using(modify=["{input.data}"]),
             wma_env.script(
                 "wm_assess_cluster_location_by_hemisphere.py "
@@ -225,16 +210,15 @@ rule transform_clusters_to_subject_space:
     input:
         hemisphereAssignment=rules.assess_cluster_location_by_hemisphere.output,
         data=rules.remove_cluster_outliers.output,
-        transform=rules.collect_registration_output.output.inv_matrix,
+        transform=rules.tractography_registration.output.transform_xfm,
 
     output:
-        temp(directory(work+"/transformed_clusters/" + uid + "/"))
+        temp(directory(work/"transformed_clusters"/uid))
 
     log: f"logs/transform_clusters_to_subject_space/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/transform_clusters_to_subject_space/{'.'.join(wildcards.values())}.tsv"
 
-    container: "docker://slicer/slicer-base"
-    envmodules: "slicer/4.11.20210226"
+    envmodules: 'python/3.7'
 
     group: "cluster_postprocess"
     resources:
@@ -242,12 +226,13 @@ rule transform_clusters_to_subject_space:
         runtime=1,
 
     shell:
-        pipe(
+        boost(
+            datalad.msg("Convert clusters back to subject T1w space"),
             xvfb_run,
             tar.using(inputs=["{input.data}"]),
-            Pyscript(config['snakemake_dir'], wma_env)(
+            Pyscript(workflow.basedir, wma_env)(
                 input=["data", "transform"],
-                script="workflow/scripts/harden_transform.py"
+                script="scripts/harden_transform.py"
             )
         )
 
@@ -258,9 +243,9 @@ rule separate_clusters_by_hemisphere:
 
     output:
         bids_output_dwi(
-            space="individual",
-            desc="clusters800",
-            suffix="sorted.tar.gz"
+            atlas="ORG",
+            desc="sorted",
+            suffix="clusters.tar.gz"
         )
 
     log: f"logs/separate_clusters_by_cluster/{'.'.join(wildcards.values())}.log"
@@ -272,7 +257,8 @@ rule separate_clusters_by_hemisphere:
         runtime=1,
 
     shell:
-        pipe(
+        boost(
+            datalad.msg("Seperate clusters into folders based on location"),
             tar.using(outputs=["{output}"]),
             wma_env.script(
                 "wm_separate_clusters_by_hemisphere.py {input} {output}"
@@ -287,9 +273,9 @@ rule assign_to_anatomical_tracts:
 
     output:
         bids_output_dwi(
-            space="individual",
+            atlas="ORG",
             desc="tracts",
-            suffix="73.tar.gz"
+            suffix="clusters.tar.gz"
         )
 
     log: f"logs/assign_to_anatomical_tracts/{'.'.join(wildcards.values())}.log"
@@ -301,7 +287,8 @@ rule assign_to_anatomical_tracts:
         runtime=1,
 
     shell:
-        pipe(
+        boost(
+            datalad.msg("Assign clusters to one of 73 anatomical tracts"),
             tar.using(inputs=["{input.data}"], outputs=["{output}"]),
             wma_env.script(
                 "wm_append_clusters_to_anatomical_tracts.py "

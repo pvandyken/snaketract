@@ -5,8 +5,7 @@ import functools as ft
 from snakebids import bids, generate_inputs
 
 from pathlib import Path
-from snakeboost import Tar, Pyscript, ScriptDict, XvfbRun, PipEnv, pipe
-
+from snakeboost import Tar, Pyscript, ScriptDict, XvfbRun, PipEnv, Boost, Datalad
 
 ###
 # Input Globals
@@ -15,16 +14,19 @@ inputs = generate_inputs(
     bids_dir=config['bids_dir'],
     pybids_inputs=config['pybids_inputs'],
     derivatives=config['preprocessed_data'],
-    participant_label=config.get("participant_label", None)
+    participant_label=config.get("participant_label", None),
+    use_bids_inputs=True
 )
 
-wildcards = inputs['input_wildcards']['preproc_dwi']
-input_paths = inputs['input_path']
+wildcards = inputs.input_wildcards['preproc_dwi']
 
 ###
 # Output Globals
 ###
-work = os.environ.get(config.get('tmpdir', ""), tempfile.gettempdir())  + '/prepdwi-recon'
+work = Path(
+    os.environ.get(config.get('tmpdir', ""), tempfile.mkdtemp(prefix="sn-tmp."))
+)/'prepdwi-recon'
+
 output = config['output_dir'] + "/prepdwi_recon"
 qc = Path(output)/"qc"
 
@@ -34,14 +36,16 @@ uid = '.'.join(wildcards.values())
 ###
 # bids Partials
 ###
-bids_output_dwi = ft.partial(bids, root=output, space="individual", datatype="dwi", **wildcards)
-bids_output_anat = ft.partial(bids, root=output, space="individual", datatype="anat", **wildcards)
+bids_output_dwi = ft.partial(bids, root=output, space="T1w", datatype="dwi", **wildcards)
+bids_output_anat = ft.partial(bids, root=output, space="orig", datatype="anat", **wildcards)
 
 ###
 # Utility functions
 ###
 tar = Tar(work)
 xvfb_run = XvfbRun(config.get('x11_srv', False))
+boost = Boost(work)
+datalad = Datalad(output)
 
 ###
 # Pipenvs
@@ -53,7 +57,7 @@ wma_env = PipEnv(
         '/scratch/knavynde/snakeboost'
     ],
     flags = config["pip-flags"],
-    root = Path(work)
+    root = work
 )
 
 test_env = PipEnv(
@@ -63,5 +67,5 @@ test_env = PipEnv(
         'black',
         '../snakeboost/'
     ],
-    root = Path(work)
+    root = work
 )

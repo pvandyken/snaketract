@@ -2,18 +2,17 @@ from snakebids import bids
 
 rule convert_t1_to_mrtrix_format:
     input:
-        input_paths['t1']
+        inputs.input_path['t1']
     output:
-        temp(bids_output_anat(
-            root=output,
-            suffix="t1w.mif"
-        ))
+        temp(work/"anatomical_segmentation"/uid/"t1.mif")
     group: "segmentation"
     log: "logs/convert_t1_to_mrtrix_format/{subject}.log"
     envmodules:
         "mrtrix/3.0.1"
     shell:
-        'mrconvert {input} {output} 2> {log}'
+        datalad(
+            'mrconvert {input} {output} 2> {log}'
+        )
 
 
 rule segment_anatomical_image:
@@ -34,7 +33,10 @@ rule segment_anatomical_image:
         "gcc/9.3.0",
         "fsl/6.0.4"
     shell:
-        '5ttgen fsl {input} {output} -premasked -scratch {resources.tmpdir} 2> {log}'
+        datalad.msg("Segment into 5 tissue types with fsl")(
+            '5ttgen fsl {input} {output} -premasked -scratch {resources.tmpdir} '
+            '2> {log}'
+        )
 
 rule create_seed_boundary:
     input:
@@ -48,4 +50,6 @@ rule create_seed_boundary:
     envmodules:
         "mrtrix/3.0.1"
     shell:
-        '5tt2gmwmi {input} {output} 2> {log}'
+        datalad.msg("Compute boundary between GM/WM for tractography")(
+            '5tt2gmwmi {input} {output} 2> {log}'
+        )

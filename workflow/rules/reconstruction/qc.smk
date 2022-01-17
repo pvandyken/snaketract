@@ -2,7 +2,7 @@ rule qc_generate_tractography_images:
     input: 
         expand(
             rules.run_act.output,
-            **inputs['input_lists']['preproc_dwi']
+            **inputs.input_lists['preproc_dwi']
         )
     output: 
         output_qc / "tractography"

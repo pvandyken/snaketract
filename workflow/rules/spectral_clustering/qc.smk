@@ -3,21 +3,12 @@ from lib.pipenv import PipEnv
 from lib.utils import XvfbRun
 import itertools as it
 
-wma_env = PipEnv(
-    packages = [
-        'whitematteranalysis'
-    ],
-    flags = config["pip-flags"],
-    root = Path(work)
-)
-
-xvfb_run = XvfbRun(config.get('x11_srv', False))
 
 wma_qc = qc/"whitematteranalysis"
 
 rule qc_tractography_unregistered_overlap:
     input:
-        data=rules.collect_registration_output.output.data,
+        data=rules.tractography_registration.output.data,
         atlas=config['atlases']['registration_atlas'],
 
     output:
@@ -104,10 +95,10 @@ rule qc_tractography_anatomical_tracts:
 
 
 def qc_spectral_clustering_collector(*_):
-    ret = [*it.chain(
+    return [*it.chain(
         *(expand(
             r,
-            **inputs['input_lists']['preproc_dwi']
+            **inputs.input_lists['preproc_dwi']
         ) for r in [
             rules.qc_tractography_unregistered_overlap.output,
             rules.qc_tractography_clusters_initial.output,
@@ -115,7 +106,6 @@ def qc_spectral_clustering_collector(*_):
             rules.qc_tractography_anatomical_tracts.output,
         ])
     )]
-    return ret
 
 rule qc_spectral_clustering:
     input: qc_spectral_clustering_collector

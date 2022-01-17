@@ -2,9 +2,9 @@ from snakebids import bids
 
 rule create_qc_reference_image:
     input:
-        dwi=input_paths['preproc_dwi'],
-        bvec=input_paths['bvec'],
-        bval=input_paths['bval']
+        dwi=inputs.input_path['preproc_dwi'],
+        bvec=inputs.input_path['bvec'],
+        bval=inputs.input_path['bval']
     output:
         bids(root=qc,
             datatype='dwi',
@@ -82,7 +82,7 @@ rule generate_odf_qc_view_script:
 
 rule create_tractography_png:
     input:
-        dwi=input_paths['preproc_dwi'],
+        dwi=inputs.input_path['preproc_dwi'],
         tracts=rules.run_act.output
     output:
         directory(bids(

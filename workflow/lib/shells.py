@@ -11,15 +11,19 @@ class FodAlgorithm:
         sub = wildcards['subject']
         bval = self.bval.format(subject=sub)
         if is_multi_shelled(bval):
-            algorithm = 'fodMs3t'
+            algorithm = 'ms3t'
         else:
-            algorithm = 'fodSs3t'
-        return bids(root=self.root,
-                datatype='dwi',
-                space="individual",
-                desc=algorithm,
-                suffix=f"{self.tissue}.mif",
-                **wildcards)
+            algorithm = 'ss3t'
+        return bids(
+            root=self.root,
+            datatype='dwi',
+            model="CSD",
+            space="T1w",
+            desc=algorithm,
+            label=self.tissue,
+            suffix="fod.mif",
+            **wildcards
+        )
 
 def is_multi_shelled(bval_file: str):
     with open(bval_file) as bval_s:
@@ -30,7 +34,6 @@ def is_multi_shelled(bval_file: str):
 
         return len(ranks) > 2
 
-        
+
 def _shell_rank(bval):
     return round(int(bval) / 500) * 500
-    

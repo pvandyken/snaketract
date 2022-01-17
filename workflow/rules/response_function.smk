@@ -4,36 +4,37 @@ from lib.shells import FodAlgorithm
 
 rule convert_dwi_to_mrtrix_format:
     input:
-        dwi=input_paths['preproc_dwi'],
-        bvec=input_paths['bvec'],
-        bval=input_paths['bval']
+        dwi=inputs.input_path['preproc_dwi'],
+        bvec=inputs.input_path['bvec'],
+        bval=inputs.input_path['bval']
 
     output:
-        temp(bids_output_dwi(
-            suffix="dwi.mif"
-        ))
+        temp(work/"response-function"/uid/"dwi.mif")
 
     envmodules:
         "mrtrix/3.0.1"
     log: f"logs/convert_dwi_to_mrtrix_format/{'.'.join(wildcards.values())}.log"
     group: "response_generation"
     shell:
-        'mrconvert {input.dwi} {output} -fslgrad {input.bvec} {input.bval} 2> {log}'
+        datalad(
+            'mrconvert {input.dwi} {output} -fslgrad {input.bvec} {input.bval} 2> {log}'
+        )
+
 
 
 rule convert_mask_to_mrtrix_format:
     input:
-        input_paths['brainmask']
+        inputs.input_path['brainmask']
     output:
-        temp(bids_output_dwi(
-            suffix="brainmask.mif"
-        ))
+        temp(work/"response-function"/uid/"mask.mif")
     envmodules:
         "mrtrix/3.0.1"
     log: "logs/convert_mask_to_mrtrix_format/{subject}.log"
     group: "response_generation"
     shell:
-        'mrconvert {input} {output} 2> {log}'
+        datalad(
+            'mrconvert {input} {output} 2> {log}'
+        )
 
 
 rule generate_response_function:
@@ -42,20 +43,24 @@ rule generate_response_function:
         mask=rules.convert_mask_to_mrtrix_format.output
     output:
         wm=bids_output_dwi(
-            desc="fod",
-            suffix='wm.txt'
+            model="CSD",
+            label="wm",
+            suffix='fod.txt'
         ),
         gm=bids_output_dwi(
-            desc="fod",
-            suffix='gm.txt'
+            model="CSD",
+            label="gm",
+            suffix='fod.txt'
         ),
         csf=bids_output_dwi(
-            desc="fod",
-            suffix='csf.txt'
+            model="CSD",
+            label="csf",
+            suffix='fod.txt'
         ),
         voxels=bids_output_dwi(
-            desc="fod",
-            suffix='voxels.mif'
+            model="CSD",
+            desc="voxels",
+            suffix='fod.mif'
         )
     group: "response_generation"
     log: "logs/generate_response_function/{subject}.log"
@@ -64,8 +69,11 @@ rule generate_response_function:
     envmodules:
         "mrtrix/3.0.1"
     shell:
-        'dwi2response dhollander {input.dwi} {output.wm} {output.gm} {output.csf} '
-        '-voxels {output.voxels} -mask {input.mask} -scratch {resources.tmpdir} 2> {log}'
+        datalad.msg("Estimate WM, GM, CSF response functions")(
+            'dwi2response dhollander {input.dwi} {output.wm} {output.gm} {output.csf} '
+            '-voxels {output.voxels} -mask {input.mask} -scratch {resources.tmpdir} '
+            '2> {log}'
+        )
 
 
 rule compute_ss3t_fiber_orientation_densities:
@@ -77,16 +85,22 @@ rule compute_ss3t_fiber_orientation_densities:
         mask=rules.convert_mask_to_mrtrix_format.output
     output:
         wm=bids_output_dwi(
-            desc="fodSs3t",
-            suffix='wm.mif'
+            model="CSD",
+            desc="ss3t",
+            label="wm",
+            suffix='fod.mif'
         ),
         gm=bids_output_dwi(
-            desc="fodSs3t",
-            suffix='gm.mif'
+            model="CSD",
+            desc="ss3t",
+            label="gm",
+            suffix='fod.mif'
         ),
         csf=bids_output_dwi(
-            desc="fodSs3t",
-            suffix='csf.mif'
+            model="CSD",
+            desc="ss3t",
+            label="csf",
+            suffix='fod.mif'
         )
     group: "response_generation"
     threads: 32
@@ -99,9 +113,12 @@ rule compute_ss3t_fiber_orientation_densities:
     benchmark:
         'benchmarks/compute_fiber_orientation_densities/{subject}.tsv'
     shell:
-        'ss3t_csd_beta1 {input.dwi} '
-        '{input.wm} {output.wm} {input.gm} {output.gm} {input.csf} {output.csf} '
-        '-mask {input.mask} -nthreads {threads} -scratch {resources.tmpdir}'
+        datalad.msg("Compute fod using ss3t algorithm")(
+            'ss3t_csd_beta1 {input.dwi} '
+            '{input.wm} {output.wm} {input.gm} {output.gm} {input.csf} {output.csf} '
+            '-mask {input.mask} -nthreads {threads} -scratch {resources.tmpdir}'
+        )
+
 
 
 rule compute_ms3t_fiber_orientation_densities:
@@ -113,16 +130,22 @@ rule compute_ms3t_fiber_orientation_densities:
         mask=rules.convert_mask_to_mrtrix_format.output
     output:
         wm=bids_output_dwi(
-            desc="fodMs3t",
-            suffix='wm.mif'
+            model="CSD",
+            desc="ms3t",
+            label="wm",
+            suffix='fod.mif'
         ),
         gm=bids_output_dwi(
-            desc="fodMs3t",
-            suffix='gm.mif'
+            model="CSD",
+            desc="ms3t",
+            label="gm",
+            suffix='fod.mif'
         ),
         csf=bids_output_dwi(
-            desc="fodMs3t",
-            suffix='csf.mif'
+            model="CSD",
+            desc="ms3t",
+            label="csf",
+            suffix='fod.mif'
         )
     group: "response_generation"
     threads: 32
@@ -133,41 +156,49 @@ rule compute_ms3t_fiber_orientation_densities:
         "mrtrix/3.0.1"
     log: "logs/compute_fiber_orientation_densities/{subject}.log"
     shell:
-        'dwi2fod msmt_csd {input.dwi} '
-        '{input.wm} {output.wm} {input.gm} {output.gm} {input.csf} {output.csf} '
-        '-mask {input.mask} -nthreads {threads} 2> {log}'
+        datalad.msg("Compute fod using ss3t algorithm")(
+            'dwi2fod msmt_csd {input.dwi} '
+            '{input.wm} {output.wm} {input.gm} {output.gm} {input.csf} {output.csf} '
+            '-mask {input.mask} -nthreads {threads} 2> {log}'
+        )
 
 
 rule normalize_fiber_orientation_densities:
     input:
         wm=FodAlgorithm(
             root=output,
-            bval=input_paths['bval'],
+            bval=inputs.input_path['bval'],
             tissue='wm'
         ),
         gm=FodAlgorithm(
             root=output,
-            bval=input_paths['bval'],
+            bval=inputs.input_path['bval'],
             tissue='gm'
         ),
         csf=FodAlgorithm(
             root=output,
-            bval=input_paths['bval'],
+            bval=inputs.input_path['bval'],
             tissue='csf'
         ),
         mask=rules.convert_mask_to_mrtrix_format.output
     output:
         wm=bids_output_dwi(
-            desc='fodNorm',
-            suffix='wm.mif'
+            model="CSD",
+            desc="norm",
+            label="wm",
+            suffix='fod.mif'
         ),
         gm=bids_output_dwi(
-            desc='fodNorm',
-            suffix='gm.mif'
+            model="CSD",
+            desc="norm",
+            label="gm",
+            suffix='fod.mif'
         ),
         csf=bids_output_dwi(
-            desc='fodNorm',
-            suffix='csf.mif'
+            model="CSD",
+            desc="norm",
+            label="csf",
+            suffix='fod.mif'
         )
     group: "response_generation"
     resources:
@@ -176,5 +207,8 @@ rule normalize_fiber_orientation_densities:
         "mrtrix/3.0.1"
     log: "logs/normalize_fiber_orientation_densities/{subject}.log"
     shell:
-        'mtnormalise {input.wm} {output.wm} {input.gm} {output.gm} {input.csf} {output.csf} '
-        '-mask {input.mask} 2> {log}'
+        datalad.msg("Normalize fod functions")(
+            'mtnormalise '
+            '{input.wm} {output.wm} {input.gm} {output.gm} {input.csf} {output.csf} '
+            '-mask {input.mask} 2> {log}'
+        )

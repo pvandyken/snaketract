@@ -31,7 +31,8 @@ rule read_pipenv:
         pip=rules.make_pipenv.output,
         out=rules.read_gitignore.output
     shell:
-        tar.using(inputs=["{input.pip}"])(
+        boost(
+            tar.using(inputs=["{input.pip}"]),
             "cat {input.pip}/pyvenv.cfg"
         )
 
@@ -50,7 +51,7 @@ rule test_pyscript:
         )
     params:
         first="second",
-        third="fourth"
+        third=workflow.basedir
     threads: 2
     resources:
         mem_mb=4

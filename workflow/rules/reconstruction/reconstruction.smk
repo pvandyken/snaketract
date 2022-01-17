@@ -8,8 +8,7 @@ rule run_act:
         fod=rules.normalize_fiber_orientation_densities.output.wm
     output:
         protected(bids_output_dwi(
-            desc="tracts",
-            suffix='10M.tck'
+            suffix='tractography.tck'
         ))
     params:
         maxlength=config['tractography']['maxlength'],
@@ -24,10 +23,13 @@ rule run_act:
         "mrtrix/3.0.1"
     group: 'act'
     shell:
-        'tckgen -act {input.act} -seed_gmwmi {input.gmwmi} '
-        '-nthreads {threads} -backtrack '
-        '-maxlength {params.maxlength} -cutoff {params.cutoff} -select {params.num_tracts} '
-        '{input.fod} {output} 2> {log}'
+        datalad.msg("Generate anatomically constrained tractography")(
+            'tckgen -act {input.act} -seed_gmwmi {input.gmwmi} '
+            '-nthreads {threads} -backtrack '
+            '-maxlength {params.maxlength} -cutoff {params.cutoff} '
+            '-select {params.num_tracts} '
+            '{input.fod} {output} 2> {log}'
+        )
 
 rule run_sift2:
     input:
@@ -36,16 +38,16 @@ rule run_sift2:
         act=rules.segment_anatomical_image.output
     output:
         weights=bids_output_dwi(
-            desc="sift",
-            suffix='weights.txt'
+            desc="weights",
+            suffix='sift.txt'
         ),
         mu=bids_output_dwi(
-            desc="sift",
-            suffix='mu.txt'
+            desc="mu",
+            suffix='sift.txt'
         ),
         coeffs=bids_output_dwi(
-            desc="sift",
-            suffix='coeffs.txt'
+            desc="coeffs",
+            suffix='sift.txt'
         )
     threads: 16
     resources:
@@ -57,7 +59,10 @@ rule run_sift2:
     benchmark:
         "benchmarks/run_sift2/sub-{subject}.tsv"
     group: "sift"
-    shell: "tcksift2 "
-        "-nthreads {threads} "
-        "-out_mu {output.mu} -out_coeffs {output.coeffs} "
-        "{input.tracks} {input.fod} {output.weights}"
+    shell:
+        datalad.msg("Calculate streamline weights")(
+            "tcksift2 "
+            "-nthreads {threads} "
+            "-out_mu {output.mu} -out_coeffs {output.coeffs} "
+            "{input.tracks} {input.fod} {output.weights}"
+        )
