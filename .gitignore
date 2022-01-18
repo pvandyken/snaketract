@@ -9,4 +9,5 @@ resources
 
 config/*
 !config/config.template.yml
+results
 .python-version
