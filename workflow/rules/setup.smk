@@ -13,7 +13,7 @@ from snakeboost import Tar, Pyscript, ScriptDict, XvfbRun, PipEnv, Boost, Datala
 inputs = generate_inputs(
     bids_dir=config['bids_dir'],
     pybids_inputs=config['pybids_inputs'],
-    derivatives=config['preprocessed_data'],
+    derivatives=config.get('preprocessed_data', None),
     participant_label=config.get("participant_label", None),
     use_bids_inputs=True
 )
