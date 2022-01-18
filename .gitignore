@@ -7,7 +7,6 @@ logs
 env.yaml
 resources
 
-config/
-!config/config.yml
-results
+config/*
+!config/config.template.yml
 .python-version
