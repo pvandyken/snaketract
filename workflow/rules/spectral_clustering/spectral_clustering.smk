@@ -127,7 +127,8 @@ rule tractography_spectral_clustering:
             datalad.msg("Cluster tracts with spectral clustering"),
             xvfb_run,
             tar.using(outputs=["{output}"]),
-            wma_env.script(
+            wma_env.script,
+            (
                 "wm_cluster_from_atlas.py "
                 "-j {threads} "
                 "{input.data} {input.atlas} {params.work_folder} && "
@@ -163,7 +164,8 @@ rule remove_cluster_outliers:
         boost(
             datalad.msg("Remove outliers from clusters"),
             tar.using(inputs = ["{input.data}"], outputs = ["{output}"]),
-            wma_env.script(
+            wma_env.script,
+            (
                 "wm_cluster_remove_outliers.py "
                 "-j {threads} "
                 "{input.data} {input.atlas} {params.work_folder} && "
@@ -197,7 +199,8 @@ rule assess_cluster_location_by_hemisphere:
         boost(
             datalad.msg("Assign cluster locations (left v right hem)"),
             tar.using(modify=["{input.data}"]),
-            wma_env.script(
+            wma_env.script,
+            (
                 "wm_assess_cluster_location_by_hemisphere.py "
                 "{input.data} -clusterLocationFile "
                 "{input.atlas}/cluster_hemisphere_location.txt && "
@@ -260,9 +263,9 @@ rule separate_clusters_by_hemisphere:
         boost(
             datalad.msg("Seperate clusters into folders based on location"),
             tar.using(outputs=["{output}"]),
-            wma_env.script(
-                "wm_separate_clusters_by_hemisphere.py {input} {output}"
-            )
+            wma_env.script,
+
+            "wm_separate_clusters_by_hemisphere.py {input} {output}"
         )
 
 
@@ -290,7 +293,8 @@ rule assign_to_anatomical_tracts:
         boost(
             datalad.msg("Assign clusters to one of 73 anatomical tracts"),
             tar.using(inputs=["{input.data}"], outputs=["{output}"]),
-            wma_env.script(
+            wma_env.script,
+            (
                 "wm_append_clusters_to_anatomical_tracts.py "
                 "{input.data} {input.atlas} {output}"
             )
