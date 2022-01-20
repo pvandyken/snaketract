@@ -1,4 +1,5 @@
 from itertools import groupby
+from tokenize import group
 from snakebids import bids
 
 class FodAlgorithm:
@@ -27,8 +28,9 @@ class FodAlgorithm:
 
 def is_multi_shelled(bval_file: str):
     with open(bval_file) as bval_s:
-        bvals = filter(None, next(bval_s).split(" "))
+        bvals = filter(None, next(bval_s).split())
         ranks = set()
+        ranks = { rank for rank, _ in groupby(bvals, key=_shell_rank) }
         for rank, _ in groupby(bvals, key=_shell_rank):
             ranks.add(rank)
 
