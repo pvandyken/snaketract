@@ -8,7 +8,8 @@ rule convert_t1_to_mrtrix_format:
     group: "segmentation"
     log: "logs/convert_t1_to_mrtrix_format/{subject}.log"
     envmodules:
-        "mrtrix/3.0.1"
+        "mrtrix/3.0.1",
+        "git-annex/8.20200810"
     shell:
         datalad(
             'mrconvert {input} {output} 2> {log}'
@@ -32,7 +33,8 @@ rule segment_anatomical_image:
         "mrtrix/3.0.1",
         "StdEnv/2020",
         "gcc/9.3.0",
-        "fsl/6.0.4"
+        "fsl/6.0.4",
+        "git-annex/8.20200810"
     shell:
         datalad.msg("Segment into 5 tissue types with fsl")(
             '5ttgen fsl {input} {output} -premasked -scratch {resources.tmpdir} '
@@ -49,7 +51,8 @@ rule create_seed_boundary:
     group: "segmentation"
     log: "logs/create_seed_boundary/{subject}.log"
     envmodules:
-        "mrtrix/3.0.1"
+        "mrtrix/3.0.1",
+        "git-annex/8.20200810"
     shell:
         datalad.msg("Compute boundary between GM/WM for tractography")(
             '5tt2gmwmi {input} {output} 2> {log}'

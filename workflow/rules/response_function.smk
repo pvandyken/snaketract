@@ -12,7 +12,8 @@ rule convert_dwi_to_mrtrix_format:
         temp(work/"response-function"/uid/"dwi.mif")
 
     envmodules:
-        "mrtrix/3.0.1"
+        "mrtrix/3.0.1",
+        "git-annex/8.20200810"
     log: f"logs/convert_dwi_to_mrtrix_format/{'.'.join(wildcards.values())}.log"
     group: "response_generation"
     shell:
@@ -28,7 +29,8 @@ rule convert_mask_to_mrtrix_format:
     output:
         temp(work/"response-function"/uid/"mask.mif")
     envmodules:
-        "mrtrix/3.0.1"
+        "mrtrix/3.0.1",
+        "git-annex/8.20200810"
     log: "logs/convert_mask_to_mrtrix_format/{subject}.log"
     group: "response_generation"
     shell:
@@ -67,7 +69,8 @@ rule generate_response_function:
     resources:
         runtime=2
     envmodules:
-        "mrtrix/3.0.1"
+        "mrtrix/3.0.1",
+        "git-annex/8.20200810"
     shell:
         datalad.msg("Estimate WM, GM, CSF response functions")(
             'dwi2response dhollander {input.dwi} {output.wm} {output.gm} {output.csf} '
@@ -153,7 +156,8 @@ rule compute_ms3t_fiber_orientation_densities:
         mem_mb=10000,
         runtime=15,
     envmodules:
-        "mrtrix/3.0.1"
+        "mrtrix/3.0.1",
+        "git-annex/8.20200810"
     log: "logs/compute_fiber_orientation_densities/{subject}.log"
     shell:
         datalad.msg("Compute fod using ss3t algorithm")(
@@ -204,7 +208,8 @@ rule normalize_fiber_orientation_densities:
     resources:
         runtime=2
     envmodules:
-        "mrtrix/3.0.1"
+        "mrtrix/3.0.1",
+        "git-annex/8.20200810"
     log: "logs/normalize_fiber_orientation_densities/{subject}.log"
     shell:
         datalad.msg("Normalize fod functions")(

@@ -20,7 +20,8 @@ rule run_act:
         mem_mb=4000
     log: "logs/run_act/{subject}.log"
     envmodules:
-        "mrtrix/3.0.1"
+        "mrtrix/3.0.1",
+        "git-annex/8.20200810"
     group: 'act'
     shell:
         datalad.msg("Generate anatomically constrained tractography")(
@@ -54,7 +55,8 @@ rule run_sift2:
         mem_mb=10000,
         runtime=9
     envmodules:
-        "mrtrix/3.0.1"
+        "mrtrix/3.0.1",
+        "git-annex/8.20200810"
     log: "logs/run_sift2/{subject}.log"
     benchmark:
         "benchmarks/run_sift2/sub-{subject}.tsv"

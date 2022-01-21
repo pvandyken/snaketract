@@ -28,7 +28,9 @@ rule convert_tracts_to_vtk:
     log: f"logs/convert_tracts_to_vtk/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/convert_tracts_to_vtk/{'.'.join(wildcards.values())}.tsv"
 
-    envmodules: "mrtrix/3.0.1"
+    envmodules:
+        "mrtrix/3.0.1",
+        "git-annex/8.20200810"
 
     group: "tract_registration"
     resources:
@@ -221,7 +223,9 @@ rule transform_clusters_to_subject_space:
     log: f"logs/transform_clusters_to_subject_space/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/transform_clusters_to_subject_space/{'.'.join(wildcards.values())}.tsv"
 
-    envmodules: 'python/3.7'
+    envmodules: 
+        'python/3.7',
+        "git-annex/8.20200810"
 
     group: "cluster_postprocess"
     resources:
