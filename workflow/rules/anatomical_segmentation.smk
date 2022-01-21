@@ -25,7 +25,8 @@ rule segment_anatomical_image:
     group: "segmentation"
     resources:
         mem_mb=2500,
-        runtime=20
+        runtime=20,
+        tmpdir="$SLURM_TMPDIR"
     log: "logs/segment_anatomical_image/{subject}.log"
     envmodules:
         "mrtrix/3.0.1",
