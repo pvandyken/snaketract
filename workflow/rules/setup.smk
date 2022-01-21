@@ -45,7 +45,7 @@ bids_output_anat = ft.partial(bids, root=output, space="orig", datatype="anat", 
 tar = Tar(work)
 xvfb_run = XvfbRun(config.get('x11_srv', False))
 boost = Boost(work)
-datalad = Datalad(output)
+datalad = Datalad(config['bids_dir'])
 
 ###
 # Pipenvs
