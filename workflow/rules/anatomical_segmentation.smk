@@ -7,6 +7,8 @@ rule convert_t1_to_mrtrix_format:
         temp(work/"anatomical_segmentation"/uid/"t1.mif")
     group: "segmentation"
     log: "logs/convert_t1_to_mrtrix_format/{subject}.log"
+    resources:
+        tmpdir=str(work/"__sn_tmp__")
     envmodules:
         "mrtrix/3.0.1",
         "git-annex/8.20200810"
@@ -49,6 +51,8 @@ rule create_seed_boundary:
             suffix="gmwmInterface.mif",
         )
     group: "segmentation"
+    resources:
+        tmpdir=str(work/"__sn_tmp__")
     log: "logs/create_seed_boundary/{subject}.log"
     envmodules:
         "mrtrix/3.0.1",
