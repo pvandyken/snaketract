@@ -106,11 +106,11 @@ rule compute_ss3t_fiber_orientation_densities:
             suffix='fod.mif'
         )
     group: "response_generation"
-    threads: 32
+    threads: 16
     # This still needs to be benchmarked!!
     resources:
-        mem_mb=10000,
-        runtime=25,
+        mem_mb=5000,
+        runtime=5,
     container:
         'docker://pennbbl/ss3t_beta:0.0.1'
     benchmark:

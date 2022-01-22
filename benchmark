@@ -30,8 +30,9 @@ for core, subject in zip(args.cores, args.subjects):
         core,
         "--cores",
         core,
+        *args.snakemake_args,
         "--config",
-        f"participant_label={subject}",
+        f"'\"participant_label='\"'\"{subject}\"'\"'\"'",
         "tmpdir=\"SLURM_TMPDIR\"",
         "x11_srv=true",
     ])
