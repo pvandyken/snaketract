@@ -47,6 +47,14 @@ pybids_inputs:
       desc: preproc
     wildcards:
     - subject
+  t1_mask:
+    filters:
+      suffix: mask
+      extension: .nii.gz
+      space: orig
+      datatype: anat
+    wildcards:
+    - subject
 targets_by_analysis_level:
   participant:
   - ''
