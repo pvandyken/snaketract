@@ -2,20 +2,20 @@ from pathlib import Path
 
 
 # group tract_registration:
-#   num_components: 16
+#   num_components: 8
 #   total_runtime: 3:00
-#   total_mem_mb: 480,000
-#   cores: 16
+#   total_mem_mb: 240,000
+#   cores: 8
 
 # group spectral_clustering:
-#   num_components: 24
+#   num_components: 12
 #   total_runtime: 12:00
-#   total_mem_mb: 500,000
-#   cores: 32
+#   total_mem_mb: 250,000
+#   cores: 16
 
 # group cluster_postprocess:
-#   num_components: 160
-#   total_runtime: 12:00
+#   num_components: 40
+#   total_runtime: 3:00
 #   total_mem_mb: 16,000
 #   cores: 32
 

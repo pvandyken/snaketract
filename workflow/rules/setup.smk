@@ -7,6 +7,11 @@ from snakebids import bids, generate_inputs
 from pathlib import Path
 from snakeboost import Tar, Pyscript, ScriptDict, XvfbRun, PipEnv, Boost, Datalad
 
+participant_label = config.get("participant_label", None)
+exclude_participant_label = (
+    config.get("exclude_participant_label", None) if not participant_label else None
+)
+
 ###
 # Input Globals
 ###
@@ -14,7 +19,8 @@ inputs = generate_inputs(
     bids_dir=config['bids_dir'],
     pybids_inputs=config['pybids_inputs'],
     derivatives=config.get('preprocessed_data', None),
-    participant_label=config.get("participant_label", None),
+    participant_label=participant_label,
+    exclude_participant_label=exclude_participant_label,
     use_bids_inputs=True
 )
 
