@@ -73,6 +73,10 @@ rule tractography_registration:
     benchmark:
         f"benchmarks/tractography_registration/{'.'.join(wildcards.values())}.tsv"
 
+    envmodules:
+        'python/3.7',
+        "git-annex/8.20200810"
+
     group: "tract_registration"
     resources:
         mem_mb=60000,
@@ -115,6 +119,10 @@ rule tractography_spectral_clustering:
     log: f"logs/tractography_spectral_clustering/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/tractography_spectral_clustering/{'.'.join(wildcards.values())}.tsv"
 
+    envmodules:
+        'python/3.7',
+        "git-annex/8.20200810"
+
     group: "spectral_clustering"
     threads: 16
     resources:
@@ -154,6 +162,10 @@ rule remove_cluster_outliers:
     log: f"logs/remove_cluster_outliers/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/remove_cluster_outliers/{'.'.join(wildcards.values())}.tsv"
 
+    envmodules:
+        'python/3.7',
+        "git-annex/8.20200810"
+
     group: "cluster_postprocess"
     threads: 32
     resources:
@@ -191,6 +203,10 @@ rule assess_cluster_location_by_hemisphere:
 
     log: f"logs/assess_cluster_location_by_hemisphere/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/assess_cluster_location_by_hemisphere/{'.'.join(wildcards.values())}.tsv"
+
+    envmodules:
+        'python/3.7',
+        "git-annex/8.20200810"
 
     group: "cluster_postprocess"
     resources:
@@ -258,6 +274,10 @@ rule separate_clusters_by_hemisphere:
     log: f"logs/separate_clusters_by_cluster/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/separate_clusters_by_cluster/{'.'.join(wildcards.values())}.tsv"
 
+    envmodules: 
+        'python/3.7',
+        "git-annex/8.20200810"
+
     group: "cluster_postprocess"
     resources:
         mem_mb=100,
@@ -287,6 +307,10 @@ rule assign_to_anatomical_tracts:
 
     log: f"logs/assign_to_anatomical_tracts/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/assign_to_anatomical_tracts/{'.'.join(wildcards.values())}.tsv"
+
+    envmodules:
+        'python/3.7',
+        "git-annex/8.20200810"
 
     group: "cluster_postprocess"
     resources:
