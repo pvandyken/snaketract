@@ -46,18 +46,27 @@ if __name__ == "__main__":
     )
 
     data = args.input["data"]
-    paths = data.glob("*.vtp")
-    transform_path = args.input["transform"]
-    transform = open_transform(transform_path, inverse=True)
 
+    transform_path = args.input["transform"]
+    inverse = isinstance(args.params, dict) and bool(args.params.get("inverse", None))
     assert isinstance(args.output, list) and len(args.output) == 1, (
         "Incorrect number of outputs provided"
     )
     output = Path(args.output[0])
-    if not output.exists():
-        output.mkdir()
+    transform = open_transform(transform_path, inverse=inverse)
 
-    for path in paths:
+    if data.is_dir():
+        paths = data.glob("*.vtp")
+
+        if not output.exists():
+            output.mkdir()
+
+
+        for path in paths:
+            wma.io.transform_polydata_from_disk_using_transform_object(
+                str(path), transform, str(output/path.name)
+            )
+    else:
         wma.io.transform_polydata_from_disk_using_transform_object(
-            str(path), transform, str(output/path.name)
+            str(data), transform, str(output)
         )

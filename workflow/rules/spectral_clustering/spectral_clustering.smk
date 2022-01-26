@@ -43,7 +43,7 @@ rule convert_tracts_to_vtk:
 # Including {uid} at the end of registration_dir will lead to it appearing twice in the
 # path, but this is necessary because Snakemake wants every output to have the wildcards
 # at least once. (Main, below, needs wildcards)
-registration_dir = work/"tractography_registration"/uid
+registration_dir = work/"tractography_registration"
 registration_files = registration_dir/uid/"output_tractography"
 
 rule tractography_registration:
@@ -52,21 +52,27 @@ rule tractography_registration:
         atlas=config['atlases']['registration_atlas'],
 
     output:
-        data=bids_output_dwi(
+        data=temp(bids_output_dwi(
             space="ORG",
             suffix="tractography.vtk"
-        ),
-        transform_tfm=bids_output_dwi(
+        )),
+        transform_tfm=bids(
+            root=output,
+            datatype="dwi",
             _from="T1w",
             to="ORG",
             mode="points",
-            suffix="xfm.tfm"
+            suffix="xfm.tfm",
+            **wildcards
         ),
-        transform_xfm=bids_output_dwi(
+        transform_xfm=bids(
+            root=output,
+            datatype="dwi",
             _from="T1w",
             to="ORG",
             mode="points",
-            suffix="xfm.xfm"
+            suffix="xfm.xfm",
+            **wildcards
         )
 
     log: f"logs/tractography_registration/{'.'.join(wildcards.values())}.log"
@@ -99,9 +105,9 @@ rule tractography_registration:
                 "-mode {params.mode} "
                 "{input.data} {input.atlas} {params.main} && "
 
-                "cp {params.transformed_data} {output.data} && "
-                "cp {params.transform_tfm} {output.transform_tfm} && "
-                "cp {params.transform_xfm} {output.transform_xfm}"
+                "mv {params.transformed_data} {output.data} && "
+                "mv {params.transform_tfm} {output.transform_tfm} && "
+                "mv {params.transform_xfm} {output.transform_xfm}"
             )
         )
 
@@ -169,8 +175,8 @@ rule remove_cluster_outliers:
     group: "cluster_postprocess"
     threads: 32
     resources:
-        mem_mb=10000,
-        runtime=4,
+        mem_mb=3000,
+        runtime=90,
     params:
         work_folder=work/"tractography_outlier_removal",
         results_subfolder=Path(rules.tractography_spectral_clustering.output[0]).name
@@ -210,8 +216,8 @@ rule assess_cluster_location_by_hemisphere:
 
     group: "cluster_postprocess"
     resources:
-        mem_mb=500,
-        runtime=13,
+        mem_mb=1500,
+        runtime=10,
 
     shell:
         boost(
@@ -239,14 +245,14 @@ rule transform_clusters_to_subject_space:
     log: f"logs/transform_clusters_to_subject_space/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/transform_clusters_to_subject_space/{'.'.join(wildcards.values())}.tsv"
 
-    envmodules: 
+    envmodules:
         'python/3.7',
         "git-annex/8.20200810"
 
     group: "cluster_postprocess"
     resources:
-        mem_mb=500,
-        runtime=1,
+        mem_mb=4000,
+        runtime=5,
 
     shell:
         boost(
@@ -274,14 +280,14 @@ rule separate_clusters_by_hemisphere:
     log: f"logs/separate_clusters_by_cluster/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/separate_clusters_by_cluster/{'.'.join(wildcards.values())}.tsv"
 
-    envmodules: 
+    envmodules:
         'python/3.7',
         "git-annex/8.20200810"
 
     group: "cluster_postprocess"
     resources:
-        mem_mb=100,
-        runtime=1,
+        mem_mb=1500,
+        runtime=15,
 
     shell:
         boost(
@@ -314,8 +320,8 @@ rule assign_to_anatomical_tracts:
 
     group: "cluster_postprocess"
     resources:
-        mem_mb=500,
-        runtime=1,
+        mem_mb=2000,
+        runtime=6,
 
     shell:
         boost(
