@@ -48,7 +48,7 @@ if __name__ == "__main__":
     data = args.input["data"]
 
     transform_path = args.input["transform"]
-    inverse = isinstance(args.params, dict) and bool(args.params.get("inverse", None))
+    inverse = True
     assert isinstance(args.output, list) and len(args.output) == 1, (
         "Incorrect number of outputs provided"
     )
