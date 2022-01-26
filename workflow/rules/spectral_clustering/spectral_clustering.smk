@@ -143,7 +143,7 @@ rule tractography_spectral_clustering:
                 "-j {threads} "
                 "{input.data} {input.atlas} {params.work_folder} && "
 
-                "mv {params.work_folder}/{params.results_subfolder} {output}"
+                "mv {params.work_folder}/{params.results_subfolder}/* {output}"
             )
         )
 
