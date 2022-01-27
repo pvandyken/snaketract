@@ -2,21 +2,27 @@ from pathlib import Path
 
 
 # group tract_registration:
-#   num_components: 8
-#   total_runtime: 3:00
-#   total_mem_mb: 240,000
+#   num_components: 32
+#   total_runtime: 12:00
+#   total_mem_mb: 240_000
 #   cores: 8
 
 # group spectral_clustering:
 #   num_components: 12
 #   total_runtime: 12:00
-#   total_mem_mb: 250,000
+#   total_mem_mb: 250_000
 #   cores: 16
 
-# group cluster_postprocess:
-#   num_components: 40
+# group cluster_outlier_removal:
+#   num_components: 18
 #   total_runtime: 3:00
-#   total_mem_mb: 16,000
+#   total_mem_mb: 3000
+#   cores: 32
+
+# group cluster_postprocess:
+#   num_components: 180
+#   total_runtime: 3:00
+#   total_mem_mb: 112_000
 #   cores: 32
 
 
@@ -172,11 +178,11 @@ rule remove_cluster_outliers:
         'python/3.7',
         "git-annex/8.20200810"
 
-    group: "cluster_postprocess"
+    group: "cluster_outlier_removal"
     threads: 32
     resources:
         mem_mb=3000,
-        runtime=90,
+        runtime=10,
     params:
         work_folder=work/"tractography_outlier_removal",
         results_subfolder=Path(rules.tractography_spectral_clustering.output[0]).name
@@ -251,7 +257,7 @@ rule transform_clusters_to_subject_space:
 
     group: "cluster_postprocess"
     resources:
-        mem_mb=4000,
+        mem_mb=3500,
         runtime=5,
 
     shell:

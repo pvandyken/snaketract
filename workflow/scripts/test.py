@@ -15,3 +15,4 @@ with out.open("w") as f:
         log={args.log}
         """
     )
+fi = 160_000_00
