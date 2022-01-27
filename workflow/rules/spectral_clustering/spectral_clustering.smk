@@ -1,11 +1,17 @@
 from pathlib import Path
 
 
+# group convert_tracts_to_vtk:
+#   num_components: 192
+#   total_runtime: 3:00
+#   total_mem_mb: 16_000
+#   cores: 32
+
 # group tract_registration:
-#   num_components: 32
-#   total_runtime: 12:00
+#   num_components: 64
+#   total_runtime: 11:44
 #   total_mem_mb: 240_000
-#   cores: 8
+#   cores: 4
 
 # group spectral_clustering:
 #   num_components: 12
@@ -29,7 +35,7 @@ from pathlib import Path
 rule convert_tracts_to_vtk:
     input: rules.run_act.output
 
-    output: temp(work/f"tractography/{uid}.vtk")
+    output: temp(shared_work/uid/"tractography.vtk")
 
     log: f"logs/convert_tracts_to_vtk/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/convert_tracts_to_vtk/{'.'.join(wildcards.values())}.tsv"
@@ -38,7 +44,7 @@ rule convert_tracts_to_vtk:
         "mrtrix/3.0.1",
         "git-annex/8.20200810"
 
-    group: "tract_registration"
+    group: "convert_tracts_to_vtk"
     resources:
         mem_mb=500,
         runtime=30 # for 10M fibres
@@ -58,10 +64,7 @@ rule tractography_registration:
         atlas=config['atlases']['registration_atlas'],
 
     output:
-        data=temp(bids_output_dwi(
-            space="ORG",
-            suffix="tractography.vtk"
-        )),
+        data=temp(shared_work/uid/"registered_tractography.vtk"),
         transform_tfm=bids(
             root=output,
             datatype="dwi",

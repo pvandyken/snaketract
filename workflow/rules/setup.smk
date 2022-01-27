@@ -34,6 +34,7 @@ work = Path(
 )/'prepdwi-recon'
 
 output = config['output_dir'] + "/prepdwi_recon"
+shared_work = Path(config['output_dir'])/'work'/'prepdwi_recon'
 qc = Path(output)/"qc"
 
 # Unique ID for easy naming in temporary files
