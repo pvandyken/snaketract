@@ -55,12 +55,13 @@ rule convert_tracts_to_vtk:
 # Including {uid} at the end of registration_dir will lead to it appearing twice in the
 # path, but this is necessary because Snakemake wants every output to have the wildcards
 # at least once. (Main, below, needs wildcards)
-registration_dir = work/"tractography_registration"
-registration_files = registration_dir/uid/"output_tractography"
+registration_dir = work/"tractography_registration"/uid
+registration_output = Path(rules.convert_tracts_to_vtk.output[0]).stem
+registration_files = registration_dir/registration_output/"output_tractography"
 
 rule tractography_registration:
     input:
-        data=rules.convert_tracts_to_vtk.output[0],
+        data=rules.convert_tracts_to_vtk.output,
         atlas=config['atlases']['registration_atlas'],
 
     output:
@@ -101,10 +102,10 @@ rule tractography_registration:
         mode="rigid_affine_fast",
 
         # Temporary files
-        main=registration_dir,
-        transformed_data=f"{registration_files}/{uid}_reg.vtk",
-        transform_tfm=f"{registration_files}/itk_txform_{uid}.tfm",
-        transform_xfm=f"{registration_files}/vtk_txform_{uid}.xfm"
+        main=str(registration_dir),
+        transformed_data=f"{registration_files}/{registration_output}_reg.vtk",
+        transform_tfm=f"{registration_files}/itk_txform_{registration_output}.tfm",
+        transform_xfm=f"{registration_files}/vtk_txform_{registration_output}.xfm"
     shell:
         boost(
             datalad.msg("Register tractography to ORG atlas"),
@@ -145,7 +146,7 @@ rule tractography_spectral_clustering:
         runtime=60,
 
     params:
-        work_folder=work/"tractography_clustering",
+        work_folder=work/"tractography_clustering"/uid,
         results_subfolder=Path(rules.tractography_registration.output.data).stem
     shell:
         boost(
