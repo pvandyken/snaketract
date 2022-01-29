@@ -146,7 +146,7 @@ rule tractography_spectral_clustering:
         runtime=90,
 
     params:
-        work_folder=str(work/"tractography_clustering"/uid)
+        work_folder=str(work/"tractography_clustering"/uid),
         results_subfolder=Path(rules.tractography_registration.output.data).stem
     shell:
         boost(
