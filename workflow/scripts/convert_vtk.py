@@ -12,9 +12,11 @@ if __name__ == "__main__":
     output = Path(args.output[0])
 
     if data.is_dir():
-        paths = [*data.glob("*.vt{p,k}")]
-        out_paths = [
-            path.with_stem(".vtk") if path.stem == ".vtp" else path.with_stem(".vtp")
+        paths = [*data.glob("*.vtp")]
+        out_names = [
+            path.with_suffix(".vtk").name
+            if path.suffix == ".vtp"
+            else path.with_suffix(".vtp")
             for path in paths
         ]
 
@@ -22,7 +24,10 @@ if __name__ == "__main__":
             output.mkdir()
     else:
         paths = [data]
-        out_paths = [output]
+        out_names = [output.name]
+        output = output.parent
 
-    for path, out_path in zip(paths, out_paths):
-        wma.io.write_polydata(wma.io.read_polydata(path), out_path)
+    for path, out_name in zip(paths, out_names):
+        out_path = output/out_name
+        print(out_path)
+        wma.io.write_polydata(wma.io.read_polydata(str(path)), str(out_path))
