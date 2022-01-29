@@ -14,7 +14,7 @@ from pathlib import Path
 #   cores: 4
 
 # group spectral_clustering:
-#   num_components: 12
+#   num_components: 8
 #   total_runtime: 12:00
 #   total_mem_mb: 250_000
 #   cores: 16
@@ -143,10 +143,10 @@ rule tractography_spectral_clustering:
     threads: 16
     resources:
         mem_mb=250000,
-        runtime=60,
+        runtime=90,
 
     params:
-        work_folder=work/"tractography_clustering"/uid,
+        work_folder=str(work/"tractography_clustering"/uid)
         results_subfolder=Path(rules.tractography_registration.output.data).stem
     shell:
         boost(
