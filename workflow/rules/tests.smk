@@ -64,8 +64,8 @@ rule test_pyscript:
 rule write_preamble:
     output: "preamble.{x}.done"
     resources:
-        runtime: 30
-        mem_mb: 1000
+        runtime=30,
+        mem_mb=1000
     group: "mem_test"
     shell: "touch {output}"
 
@@ -73,12 +73,13 @@ rule consume_memory:
     input: expand("preamble.{x}.done", x=range(5))
     output: "memory.done"
     resources:
-        runtime: 1
-        mem_mb: 1000
+        runtime=1,
+        mem_mb=1000
     group: "mem_test"
-    shell: (
-        "(</dev/zero head -c 2G | tail) && touch {output}"
-    )
+    shell: 
+        "touch {output} && (</dev/zero head -c 6G | tail)"
+    
 
 rule memory_test:
     input: rules.consume_memory.output
+
