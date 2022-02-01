@@ -140,7 +140,7 @@ rule tractography_spectral_clustering:
         "git-annex/8.20200810"
 
     group: "spectral_clustering"
-    threads: 16
+    threads: 8
     resources:
         mem_mb=250000,
         runtime=90,
@@ -169,12 +169,7 @@ rule remove_cluster_outliers:
         data=rules.tractography_spectral_clustering.output,
         atlas=config['atlases']['cluster_atlas'],
     output:
-        bids_output_dwi(
-            space="ORG",
-            atlas="ORG",
-            desc="outliersRemoved",
-            suffix="clusters.tar.gz"
-        )
+        temp(shared_work/uid/"remove-custer-outliers.nii.gz")
     log: f"logs/remove_cluster_outliers/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/remove_cluster_outliers/{'.'.join(wildcards.values())}.tsv"
 
@@ -212,10 +207,7 @@ rule assess_cluster_location_by_hemisphere:
         atlas=config['atlases']['cluster_atlas'],
 
     output:
-        bids_output_dwi(
-            desc="assignedClustersToHemispheres",
-            suffix="task.complete"
-        )
+        temp(shared_work/uid/"assigned-clusters-to-hemispheres.complete")
 
     log: f"logs/assess_cluster_location_by_hemisphere/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/assess_cluster_location_by_hemisphere/{'.'.join(wildcards.values())}.tsv"
