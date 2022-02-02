@@ -272,7 +272,7 @@ rule separate_clusters_by_hemisphere:
 
     output:
         bids_output_dwi(
-            atlas="ORG",
+            atlas="T1w",
             desc="sorted",
             suffix="clusters.tar.gz"
         )
@@ -289,19 +289,13 @@ rule separate_clusters_by_hemisphere:
         mem_mb=1500,
         runtime=15,
 
-    params:
-        vtp_tmp=str(work/uid/"cluster-separation-vtp"),
-        vtk_tmp=str(work/uid/"cluster-separation-vtk"),
-
-
     shell:
         boost(
             datalad.msg("Seperate clusters into folders based on location"),
             tar.using(outputs=["{output}"]),
             wma_env.script,
 
-            "wm_separate_clusters_by_hemisphere.py {input} {params.vtp_tmp} && "
-            " {output}"
+            "wm_separate_clusters_by_hemisphere.py {input} {output}"
         )
 
 
@@ -312,7 +306,7 @@ rule assign_to_anatomical_tracts:
 
     output:
         bids_output_dwi(
-            atlas="ORG",
+            atlas="T1w",
             desc="tracts",
             suffix="clusters.tar.gz"
         )

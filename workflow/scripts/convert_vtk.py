@@ -5,11 +5,15 @@ from snakeboost import snakemake_args
 
 if __name__ == "__main__":
     args = snakemake_args()
-    assert isinstance(args.input, list)
-    assert isinstance(args.output, list)
+    if isinstance(args.input, list):
+        data = args.input[0]
+    else:
+        data = Path(args.input.get("input", ""))
 
-    data = args.input[0]
-    output = Path(args.output[0])
+    if isinstance(args.output, list):
+        output = Path(args.output[0])
+    else:
+        output = Path(args.output.get("output", ""))
 
     if data.is_dir():
         paths = [*data.glob("*.vtp")]
