@@ -14,10 +14,10 @@ from pathlib import Path
 #   cores: 4
 
 # group spectral_clustering:
-#   num_components: 8
-#   total_runtime: 12:00
+#   num_components: 2
+#   total_runtime: 3:00
 #   total_mem_mb: 250_000
-#   cores: 16
+#   cores: 8
 
 # group cluster_outlier_removal:
 #   num_components: 18
@@ -207,7 +207,7 @@ rule assess_cluster_location_by_hemisphere:
         atlas=config['atlases']['cluster_atlas'],
 
     output:
-        temp(shared_work/uid/"assigned-clusters-to-hemispheres.complete")
+        touch(temp(shared_work/uid/"assigned-clusters-to-hemispheres.complete"))
 
     log: f"logs/assess_cluster_location_by_hemisphere/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/assess_cluster_location_by_hemisphere/{'.'.join(wildcards.values())}.tsv"
@@ -229,9 +229,7 @@ rule assess_cluster_location_by_hemisphere:
             (
                 "wm_assess_cluster_location_by_hemisphere.py "
                 "{input.data} -clusterLocationFile "
-                "{input.atlas}/cluster_hemisphere_location.txt && "
-
-                "touch {output}"
+                "{input.atlas}/cluster_hemisphere_location.txt"
             )
         )
 
@@ -291,13 +289,19 @@ rule separate_clusters_by_hemisphere:
         mem_mb=1500,
         runtime=15,
 
+    params:
+        vtp_tmp=str(work/uid/"cluster-separation-vtp"),
+        vtk_tmp=str(work/uid/"cluster-separation-vtk"),
+
+
     shell:
         boost(
             datalad.msg("Seperate clusters into folders based on location"),
             tar.using(outputs=["{output}"]),
             wma_env.script,
 
-            "wm_separate_clusters_by_hemisphere.py {input} {output}"
+            "wm_separate_clusters_by_hemisphere.py {input} {params.vtp_tmp} && "
+            " {output}"
         )
 
 
