@@ -8,6 +8,7 @@ include: 'rules/anatomical_segmentation.smk'
 include: "rules/response_function.smk"
 include: 'rules/reconstruction/reconstruction.smk'
 include: 'rules/spectral_clustering/spectral_clustering.smk'
+include: 'rules/tract_profiles.smk'
 include: 'rules/spectral_clustering/qc.smk'
 include: 'rules/tests.smk'
 #include: "rules/qc.smk"
@@ -26,6 +27,13 @@ rule tractography:
     input:
         expand(
             rules.run_sift2.output.weights,
+            **inputs.input_lists['preproc_dwi']
+        )
+
+rule reformated:
+    input:
+        expand(
+            rules.reformat_clusters.output,
             **inputs.input_lists['preproc_dwi']
         )
 

@@ -26,7 +26,7 @@ rule reformat_clusters:
             datalad,
             tar.using(inputs=["{input}"], outputs=["{output}"]),
 
-            "tmpdir={tmpdir}/reformat_clusters; "
+            "tmpdir={resources.tmpdir}/reformat_clusters; "
             "mkdir -p $tmpdir/vtp-tracts; "
             "mv {input}/tracts_left_hemisphere/* $tmpdir/vtp-tracts; "
             "rename_expr='{{ "
@@ -44,12 +44,13 @@ rule reformat_clusters:
             "xargs -L 1 mv; "
 
             + Pyscript(workflow.basedir, wma_env)(
-                input={"input": "{tmpdir}/reformat_clusters/vtp-tracts"},
-                output={"output": "{tmpdir}/reformat_clusters/vtk-tracts"}
+                input={"input": "{resources.tmpdir}/reformat_clusters/vtp-tracts"},
+                output={"output": "{resources.tmpdir}/reformat_clusters/vtk-tracts"},
+                script="scripts/convert_vtk.py",
             )
 
             + (
-                "find {tmpdir}/reformat_clusters/vtk-tracts -type f | "
+                "find {resources.tmpdir}/reformat_clusters/vtk-tracts -type f | "
                 "awk -F'[./]' '{{print $0 \"{output}/\"$(NF-1)\".tck\"}}' | "
                 "xargs -L 1 tckconvert"
             )
