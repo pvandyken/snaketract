@@ -272,7 +272,7 @@ rule separate_clusters_by_hemisphere:
 
     output:
         bids_output_dwi(
-            atlas="T1w",
+            atlas="ORG",
             desc="sorted",
             suffix="clusters.tar.gz"
         )
@@ -306,7 +306,7 @@ rule assign_to_anatomical_tracts:
 
     output:
         bids_output_dwi(
-            atlas="T1w",
+            atlas="ORG",
             desc="tracts",
             suffix="clusters.tar.gz"
         )

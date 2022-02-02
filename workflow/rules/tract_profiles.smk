@@ -4,7 +4,7 @@ rule reformat_clusters:
 
     output:
         bids_output_dwi(
-            atlas="T1w",
+            atlas="ORG",
             suffix="clusters.tar.gz"
         )
 
