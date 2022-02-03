@@ -55,3 +55,30 @@ rule reformat_clusters:
                 "xargs -L 1 tckconvert"
             )
         )
+
+
+rule tract_profiles:
+    input:
+        data=rules.reformat_clusters.output,
+        ref=inputs.input_path['t1']
+    output:
+        shared_work/f"{uid}_tract_profiles.csv"
+    log: f"logs/tract_profiles/{'.'.join(wildcards.values())}.log"
+    benchmark: f"benchmarks/tract_profiles/{'.'.join(wildcards.values())}.tsv"
+    group:
+    threads: 1
+    resources:
+        mem_mb=2000,
+        runtime=30,
+    params:
+    shell: (
+        boost(
+            datalad,
+            tar.using(inputs=["{input.data}"]),
+            Pyscript(workflow.basedir)(
+                "scripts/tract-profiling.py",
+                input=["data", "ref"],
+                wildcards=["subject"]
+            )
+        )
+    )

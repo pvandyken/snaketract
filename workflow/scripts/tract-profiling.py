@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 import numpy as np
 from dipy.io.streamline import load_tractogram
 import nibabel as nib
@@ -69,10 +70,14 @@ if __name__ == "__main__":
         raise FileNotFoundError("Input must be a directory")
 
     profiles = get_profiles(paths, parameter_maps, ref_img)
+    cluster_numbers = (
+        re.match(r'(?<=cluster_)\d{5}(?=\.tck$)', str(path)) for path in paths
+    )
     profile_table = pd.DataFrame(
         {
             key: data for key, data in zip(parameter_maps, profiles)
         }
     )
+    profile_table.assign(cluster=pd.Series(cluster_numbers))
     with output.open('w') as f:
         profile_table.to_csv(f)
