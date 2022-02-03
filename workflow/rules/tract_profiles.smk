@@ -65,13 +65,12 @@ rule tract_profiles:
         shared_work/f"{uid}_tract_profiles.csv"
     log: f"logs/tract_profiles/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/tract_profiles/{'.'.join(wildcards.values())}.tsv"
-    group:
     threads: 1
     resources:
         mem_mb=2000,
         runtime=30,
     params:
-    shell: (
+    shell: 
         boost(
             datalad,
             tar.using(inputs=["{input.data}"]),
@@ -81,7 +80,6 @@ rule tract_profiles:
                 wildcards=["subject"]
             )
         )
-    )
 
 rule aggregate_profiles:
     input:
@@ -91,17 +89,16 @@ rule aggregate_profiles:
         )
     output:
         config['output_dir'] + "/tract_profiles.csv"
-    log: f"logs/aggregate_profiles/{'.'.join(wildcards.values())}.log"
-    benchmark: f"benchmarks/aggregate_profiles/{'.'.join(wildcards.values())}.tsv"
+    log: f"logs/aggregate_profiles/all.log"
+    benchmark: f"benchmarks/aggregate_profiles/all.tsv"
     threads: 1
     resources:
         mem_mb=1000,
         runtime=30,
     params:
-    shell: (
+    shell:
         boost(
             Pyscript(workflow.basedir)(
                 "scripts/tract-profile-merge.py"
             )
         )
-    )
