@@ -3,7 +3,6 @@ import re
 import numpy as np
 from dipy.io.streamline import load_tractogram
 import nibabel as nib
-import matplotlib.pyplot as plt
 import pandas as pd
 from dipy.segment.clustering import QuickBundles
 from dipy.segment.metric import AveragePointwiseEuclideanMetric, ResampleFeature

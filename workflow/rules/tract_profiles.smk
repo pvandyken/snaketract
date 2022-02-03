@@ -13,7 +13,8 @@ rule reformat_clusters:
 
     envmodules:
         'python/3.7',
-        "git-annex/8.20200810"
+        "git-annex/8.20200810",
+        "mrtrix"
 
     group: "cluster_postprocess"
     resources:
@@ -32,7 +33,7 @@ rule reformat_clusters:
             "rename_expr='{{ "
                 "number=substr($(NF), match($(NF), /[0-9]{{5}}/), 5); "
                 "split($(NF), parts, number); "
-                "printf \"%s output/%s%05d%s\n\", parts[1], number+offset, parts[2]"
+                "printf \"%s \"output\"/%s%05d%s\\n\", $0, parts[1], number+offset, parts[2]"
             "}}'; "
 
             "find {input}/tracts_right_hemisphere/ -type f | "
@@ -50,9 +51,9 @@ rule reformat_clusters:
             )
 
             + (
-                "find {resources.tmpdir}/reformat_clusters/vtk-tracts -type f | "
-                "awk -F'[./]' '{{print $0 \"{output}/\"$(NF-1)\".tck\"}}' | "
-                "xargs -L 1 tckconvert"
+                "; find {resources.tmpdir}/reformat_clusters/vtk-tracts -type f | "
+                "awk -F'[./]' '{{print $0 \" {output}/\"$(NF-1)\".tck\"}}' | "
+                "xargs -L 1 tckconvert; "
             )
         )
 
@@ -74,7 +75,7 @@ rule tract_profiles:
         boost(
             datalad,
             tar.using(inputs=["{input.data}"]),
-            Pyscript(workflow.basedir)(
+            Pyscript(workflow.basedir, dipy_env)(
                 "scripts/tract-profiling.py",
                 input=["data", "ref"],
                 wildcards=["subject"]
@@ -98,7 +99,7 @@ rule aggregate_profiles:
     params:
     shell:
         boost(
-            Pyscript(workflow.basedir)(
+            Pyscript(workflow.basedir, dipy_env)(
                 "scripts/tract-profile-merge.py"
             )
         )

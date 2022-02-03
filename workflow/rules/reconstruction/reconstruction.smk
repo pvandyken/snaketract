@@ -7,9 +7,9 @@ rule run_act:
         gmwmi=rules.create_seed_boundary.output,
         fod=rules.normalize_fiber_orientation_densities.output.wm
     output:
-        protected(bids_output_dwi(
+        bids_output_dwi(
             suffix='tractography.tck'
-        ))
+        )
     params:
         maxlength=config['tractography']['maxlength'],
         cutoff=config['tractography']['cutoff'],

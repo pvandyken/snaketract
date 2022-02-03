@@ -67,6 +67,19 @@ wma_env = PipEnv(
     root = work
 )
 
+dipy_env = PipEnv(
+    packages = [
+        'dipy',
+        'pandas',
+        'numpy',
+        'scipy',
+        'snakeboost',
+        'nibabel',
+    ],
+    flags = config["pip-flags"],
+    root = work
+)
+
 test_env = PipEnv(
     packages = [
         'colorama',
