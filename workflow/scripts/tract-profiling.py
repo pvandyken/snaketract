@@ -54,6 +54,7 @@ if __name__ == "__main__":
     args = snakemake_args()
     assert isinstance(args.input, dict)
     assert isinstance(args.output, list)
+    assert isinstance(args.wildcards, dict)
 
     data = args.input["data"]
     ref_img = args.input["ref_img"]
@@ -71,13 +72,16 @@ if __name__ == "__main__":
 
     profiles = get_profiles(paths, parameter_maps, ref_img)
     cluster_numbers = (
-        re.match(r'(?<=cluster_)\d{5}(?=\.tck$)', str(path)) for path in paths
+        match[0] for match in (
+            re.search(r'(?<=cluster_)\d{5}(?=\.tck$)', str(path)) for path in paths
+        ) if match
     )
     profile_table = pd.DataFrame(
         {
             key: data for key, data in zip(parameter_maps, profiles)
         }
-    )
-    profile_table.assign(cluster=pd.Series(cluster_numbers))
+    ).assign(
+        cluster=pd.Series(cluster_numbers), subject=args.wildcards["subject"]
+    ).set_index(["subject", "cluster"])
     with output.open('w') as f:
         profile_table.to_csv(f)
