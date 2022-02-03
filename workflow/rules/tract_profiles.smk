@@ -82,3 +82,26 @@ rule tract_profiles:
             )
         )
     )
+
+rule aggregate_profiles:
+    input:
+        expand(
+            rules.tract_profiles.output,
+            **inputs.input_lists['preproc_dwi']
+        )
+    output:
+        config['output_dir'] + "/tract_profiles.csv"
+    log: f"logs/aggregate_profiles/{'.'.join(wildcards.values())}.log"
+    benchmark: f"benchmarks/aggregate_profiles/{'.'.join(wildcards.values())}.tsv"
+    threads: 1
+    resources:
+        mem_mb=1000,
+        runtime=30,
+    params:
+    shell: (
+        boost(
+            Pyscript(workflow.basedir)(
+                "scripts/tract-profile-merge.py"
+            )
+        )
+    )
