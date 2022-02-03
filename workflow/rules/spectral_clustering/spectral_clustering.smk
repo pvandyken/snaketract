@@ -142,7 +142,7 @@ rule tractography_spectral_clustering:
     group: "spectral_clustering"
     threads: 8
     resources:
-        mem_mb=250000,
+        mem_mb=500000,
         runtime=90,
 
     params:
