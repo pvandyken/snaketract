@@ -32,6 +32,7 @@ rule reformat_clusters:
         boost(
             datalad,
             tar.using(inputs=["{input}"], outputs=["{output}"]),
+            wma_env.get_venv,
 
             sh.ShTry(
                 tmpdir := sh.ShVar("{resources.tmpdir}/reformat_clusters"),
@@ -51,7 +52,7 @@ rule reformat_clusters:
                 ) |
                 "xargs -L 1 mv",
 
-                Pyscript(workflow.basedir, wma_env)(
+                Pyscript(workflow.basedir, wma_env.python_path)(
                     input={"input": vtp_dir},
                     output={"output": tmpdir+"/vtk-tracts"},
                     script="scripts/convert_vtk.py",
@@ -80,11 +81,12 @@ rule tract_profiles:
         mem_mb=2000,
         runtime=30,
     params:
-    shell: 
+    shell:
         boost(
             datalad,
             tar.using(inputs=["{input.data}"]),
-            Pyscript(workflow.basedir, dipy_env)(
+            dipy_env.script,
+            Pyscript(workflow.basedir)(
                 "scripts/tract-profiling.py",
                 input=["data", "ref"],
                 wildcards=["subject"]
@@ -108,7 +110,8 @@ rule aggregate_profiles:
     params:
     shell:
         boost(
-            Pyscript(workflow.basedir, dipy_env)(
+            dipy_env.script,
+            Pyscript(workflow.basedir)(
                 "scripts/tract-profile-merge.py"
             )
         )

@@ -259,9 +259,10 @@ rule transform_clusters_to_subject_space:
             datalad.msg("Convert clusters back to subject T1w space"),
             xvfb_run,
             tar.using(inputs=["{input.data}"]),
-            Pyscript(workflow.basedir, wma_env)(
-                input=["data", "transform"],
-                script="scripts/harden_transform.py"
+            wma_env.script,
+            Pyscript(workflow.basedir)(
+                "scripts/harden_transform.py",
+                input=["data", "transform"]
             )
         )
 
