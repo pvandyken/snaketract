@@ -180,7 +180,7 @@ rule remove_cluster_outliers:
     group: "cluster_outlier_removal"
     threads: 32
     resources:
-        mem_mb=3000,
+        mem_mb=15000,
         runtime=10,
     params:
         work_folder=work/"tractography_outlier_removal",
