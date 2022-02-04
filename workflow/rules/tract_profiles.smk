@@ -1,3 +1,9 @@
+rename_awk_expr = (
+    "number=substr($(NF), match($(NF), /[0-9]{{5}}/), 5)",
+    "split($(NF), parts, number)",
+    'printf "%s "output"/%s%05d%s\\n", $0, parts[1], number+offset, parts[2]'
+)
+
 rule reformat_clusters:
     input:
         rules.separate_clusters_by_hemisphere.output,
@@ -27,36 +33,54 @@ rule reformat_clusters:
             datalad,
             tar.using(inputs=["{input}"], outputs=["{output}"]),
 
-            "tmpdir={resources.tmpdir}/reformat_clusters; "
-            "mkdir -p $tmpdir/vtp-tracts; "
-            "mv {input}/tracts_left_hemisphere/* $tmpdir/vtp-tracts; "
-            "rename_expr='{{ "
-                "number=substr($(NF), match($(NF), /[0-9]{{5}}/), 5); "
-                "split($(NF), parts, number); "
-                "printf \"%s \"output\"/%s%05d%s\\n\", $0, parts[1], number+offset, parts[2]"
-            "}}'; "
+            sh.ShTry(
+                "tmpdir={resources.tmpdir}/reformat_clusters",
+                sh.mkdir("$tmpdir/vtp-tracts").p,
+                "mv {input}/tracts_left_hemisphere/* $tmpdir/vtp-tracts",
 
-            "find {input}/tracts_right_hemisphere/ -type f | "
-            "awk -F'/' -v offset='800' -v output=$tmpdir/vtp-tracts \"$rename_expr\" | "
-            "xargs -L 1 mv; "
+                sh.find("{input}/tracts_right_hemisphere/ -type f") |
+                sh.awk(*rename_awk_expr).F('/').v(
+                    offset='800', output="$tmpdir/vtp-tracts"
+                ) |
+                "xargs -L 1 mv",
 
-            "find {input}/tracts_commissural/ -type f | "
-            "awk -F'/' -v offset='800' -v output=$tmpdir/vtp-tracts \"$rename_expr\" | "
-            "xargs -L 1 mv; "
+                sh.find("{input}/tracts_commissural/ -type f") |
+                sh.awk(*rename_awk_expr).F('/').v(
+                    offset='1600', output="$tmpdir/vtp-tracts"
+                ) |
+                "xargs -L 1 mv",
 
-            + Pyscript(workflow.basedir, wma_env)(
-                input={"input": "{resources.tmpdir}/reformat_clusters/vtp-tracts"},
-                output={"output": "{resources.tmpdir}/reformat_clusters/vtk-tracts"},
-                script="scripts/convert_vtk.py",
-            )
+                Pyscript(workflow.basedir, wma_env)(
+                    input={"input": "$tmpdir/vtp-tracts"},
+                    output={"output": "$tmpdir/vtk-tracts"},
+                    script="scripts/convert_vtk.py",
+                ),
 
-            + (
-                "; find {resources.tmpdir}/reformat_clusters/vtk-tracts -type f | "
-                "awk -F'[./]' '{{print $0 \" {output}/\"$(NF-1)\".tck\"}}' | "
-                "xargs -L 1 tckconvert; "
-            )
+                sh.find("$tmpdir/vtk-tracts -type f") |
+                sh.awk('print $0 " {output}/"$(NF-1)".tck"').F('[./]') |
+                "xargs -L 1 tckconvert"
+            ).catch(
+                "rm {resources.tmpdir}/reformat_clusters -rf"
+            ).to_str()
         )
 
+
+"tmpdir={resources.tmpdir}/reformat_clusters; "
+"mkdir -p $tmpdir/vtp-tracts; "
+"mv {input}/tracts_left_hemisphere/* $tmpdir/vtp-tracts; "
+"rename_expr='{{ "
+    "number=substr($(NF), match($(NF), /[0-9]{{5}}/), 5); "
+    "split($(NF), parts, number); "
+    "printf \"%s \"output\"/%s%05d%s\\n\", $0, parts[1], number+offset, parts[2]"
+"}}'; "
+
+"find {input}/tracts_right_hemisphere/ -type f | "
+"awk -F'/' -v offset='800' -v output=$tmpdir/vtp-tracts \"$rename_expr\" | "
+"xargs -L 1 mv; "
+
+"find {input}/tracts_commissural/ -type f | "
+"awk -F'/' -v offset='800' -v output=$tmpdir/vtp-tracts \"$rename_expr\" | "
+"xargs -L 1 mv; "
 
 rule tract_profiles:
     input:

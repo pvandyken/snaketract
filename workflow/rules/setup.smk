@@ -6,6 +6,7 @@ from snakebids import bids, generate_inputs
 
 from pathlib import Path
 from snakeboost import Tar, Pyscript, ScriptDict, XvfbRun, PipEnv, Boost, Datalad
+import snakeboost.bash as sh
 
 participant_label = config.get("participant_label", None)
 exclude_participant_label = (
