@@ -34,13 +34,14 @@ rule reformat_clusters:
             tar.using(inputs=["{input}"], outputs=["{output}"]),
 
             sh.ShTry(
-                "tmpdir={resources.tmpdir}/reformat_clusters",
-                sh.mkdir("$tmpdir/vtp-tracts").p,
-                "mv {input}/tracts_left_hemisphere/* $tmpdir/vtp-tracts",
+                tmpdir := sh.ShVar("{resources.tmpdir}/reformat_clusters"),
+                vtp_dir := sh.ShVar(tmpdir+"/vtp-tracts"),
+                sh.mkdir(vtp_dir).p,
+                sh.mv("{input}/tracts_left_hemisphere/*", vtp_dir),
 
                 sh.find("{input}/tracts_right_hemisphere/ -type f") |
                 sh.awk(*rename_awk_expr).F('/').v(
-                    offset='800', output="$tmpdir/vtp-tracts"
+                    offset='800', output=vtp_dir
                 ) |
                 "xargs -L 1 mv",
 
@@ -51,8 +52,8 @@ rule reformat_clusters:
                 "xargs -L 1 mv",
 
                 Pyscript(workflow.basedir, wma_env)(
-                    input={"input": "$tmpdir/vtp-tracts"},
-                    output={"output": "$tmpdir/vtk-tracts"},
+                    input={"input": vtp_dir},
+                    output={"output": tmpdir+"/vtk-tracts"},
                     script="scripts/convert_vtk.py",
                 ),
 
@@ -60,27 +61,11 @@ rule reformat_clusters:
                 sh.awk('print $0 " {output}/"$(NF-1)".tck"').F('[./]') |
                 "xargs -L 1 tckconvert"
             ).catch(
-                "rm {resources.tmpdir}/reformat_clusters -rf"
+                "rm {resources.tmpdir}/reformat_clusters -rf",
+                "false"
             ).to_str()
         )
 
-
-"tmpdir={resources.tmpdir}/reformat_clusters; "
-"mkdir -p $tmpdir/vtp-tracts; "
-"mv {input}/tracts_left_hemisphere/* $tmpdir/vtp-tracts; "
-"rename_expr='{{ "
-    "number=substr($(NF), match($(NF), /[0-9]{{5}}/), 5); "
-    "split($(NF), parts, number); "
-    "printf \"%s \"output\"/%s%05d%s\\n\", $0, parts[1], number+offset, parts[2]"
-"}}'; "
-
-"find {input}/tracts_right_hemisphere/ -type f | "
-"awk -F'/' -v offset='800' -v output=$tmpdir/vtp-tracts \"$rename_expr\" | "
-"xargs -L 1 mv; "
-
-"find {input}/tracts_commissural/ -type f | "
-"awk -F'/' -v offset='800' -v output=$tmpdir/vtp-tracts \"$rename_expr\" | "
-"xargs -L 1 mv; "
 
 rule tract_profiles:
     input:
