@@ -36,7 +36,7 @@ rule reformat_clusters:
 
             sh.ShTry(
                 tmpdir := sh.ShVar("{resources.tmpdir}/reformat_clusters"),
-                vtp_dir := sh.ShVar(tmpdir+"/vtp-tracts"),
+                vtp_dir := sh.ShVar(str(tmpdir)+"/vtp-tracts"),
                 sh.mkdir(vtp_dir).p,
                 sh.mv("{input}/tracts_left_hemisphere/*", vtp_dir),
 
@@ -54,7 +54,7 @@ rule reformat_clusters:
 
                 Pyscript(workflow.basedir, wma_env.python_path)(
                     input={"input": vtp_dir},
-                    output={"output": tmpdir+"/vtk-tracts"},
+                    output={"output": str(tmpdir)+"/vtk-tracts"},
                     script="scripts/convert_vtk.py",
                 ),
 
