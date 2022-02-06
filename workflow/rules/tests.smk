@@ -1,3 +1,5 @@
+test_boost = Boost("/tmp", debug=True, disable_script=True)
+
 rule make_pipenv:
     output:
         "venv.tar.gz"
@@ -22,8 +24,11 @@ rule read_gitignore:
     output:
         "gitignore.done"
     shell:
-        tar.using(inputs=["{input}"])(
-            "cat {input}/.gitignore && touch {output}"
+        test_boost(
+            tar.using(inputs=["{input}"]),
+            (
+                "cat {input}/.gitignore && touch {output}"
+            )
         )
 
 rule read_pipenv:
@@ -31,7 +36,7 @@ rule read_pipenv:
         pip=rules.make_pipenv.output,
         out=rules.read_gitignore.output
     shell:
-        boost(
+        test_boost(
             tar.using(inputs=["{input.pip}"]),
             "cat {input.pip}/pyvenv.cfg"
         )
@@ -43,7 +48,7 @@ rule test_pipenv_creation:
     shell:
         test_env.script("black -h")
 
-test_script = Pyscript(config["snakemake_dir"], test_env)
+test_script = Pyscript(config["snakemake_dir"])
 rule test_pyscript:
     output:
         **test_script.output(
@@ -56,9 +61,11 @@ rule test_pyscript:
     resources:
         mem_mb=4
     shell:
-        test_script(
-            "workflow/scripts/test.py",
-            params=["third"],
+        test_env.script(
+            test_script(
+                "workflow/scripts/test.py",
+                params=["third"],
+            )
         )
 
 rule write_preamble:

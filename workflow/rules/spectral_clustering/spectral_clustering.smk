@@ -46,7 +46,7 @@ rule convert_tracts_to_vtk:
 
     group: "convert_tracts_to_vtk"
     resources:
-        mem_mb=500,
+        mem_mb=1000,
         runtime=30 # for 10M fibres
 
     shell: datalad("tckconvert {input} {output}")

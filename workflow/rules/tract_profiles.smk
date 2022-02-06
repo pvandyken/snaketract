@@ -32,7 +32,7 @@ rule reformat_clusters:
         boost(
             datalad,
             tar.using(inputs=["{input}"], outputs=["{output}"]),
-            wma_env.get_venv,
+            wma_env.make_venv,
 
             sh.ShTry(
                 tmpdir := sh.ShVar("{resources.tmpdir}/reformat_clusters"),
@@ -52,7 +52,7 @@ rule reformat_clusters:
                 ) |
                 "xargs -L 1 mv",
 
-                Pyscript(workflow.basedir, wma_env.python_path)(
+                Pyscript(workflow.basedir, python_path=wma_env.python_path)(
                     input={"input": vtp_dir},
                     output={"output": str(tmpdir)+"/vtk-tracts"},
                     script="scripts/convert_vtk.py",

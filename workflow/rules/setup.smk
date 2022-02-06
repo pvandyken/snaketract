@@ -50,8 +50,8 @@ bids_output_anat = ft.partial(bids, root=output, space="orig", datatype="anat", 
 ###
 # Utility functions
 ###
-tar = Tar(work)
-xvfb_run = XvfbRun(config.get('x11_srv', False))
+tar = Tar("tmp")
+xvfb_run = XvfbRun()
 boost = Boost(work)
 datalad = Datalad(config['bids_dir'])
 
@@ -64,7 +64,7 @@ wma_env = PipEnv(
         'vtk==8.1.2',
         '/scratch/knavynde/snakeboost'
     ],
-    flags = config["pip-flags"],
+    flags = config.get("pip-flags", ""),
     root = work
 )
 
@@ -77,7 +77,7 @@ dipy_env = PipEnv(
         'snakeboost',
         'nibabel',
     ],
-    flags = config["pip-flags"],
+    flags = config.get("pip-flags", ""),
     root = work
 )
 
