@@ -50,7 +50,7 @@ bids_output_anat = ft.partial(bids, root=output, space="orig", datatype="anat", 
 ###
 # Utility functions
 ###
-tar = Tar("tmp")
+tar = Tar(work)
 xvfb_run = XvfbRun()
 boost = Boost(work)
 datalad = Datalad(config['bids_dir'])
