@@ -48,7 +48,7 @@ rule reformat_clusters:
 
                 sh.find("{input}/tracts_commissural/ -type f") |
                 sh.awk(*rename_awk_expr).F('/').v(
-                    offset='1600', output="$tmpdir/vtp-tracts"
+                    offset='1600', output=str(tmpdir)+"/vtp-tracts"
                 ) |
                 "xargs -L 1 mv",
 
@@ -58,7 +58,7 @@ rule reformat_clusters:
                     script="scripts/convert_vtk.py",
                 ),
 
-                sh.find("$tmpdir/vtk-tracts -type f") |
+                sh.find(str(tmpdir)+"/vtk-tracts -type f") |
                 sh.awk('print $0 " {output}/"$(NF-1)".tck"').F('[./]') |
                 "xargs -L 1 tckconvert"
             ).catch(
