@@ -24,8 +24,8 @@ rule reformat_clusters:
 
     group: "cluster_postprocess"
     resources:
-        mem_mb=1500,
-        runtime=15,
+        mem_mb=1000,
+        runtime=10,
         tmpdir=str(work/"__sn_tmp__"),
 
     shell:
@@ -64,6 +64,8 @@ rule reformat_clusters:
             ).catch(
                 "rm {resources.tmpdir}/reformat_clusters -rf",
                 "false"
+            )els(
+                "rm {resources.tmpdir}/reformat_clusters -rf"
             ).to_str()
         )
 
@@ -81,7 +83,7 @@ rule create_r1:
     threads: 1
     resources:
         mem_mb=1000,
-        runtime=30,
+        runtime=1,
     shell:
         boost(
             Pyscript(workflow.basedir)(
@@ -104,7 +106,7 @@ rule tract_profiles:
     threads: 1
     resources:
         mem_mb=2000,
-        runtime=30,
+        runtime=660,
     params:
     shell:
         boost(
