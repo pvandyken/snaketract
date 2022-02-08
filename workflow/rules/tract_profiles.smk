@@ -68,10 +68,35 @@ rule reformat_clusters:
         )
 
 
+rule create_r1:
+    input:
+        data=inputs.input_path["t1_map"],
+        mask=inputs.input_path["t1_mask"]
+    output:
+        bids_output_anat(
+            suffix="R1.nii.gz"
+        )
+    log: f"logs/create_r1/{'.'.join(wildcards.values())}.log"
+    benchmark: f"benchmarks/create_r1/{'.'.join(wildcards.values())}.tsv"
+    threads: 1
+    resources:
+        mem_mb=1000,
+        runtime=30,
+    shell:
+        boost(
+            Pyscript(workflow.basedir)(
+                "scripts/produce-r1.py",
+                input=["data", "mask"]
+            )
+        )
+
+
 rule tract_profiles:
     input:
         data=rules.reformat_clusters.output,
-        ref=inputs.input_path['t1']
+        ref=inputs.input_path['t1'],
+        r1=rules.create_r1.output,
+        fa=bids_output_dwi(model="CSD", suffix="FA.nii.gz")
     output:
         shared_work/f"{uid}_tract_profiles.csv"
     log: f"logs/tract_profiles/{'.'.join(wildcards.values())}.log"
@@ -88,7 +113,7 @@ rule tract_profiles:
             dipy_env.script,
             Pyscript(workflow.basedir)(
                 "scripts/tract-profiling.py",
-                input=["data", "ref"],
+                input=["data", "ref", "r1", "fa"],
                 wildcards=["subject"]
             )
         )

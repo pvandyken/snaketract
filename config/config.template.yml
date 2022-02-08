@@ -55,6 +55,13 @@ pybids_inputs:
       datatype: anat
     wildcards:
     - subject
+  t1_map:
+    filters:
+      suffix: T1map
+      extension: .nii.gz
+      acq: MP2RAGE
+    wildcards:
+    - subject
 targets_by_analysis_level:
   participant:
   - ''
