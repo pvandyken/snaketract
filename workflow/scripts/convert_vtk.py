@@ -23,6 +23,7 @@ if __name__ == "__main__":
             else path.with_suffix(".vtp")
             for path in paths
         ]
+        print(f"Converting {len(paths)} to vtk")
 
         if not output.exists():
             output.mkdir()
@@ -31,7 +32,7 @@ if __name__ == "__main__":
         out_names = [output.name]
         output = output.parent
 
+
     for path, out_name in zip(paths, out_names):
         out_path = output/out_name
-        print(out_path)
         wma.io.write_polydata(wma.io.read_polydata(str(path)), str(out_path))
