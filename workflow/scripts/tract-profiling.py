@@ -68,7 +68,7 @@ if __name__ == "__main__":
     assert isinstance(args.wildcards, dict)
 
     data = args.input["data"]
-    ref_img = args.input["ref_img"]
+    ref_img = args.input["ref"]
     output = Path(args.output[0])
 
     parameter_maps = {
