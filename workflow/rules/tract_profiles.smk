@@ -34,40 +34,43 @@ rule reformat_clusters:
             datalad,
             tar.using(inputs=["{input}"], outputs=["{output}"]),
             wma_env.make_venv,
-
-            sh.ShTry(
-                tmpdir := sh.ShVar("{resources.tmpdir}/reformat_clusters"),
-                vtp_dir := sh.ShVar(str(tmpdir)+"/vtp-tracts"),
-                sh.mkdir(vtp_dir).p,
-                sh.mv("{input}/tracts_left_hemisphere/*", vtp_dir),
-
-                sh.find("{input}/tracts_right_hemisphere/ -type f") |
-                sh.awk(*rename_awk_expr).F('/').v(
-                    offset='800', output=vtp_dir
-                ) |
-                "xargs -L 1 mv",
-
-                sh.find("{input}/tracts_commissural/ -type f") |
-                sh.awk(*rename_awk_expr).F('/').v(
-                    offset='1600', output=str(tmpdir)+"/vtp-tracts"
-                ) |
-                "xargs -L 1 mv",
-
-                Pyscript(workflow.basedir, python_path=wma_env.python_path)(
-                    input={"input": vtp_dir},
-                    output={"output": str(tmpdir)+"/vtk-tracts"},
-                    script="scripts/convert_vtk.py",
+            (
+                tmpdir := sh.ShVar(
+                    f"{{resources.tmpdir}}/reformat_clusters/{uid}"
                 ),
+                sh.ShTry(
+                    vtp_dir := sh.ShVar(str(tmpdir)+"/vtp-tracts"),
+                    sh.mkdir(vtp_dir).p,
+                    sh.mv("{input}/tracts_left_hemisphere/*", vtp_dir),
 
-                sh.find(str(tmpdir)+"/vtk-tracts -type f") |
-                sh.awk('print $0 " {output}/"$(NF-1)".tck"').F('[./]') |
-                "xargs -L 1 tckconvert"
-            ).catch(
-                "rm {resources.tmpdir}/reformat_clusters -rf",
-                "false"
-            ).els(
-                "rm {resources.tmpdir}/reformat_clusters -rf"
-            ).to_str()
+                    sh.find("{input}/tracts_right_hemisphere/ -type f") |
+                    sh.awk(*rename_awk_expr).F('/').v(
+                        offset='800', output=vtp_dir
+                    ) |
+                    "xargs -L 1 mv",
+
+                    sh.find("{input}/tracts_commissural/ -type f") |
+                    sh.awk(*rename_awk_expr).F('/').v(
+                        offset='1600', output=vtp_dir
+                    ) |
+                    "xargs -L 1 mv",
+
+                    Pyscript(workflow.basedir, python_path=wma_env.python_path)(
+                        input={"input": vtp_dir},
+                        output={"output": str(tmpdir)+"/vtk-tracts"},
+                        script="scripts/convert_vtk.py",
+                    ),
+
+                    sh.find(str(tmpdir)+"/vtk-tracts -type f") |
+                    sh.awk('print $0 " {output}/"$(NF-1)".tck"').F('[./]') |
+                    "xargs -L 1 tckconvert"
+                ).catch(
+                    f"rm {tmpdir} -rf",
+                    "false"
+                ).els(
+                    f"rm {tmpdir} -rf"
+                )
+            )
         )
 
 
