@@ -4,6 +4,7 @@ rename_awk_expr = (
     'printf "%s "output"/%s%05d%s\\n", $0, parts[1], number+offset, parts[2]'
 )
 
+
 rule reformat_clusters:
     input:
         rules.separate_clusters_by_hemisphere.output,
@@ -22,7 +23,7 @@ rule reformat_clusters:
         "git-annex/8.20200810",
         "mrtrix"
 
-    group: "cluster_postprocess"
+    group: "profiling"
     resources:
         mem_mb=1000,
         runtime=10,
@@ -64,7 +65,7 @@ rule reformat_clusters:
             ).catch(
                 "rm {resources.tmpdir}/reformat_clusters -rf",
                 "false"
-            )els(
+            ).els(
                 "rm {resources.tmpdir}/reformat_clusters -rf"
             ).to_str()
         )
@@ -84,6 +85,8 @@ rule create_r1:
     resources:
         mem_mb=1000,
         runtime=1,
+        tmpdir=str(work/"__sn_tmp__"),
+    group: "profiling"
     shell:
         boost(
             Pyscript(workflow.basedir)(
@@ -107,7 +110,9 @@ rule tract_profiles:
     resources:
         mem_mb=2000,
         runtime=660,
+        tmpdir=str(work/"__sn_tmp__"),
     params:
+    group: "profiling"
     shell:
         boost(
             datalad,
@@ -134,7 +139,6 @@ rule aggregate_profiles:
     resources:
         mem_mb=1000,
         runtime=30,
-    params:
     shell:
         boost(
             dipy_env.script,

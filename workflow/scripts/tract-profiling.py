@@ -72,8 +72,8 @@ if __name__ == "__main__":
     output = Path(args.output[0])
 
     parameter_maps = {
-        "FA": nib.load(args.input["FA"]),
-        "R1": nib.load(args.input["R1"])
+        "FA": nib.load(args.input["fa"]),
+        "R1": nib.load(args.input["r1"])
     }
 
     if data.is_dir():

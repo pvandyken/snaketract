@@ -19,7 +19,7 @@ if __name__ == "__main__":
         ) for path in paths
     )
 
-    merged = pd.concat(dataframes).drop(columns=[0])
+    merged = pd.concat(dataframes)
     with output.open('w') as f:
         merged.to_csv(f)
 

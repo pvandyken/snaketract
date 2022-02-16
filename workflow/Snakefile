@@ -13,7 +13,7 @@ include: 'rules/spectral_clustering/qc.smk'
 include: 'rules/tests.smk'
 #include: "rules/qc.smk"
 
-localrules: all, qc
+localrules: all, qc, aggregate_profiles
 
 rule all:
     input:
