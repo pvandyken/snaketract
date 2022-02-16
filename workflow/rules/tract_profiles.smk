@@ -106,7 +106,7 @@ rule tract_profiles:
         r1=rules.create_r1.output,
         fa=bids_output_dwi(model="CSD", suffix="FA.nii.gz")
     output:
-        shared_work/f"{uid}_tract_profiles.csv"
+        temp(shared_work/f"{uid}_tract_profiles.csv")
     log: f"logs/tract_profiles/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/tract_profiles/{'.'.join(wildcards.values())}.tsv"
     threads: 1
