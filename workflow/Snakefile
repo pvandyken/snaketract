@@ -18,7 +18,7 @@ localrules: all, qc, aggregate_profiles
 rule all:
     input:
         expand(
-            rules.assign_to_anatomical_tracts.output,
+            getattr(rules, config.get("target", ""), "assign_to_anatomical_tracts").output,
             **inputs.input_lists['preproc_dwi']
         )
 
@@ -36,6 +36,7 @@ rule reformated:
             rules.reformat_clusters.output,
             **inputs.input_lists['preproc_dwi']
         )
+
 
 # rule qc:
 #     input:

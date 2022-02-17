@@ -1,5 +1,3 @@
-from snakebids import bids
-
 rule convert_t1_to_mrtrix_format:
     input:
         inputs.input_path['t1']
