@@ -36,7 +36,7 @@ rule reformat_clusters:
             wma_env.make_venv,
             (
                 tmpdir := sh.ShVar(
-                    f"{{resources.tmpdir}}/reformat_clusters/{uid}"
+                    "{resources.tmpdir}/reformat_clusters/{wildcards.subject}"
                 ),
                 sh.ShTry(
                     vtp_dir := sh.ShVar(str(tmpdir)+"/vtp-tracts"),
