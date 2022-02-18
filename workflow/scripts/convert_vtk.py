@@ -1,18 +1,24 @@
 from glob import glob
 from pathlib import Path
 import re
+import os
 
 import whitematteranalysis as wma
 from snakeboost import snakemake_args
 
 
+def _root_stem(path: Path):
+    return os.path.splitext(path)[0]
+
+
 def glob_inputs_outputs(in_path: Path, out_path: Path):
-    ast_loc = in_path.stem.find('*')
+    ast_loc = _root_stem(in_path).find('*')
+
     inputs = [Path(path) for path in glob(str(in_path), recursive=True)]
     var_parts = [
-        path.stem[ast_loc:] for path in inputs
+        _root_stem(path)[ast_loc:] for path in inputs
     ]
-    out_const_part = out_path.stem[0:out_path.stem.find("*")]
+    out_const_part = _root_stem(out_path)[0:_root_stem(out_path).find("*")]
     outputs = [
         Path(out_const_part + var_part).with_suffix(out_path.suffix)
         for var_part in var_parts
@@ -52,12 +58,16 @@ def main():
         if "*" != output.stem[-1]:
             raise TypeError(
                 "If input is a glob pattern, the last character of output before the "
-                "extension must be an asterisk (*): e.g. output/*.vtp"
+                "extension must be an asterisk (*): e.g. output/*.vtp\n"
+                f"Got {output}"
             )
 
         paths, outputs = glob_inputs_outputs(data, output)
 
+        print(f"Converting {len(paths)} files")
+
         for path, output in zip(paths, outputs):
+            output.parent.mkdir(exist_ok=True)
             wma.io.write_polydata(wma.io.read_polydata(str(path)), str(output))
         return 0
 
