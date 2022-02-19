@@ -85,9 +85,9 @@ def convert_file(in_path: Path, out_path: Path, reference: Path):
     if in_path.suffix == out_path.suffix:
         return 0
     if in_path.suffix == ".vtp":
-        tracts = load_vtp(str(in_path), reference)
+        tracts = load_vtp(str(in_path), str(reference))
     else:
-        tracts = load_tractogram(str(in_path), reference)
+        tracts = load_tractogram(str(in_path), str(reference))
     save_tractogram(tracts, str(out_path))
 
 
@@ -108,12 +108,13 @@ def main():
         output = args.output.get("output", Path(""))
 
     input_type = data.suffix
-    if input_type not in [".vtp", ".vtk"]:
-        raise TypeError("Invalid file type as input. Must be one of ['.vtp', 'vtk']")
+    allowed_types = [".vtp", ".vtk", ".tck", ".trk"]
+    if input_type not in allowed_types:
+        raise TypeError(f"Invalid file type as input. Must be one of {allowed_types}")
 
     output_type = output.suffix
-    if output_type not in [".vtp", ".vtk"]:
-        raise TypeError("Invalid file type as output. Must be one of ['.vtp', 'vtk']")
+    if output_type not in allowed_types:
+        raise TypeError(f"Invalid file type as output. Must be one of {allowed_types}")
 
     if input_type == output_type:
         raise TypeError(
