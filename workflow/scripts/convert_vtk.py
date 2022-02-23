@@ -37,7 +37,7 @@ ConversionMapping = Dict[Converter, List[str]]
 
 
 conversion_map: ConversionMapping = {
-    "tckconvert {input} {output}": [".tck", ".vtk"],
+    "tckconvert '{input}' '{output}'": [".tck", ".vtk"],
     dipy_convert: [".tck", ".trk"],
     fury_convert: [".vtp", ".vtk"],
 }
