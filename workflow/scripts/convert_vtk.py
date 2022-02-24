@@ -37,7 +37,7 @@ ConversionMapping = Dict[Converter, List[str]]
 
 
 conversion_map: ConversionMapping = {
-    "tckconvert '{input}' '{output}'": [".tck", ".vtk"],
+    "tckconvert {input} {output}": [".tck", ".vtk"],
     dipy_convert: [".tck", ".trk"],
     fury_convert: [".vtp", ".vtk"],
 }
@@ -163,7 +163,7 @@ def convert_file(src: Path, dest: Path, reference: Path = None):
                     raise TypeError(f"No file called {reference}")
                 partial(reference)
         else:
-            cmd = converter.format(input=str(in_path), output=str(out_path))
+            cmd = converter.format(input=f"'{in_path}'", output=f"'{out_path}'")
             sp.run(cmd, shell=True)
         if in_path_is_temp:
             shutil.rmtree(in_path.parent)
