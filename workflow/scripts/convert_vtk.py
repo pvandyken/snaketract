@@ -37,7 +37,7 @@ ConversionMapping = Dict[Converter, List[str]]
 
 
 conversion_map: ConversionMapping = {
-    "tckconvert {input} {output}": [".tck", ".vtk"],
+    "tckconvert {input} {output}": [".tck", ".vtk", ".bundles"],
     dipy_convert: [".tck", ".trk"],
     fury_convert: [".vtp", ".vtk"],
 }
@@ -191,7 +191,7 @@ def main():
         output = args.output.get("output", Path(""))
 
     input_type = data.suffix
-    allowed_types = [".vtp", ".vtk", ".tck", ".trk"]
+    allowed_types = {*it.chain.from_iterable(conversion_map.values())}
     if input_type not in allowed_types:
         raise TypeError(f"Invalid file type as input. Must be one of {allowed_types}")
 

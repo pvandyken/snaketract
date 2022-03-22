@@ -2,6 +2,10 @@ pip-flags: --no-index -f ~/projects/ctb-akhanf/knavynde/wheels/
 atlases:
   registration_atlas: resources/ORG-Atlases-1.1.1/ORG-RegAtlas-100HCP/registration_atlas.vtk
   cluster_atlas: resources/ORG-Atlases-1.1.1/ORG-800FC-100HCP
+  hemispheric_tracts: resources/
+surfaces:
+  left: blah
+  right: blah
 tractography:
   maxlength: 250
   cutoff: 0.06

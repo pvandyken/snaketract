@@ -81,6 +81,12 @@ dipy_env = PipEnv(
     root = work
 )
 
+parcellation_env = PipEnv(
+    packages = [
+        'intersection',
+    ]
+)
+
 test_env = PipEnv(
     packages = [
         'colorama',
