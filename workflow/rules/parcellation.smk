@@ -1,7 +1,3 @@
-hemisphere_folders = {
-    "L": "tracts_left_hemisphere",
-    "R": "tracts_right_hemisphere",
-}
 rule get_hemispheric_tracts:
     input:
         data=rules.separate_clusters_by_hemisphere.output,
@@ -55,11 +51,16 @@ rule get_parcellation:
         tracts=rules.get_hemispheric_tracts.output,
         mesh=inputs.input_path['surf'],
     output:
-        bids_output_dwi(
+        atlas=bids_output_dwi(
             atlas="ORG",
             suffix="parcellation.vtk",
             **inputs.input_wildcards['surf'],
-        )
+        ),
+        connectome=bids_output_dwi(
+            atlas="ORG",
+            suffix="connectome.pyc",
+            **inputs.input_wildcards['surf'],
+        ),
 
     log: f"logs/get_hemisphere_parcellation/{'.'.join(inputs.input_wildcards['surf'].values())}.log"
     benchmark: f"benchmarks/get_hemisphere_parcellation/{'.'.join(inputs.input_wildcards['surf'].values())}.tsv"
@@ -80,7 +81,5 @@ rule get_parcellation:
 
             "intersection main "
             "{input.mesh} {input.tracts} "
-            "{output} --threads {threads}"
+            "{output.atlas} {output.connectome} --threads {threads}"
         )
-
-
