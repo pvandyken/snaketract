@@ -8,6 +8,7 @@ from pathlib import Path
 from snakeboost import Tar, Pyscript, ScriptDict, XvfbRun, PipEnv, Boost, Datalad
 import snakeboost.bash as sh
 
+
 participant_label = config.get("participant_label", None)
 exclude_participant_label = (
     config.get("exclude_participant_label", None) if not participant_label else None
@@ -81,10 +82,25 @@ dipy_env = PipEnv(
     root = work
 )
 
+convert_env = PipEnv(
+    packages = [
+        'dipy',
+        'fury',
+        'vtk==8.1.2',
+        'more-itertools',
+        '/scratch/knavynde/snakeboost',
+        'networkx',
+    ],
+    flags = config.get("pip-flags", ""),
+    root = work
+)
+
 parcellation_env = PipEnv(
     packages = [
         'intersection',
-    ]
+    ],
+    flags = config.get("pip-flags", ""),
+    root = work,
 )
 
 test_env = PipEnv(

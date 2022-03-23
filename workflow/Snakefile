@@ -19,8 +19,8 @@ localrules: all, qc, aggregate_profiles
 rule all:
     input:
         expand(
-            getattr(rules, config.get("target", ""), rules.assign_to_anatomical_tracts).output,
-            **inputs.input_lists['preproc_dwi']
+            getattr(rules, config.get("target", ""), rules.get_parcellation).output,
+            **inputs.input_lists['surf']
         )
 
 
