@@ -9,9 +9,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--mem',  default="64G")
 parser.add_argument('--runtime', default='12:00')
 parser.add_argument('--cores', nargs="+", type=str)
-parser.add_argument('--rules', nargs="+", type=str)
+parser.add_argument('--rule', type=str)
 parser.add_argument('--subjects', nargs="+", type=str)
-parser.add_argument('--snakemake-args', nargs="*")
+parser.add_argument('--snakemake-args', nargs="*", default=[])
 parser.add_argument('--dry', '-n', action="store_true")
 
 args = parser.parse_args(sys.argv[1:])
@@ -34,5 +34,5 @@ for core, subject in zip(args.cores, args.subjects):
         "--config",
         f"'\"participant_label='\"'\"{subject}\"'\"'\"'",
         "tmpdir=\"SLURM_TMPDIR\"",
-        "x11_srv=true",
+        *([f"target={args.rule}"] if args.rule else []),
     ])

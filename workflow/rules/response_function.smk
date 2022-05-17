@@ -106,21 +106,19 @@ rule compute_ss3t_fiber_orientation_densities:
             suffix='fod.mif'
         )
     group: "response_generation"
-    threads: 16
+    threads: 32
     # This still needs to be benchmarked!!
     resources:
         mem_mb=5000,
         runtime=5,
     container:
-        'docker://pennbbl/ss3t_beta:0.0.1'
+        '3tissue.sif'
     benchmark:
-        'benchmarks/compute_fiber_orientation_densities/{subject}.tsv'
+        'benchmarks/compute_ss3t_fiber_orientation_densities/{subject}.tsv'
     shell:
-        datalad.msg("Compute fod using ss3t algorithm")(
-            'ss3t_csd_beta1 {input.dwi} '
-            '{input.wm} {output.wm} {input.gm} {output.gm} {input.csf} {output.csf} '
-            '-mask {input.mask} -nthreads {threads} -scratch {resources.tmpdir}'
-        )
+        'ss3t_csd_beta1 {input.dwi} '
+        '{input.wm} {output.wm} {input.gm} {output.gm} {input.csf} {output.csf} '
+        '-mask {input.mask} -nthreads {threads} -scratch ' + str(work)
 
 
 
@@ -158,7 +156,7 @@ rule compute_ms3t_fiber_orientation_densities:
     envmodules:
         "mrtrix/3.0.1",
         "git-annex/8.20200810"
-    log: "logs/compute_fiber_orientation_densities/{subject}.log"
+    log: "logs/compute_ms3t_fiber_orientation_densities/{subject}.log"
     shell:
         datalad.msg("Compute fod using ss3t algorithm")(
             'dwi2fod msmt_csd {input.dwi} '

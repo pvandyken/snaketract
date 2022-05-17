@@ -44,10 +44,9 @@ rule segment_anatomical_image:
         )
     group: "segmentation"
     resources:
-        mem_mb=2500,
-        runtime=20,
         tmpdir=str(work/"__sn_tmp__")
     log: "logs/segment_anatomical_image/{subject}.log"
+    benchmark: f"benchmarks/segment_anatomical_image/{'.'.join(wildcards.values())}.tsv"
     envmodules:
         "mrtrix/3.0.1",
         "StdEnv/2020",
