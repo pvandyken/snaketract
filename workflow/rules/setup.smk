@@ -20,10 +20,12 @@ exclude_participant_label = (
 inputs = generate_inputs(
     bids_dir=config['bids_dir'],
     pybids_inputs=config['pybids_inputs'],
-    derivatives=config.get('preprocessed_data', None),
+    derivatives=True,
     participant_label=participant_label,
     exclude_participant_label=exclude_participant_label,
-    use_bids_inputs=True
+    use_bids_inputs=True,
+    pybids_database_dir=config.get("pybids_database_dir"),
+    pybids_reset_database=config.get("pybids_reset_database"),
 )
 
 wildcards = inputs.input_wildcards['preproc_dwi']

@@ -1,6 +1,11 @@
 from snakebids import bids
 from lib.shells import is_multi_shelled
 
+# group act:
+#     group_components=2
+
+# group sift:
+#    group_components=40
 rule run_act:
     input:
         act=rules.segment_anatomical_image.output,

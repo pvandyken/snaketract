@@ -1,6 +1,8 @@
 from snakebids import bids
 from lib.shells import FodAlgorithm
 
+# group response_generation:
+#     group_components=14
 
 rule convert_dwi_to_mrtrix_format:
     input:
@@ -106,11 +108,10 @@ rule compute_ss3t_fiber_orientation_densities:
             suffix='fod.mif'
         )
     group: "response_generation"
-    threads: 32
-    # This still needs to be benchmarked!!
+    threads: 16
     resources:
-        mem_mb=5000,
-        runtime=5,
+        mem_mb=1000,
+        runtime=95,
     container:
         '3tissue.sif'
     benchmark:

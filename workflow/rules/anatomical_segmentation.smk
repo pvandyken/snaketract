@@ -1,3 +1,5 @@
+# group segmentation:
+#     group_components=288
 rule convert_t1_to_mrtrix_format:
     input:
         inputs.input_path['t1']
@@ -44,7 +46,9 @@ rule segment_anatomical_image:
         )
     group: "segmentation"
     resources:
-        tmpdir=str(work/"__sn_tmp__")
+        tmpdir=str(work/"__sn_tmp__"),
+        runtime=15,
+        mem_mb=4000,
     log: "logs/segment_anatomical_image/{subject}.log"
     benchmark: f"benchmarks/segment_anatomical_image/{'.'.join(wildcards.values())}.tsv"
     envmodules:
@@ -73,6 +77,8 @@ rule create_seed_boundary:
     envmodules:
         "mrtrix/3.0.1",
         "git-annex/8.20200810"
+    resources:
+        runtime=5,
     shell:
         datalad.msg("Compute boundary between GM/WM for tractography")(
             '5tt2gmwmi {input} {output} 2> {log}'

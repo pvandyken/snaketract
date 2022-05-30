@@ -20,7 +20,7 @@ rule all:
     input:
         expand(
             getattr(rules, config.get("target", ""), rules.get_parcellation).output,
-            **inputs.input_lists['preproc_dwi']
+            **inputs.input_lists['surf']
         )
 
 

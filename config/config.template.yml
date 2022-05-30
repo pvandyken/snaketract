@@ -66,6 +66,13 @@ pybids_inputs:
       acq: MP2RAGE
     wildcards:
     - subject
+  surf:
+    filters:
+      extension: .surf.gii
+      suffix: smoothwm
+    wildcards:
+      - subject
+      - hemi
 targets_by_analysis_level:
   participant:
   - ''

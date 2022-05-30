@@ -38,4 +38,4 @@ def is_multi_shelled(bval_file: str):
 
 
 def _shell_rank(bval):
-    return round(int(bval) / 500) * 500
+    return round(int(float(bval)) / 500) * 500
