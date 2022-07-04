@@ -1,4 +1,5 @@
 import os
+import re
 import tempfile
 import functools as ft
 
@@ -21,8 +22,12 @@ inputs = generate_inputs(
     bids_dir=config['bids_dir'],
     pybids_inputs=config['pybids_inputs'],
     derivatives=True,
-    participant_label=participant_label,
-    exclude_participant_label=exclude_participant_label,
+    participant_label=(
+        participant_label.split(",") if participant_label else None
+    ),
+    exclude_participant_label=(
+        exclude_participant_label.split(",") if exclude_participant_label else None
+    ),
     use_bids_inputs=True,
     pybids_database_dir=config.get("pybids_database_dir"),
     pybids_reset_database=config.get("pybids_reset_database"),
@@ -43,6 +48,11 @@ qc = Path(output)/"qc"
 
 # Unique ID for easy naming in temporary files
 uid = '.'.join(wildcards.values())
+def shell_uid(sample):
+    return '.'.join(
+        re.sub(r'^\{', '{wildcards.', val)
+        for val in inputs.input_wildcards[sample].values()
+    )
 
 ###
 # bids Partials

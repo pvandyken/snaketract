@@ -3,6 +3,7 @@ atlases:
   registration_atlas: resources/ORG-Atlases-1.1.1/ORG-RegAtlas-100HCP/registration_atlas.vtk
   cluster_atlas: resources/ORG-Atlases-1.1.1/ORG-800FC-100HCP
   hemispheric_tracts: resources/
+  brainnetome: resources/BN_Atlas_freesurfer/
 surfaces:
   left: blah
   right: blah
@@ -10,6 +11,7 @@ tractography:
   maxlength: 250
   cutoff: 0.06
   num_tracts: 10000000
+freesurfer_output: /scratch/knavynde/newtopsy/derivatives/fmriprep_21.0.0_anat-only/sourcedata/freesurfer
 pybids_inputs:
   preproc_dwi:
     filters:
@@ -70,6 +72,22 @@ pybids_inputs:
     filters:
       extension: .surf.gii
       suffix: smoothwm
+    wildcards:
+      - subject
+      - hemi
+  surf_mid:
+    filters:
+      extension: .surf.gii
+      suffix: midthickness
+      scope: fMRIPrep
+    wildcards:
+      - subject
+      - hemi
+  surf_pial:
+    filters:
+      extension: .surf.gii
+      suffix: pial
+      scope: fMRIPrep
     wildcards:
       - subject
       - hemi
