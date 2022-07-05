@@ -37,10 +37,11 @@ rule get_hemispheric_tracts:
                 sh.ShFor(cluster:=sh.ShVar(), _in="`cat {input.index}`") >> (
                     sh.mv(f"{{input.data}}/{hemi}/{cluster}", f"{{output}}.tmp/{cluster}"),
                 ),
-                Pyscript(workflow.basedir, python_path=convert_env.python_path)(
+                Pyscript(workflow.basedir)(
                     input={"input": f"{{output}}.tmp/\*.vtp"},
                     output={"output": f"{{output}}/\*.tck"},
                     script="scripts/convert_vtk.py",
+                    python_path=convert_env.python_path,
                 ),
             )
         )

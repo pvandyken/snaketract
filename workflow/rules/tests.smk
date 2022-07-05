@@ -1,10 +1,11 @@
-test_boost = Boost("/tmp", debug=True, disable_script=True)
+test_boost = Boost("/tmp", logger)
 
 rule make_pipenv:
     output:
         "venv.tar.gz"
     shell:
-        tar.using(outputs = ["{output}"])(
+        test_boost(
+            tar.using(outputs = ["{output}"]),
             "virtualenv {output} && cat {output}/pyvenv.cfg",
         )
 
@@ -22,19 +23,17 @@ rule read_gitignore:
     input:
         rules.make_pipenv.output
     output:
-        "gitignore.done"
+        touch("gitignore.{i}.done")
     shell:
         test_boost(
             tar.using(inputs=["{input}"]),
-            (
-                "cat {input}/.gitignore && touch {output}"
-            )
+            "cat {input}/.gitignore"
         )
 
 rule read_pipenv:
     input:
         pip=rules.make_pipenv.output,
-        out=rules.read_gitignore.output
+        out=expand(rules.read_gitignore.output, i=range(6))
     shell:
         test_boost(
             tar.using(inputs=["{input.pip}"]),
@@ -43,6 +42,38 @@ rule read_pipenv:
 
 rule pipenv:
     input: rules.add_gitignore.output
+
+# rule make_big_tar:
+#     input: "data"
+#     output: "bigtar.tar.gz"
+#     shell:
+#         test_boost(
+#             tar.using(outputs=["{output}"]),
+#             "cp -r data/* {output}"
+#         )
+
+# rule read_big_tar:
+#     input: "bigtar.tar.gz"
+#     output: "read.{i}.txt"
+#     shell:
+#         test_boost(
+#             tar.using(inputs=["{input}"]),
+#             "ls {input} |  wc -l > {output}"
+#         )
+
+rule add_to_tar:
+    input: rules.make_big_tar.output
+    output: touch("tar.finished")
+    shell:
+        test_boost(
+            tar.using(modify=["input"]),
+            "touch {input}/foo"
+        )
+
+rule read_all_big_tars:
+    input:
+        rules.add_to_tar.output,
+        expand(rules.read_big_tar.output, i=range(3)),
 
 rule test_pipenv_creation:
     shell:

@@ -55,10 +55,11 @@ rule reformat_clusters:
                     ) |
                     "xargs -L 1 mv",
 
-                    Pyscript(workflow.basedir, python_path=wma_env.python_path)(
+                    Pyscript(workflow.basedir)(
                         input={"input": vtp_dir},
                         output={"output": str(tmpdir)+"/vtk-tracts"},
                         script="scripts/convert_vtk.py",
+                        python_path=wma_env.python_path,
                     ),
 
                     sh.find(str(tmpdir)+"/vtk-tracts -type f") |

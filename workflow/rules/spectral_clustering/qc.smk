@@ -1,9 +1,3 @@
-from pathlib import Path
-from lib.pipenv import PipEnv
-from lib.utils import XvfbRun
-import itertools as it
-
-
 wma_qc = qc/"whitematteranalysis"
 
 rule qc_tractography_unregistered_overlap:

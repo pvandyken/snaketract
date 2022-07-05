@@ -258,7 +258,7 @@ rule transform_clusters_to_subject_space:
         boost(
             datalad.msg("Convert clusters back to subject T1w space"),
             xvfb_run,
-            tar.using(inputs=["{input.data}"], clear_mounts=True),
+            tar.using(inputs=["{input.data}"]),
             wma_env.script,
             Pyscript(workflow.basedir)(
                 "scripts/harden_transform.py",
@@ -327,7 +327,7 @@ rule assign_to_anatomical_tracts:
     shell:
         boost(
             datalad.msg("Assign clusters to one of 73 anatomical tracts"),
-            tar.using(inputs=["{input.data}"], outputs=["{output}"], clear_mounts=True),
+            tar.using(inputs=["{input.data}"], outputs=["{output}"]),
             wma_env.script,
             (
                 "wm_append_clusters_to_anatomical_tracts.py "
