@@ -6,7 +6,7 @@ def translate_hemi(path):
         return str(path).format(**wcards)
     return inner
 
-rule map_brainnetome_atlas:
+rule map_brainnetome_atlas_cortex:
     input:
         atlas=translate_hemi(
             Path(config["atlases"]['brainnetome'], "{hemi}.BN_Atlas.gcs")
@@ -23,6 +23,7 @@ rule map_brainnetome_atlas:
             suffix="aparc.label.gii",
             **inputs.input_wildcards["surf"],
         )
+    shadow: "minimal"
 
     group: "connectome"
     envmodules:
@@ -35,43 +36,73 @@ rule map_brainnetome_atlas:
     resources:
         mem_mb=3000,
         runtime=1,
-    log: f"logs/map_brainnetome_atlas/{'.'.join(inputs.input_wildcards['surf'].values())}.log"
-    benchmark: f"benchmarks/map_brainnetome_atlas/{'.'.join(inputs.input_wildcards['surf'].values())}.tsv"
+    log: f"logs/map_brainnetome_atlas_cortex/{'.'.join(inputs.input_wildcards['surf'].values())}.log"
+    benchmark: f"benchmarks/map_brainnetome_atlas_cortex/{'.'.join(inputs.input_wildcards['surf'].values())}.tsv"
     shell:
-        boost(
-            (
-                subject_dir := sh.ShVar(
-                    config["freesurfer_output"],
-                    name="SINGULARITYENV_SUBJECTS_DIR",
-                    export=True
-                ),
-                hemi := sh.ShVar(
-                    sh.echo("{wildcards.hemi}") |
-                    sh.awk('print tolower($0)')
-                ),
-                tmp_out := sh.ShVar(
-                    work/"map_brainnetome_atlas"/f"{shell_uid('surf')}.annot"
-                ),
-                "declare -A structure",
-                "structure[l]=CORTEX_LEFT",
-                "structure[r]=CORTEX_RIGHT",
+        env.untracked(
+            # Get the hemisphere in lowercase
+            hemi = sh.echo("{wildcards.hemi}") | sh.awk('print tolower($0)'),
+        ),
+        env.export.untracked(
+            SINGULARITYENV_SUBJECTS_DIR = config["freesurfer_output"],
+        ),
+        (
+            "declare -A structure",
+            "structure[l]=CORTEX_LEFT",
+            "structure[r]=CORTEX_RIGHT",
 
-                f"mkdir -p $(dirname {tmp_out})",
+            "mris_ca_label sub-{wildcards.subject} {sb_env.hemi}h "
+            "{input.sphere} {input.atlas} tmp.annot",
 
-                f"mris_ca_label sub-{{wildcards.subject}} {hemi.escape()}h "
-                f"{{input.sphere}} {{input.atlas}} {tmp_out}",
+            "mris_convert --annot tmp.annot {input.surf} {output}",
 
-                f"mris_convert --annot {tmp_out} {{input.surf}} {{output}}",
+            "wb_command -set-structure {output} "
+            "${{structure[{sb_env.hemi}]}}"
+        )
 
-                "wb_command -set-structure {output} "
-                f"${{{{structure[{hemi.escape()}]}}}}"
-            )
+
+rule map_brainnetome_atlas_subcortex:
+    input:
+        atlas=Path(config["atlases"]['brainnetome'], "BN_Atlas_subcortex.gca"),
+        txf=Path(
+            config["freesurfer_output"], "sub-{subject}/mri/transforms/talairach.m3z"
+        ),
+        volume=Path(
+            config["freesurfer_output"], "sub-{subject}/mri/brain.mgz"
+        ),
+    output:
+        bids_output_anat(
+            atlas="bn",
+            desc="subcortex",
+            suffix="dseg.nii.gz",
+            **inputs.input_wildcards["surf"],
+        )
+    shadow: "minimal"
+    log: f"logs/map_brainnetome_atlas_subcortex/{'.'.join(wildcards.values())}.log"
+    benchmark: f"benchmarks/map_brainnetome_atlas_subcortex/{'.'.join(wildcards.values())}.tsv"
+    container:
+    envmodules:
+        "freesurfer",
+        "mrtrix",
+        "git-annex/8.20200810"
+    group: "connectome"
+    threads: 1
+    resources:
+        mem_mb=1000,
+        runtime=30,
+    shell:
+        env.export.untracked(
+            SINGULARITYENV_SUBJECTS_DIR = config["freesurfer_output"],
+        )
+        (
+            "mri_ca_label {input.volume} {input.txf} {input.atlas} $(pwd)/out.mgz",
+            "mrconvert out.mgz {output}"
         )
 
 
 rule map_labels_to_volume_ribbon:
     input:
-        label = rules.map_brainnetome_atlas.output,
+        label = rules.map_brainnetome_atlas_cortex.output,
         surf = inputs.input_path["surf_mid"],
         anat_ref = inputs.input_path["t1"],
         white_surf = inputs.input_path["surf"],
@@ -91,10 +122,7 @@ rule map_labels_to_volume_ribbon:
         runtime=20,
     log: f"logs/map_labels_to_volume_ribbon/{'.'.join(inputs.input_wildcards['surf'].values())}.log"
     benchmark: f"benchmarks/map_labels_to_volume_ribbon/{'.'.join(inputs.input_wildcards['surf'].values())}.tsv"
-    params:
-        tmp_out = str(work/uid/"{hemi}.annot")
     shell:
-        # "touch {output}"
         "wb_command -label-to-volume-mapping "
         "{input.label} {input.surf} {input.anat_ref} {output} "
         "-ribbon-constrained {input.white_surf} {input.pial_surf} -greedy"
@@ -114,7 +142,7 @@ rule combine_dseg_hemispheres:
         ),
     output:
         bids_output_anat(
-            atlas="bn",
+            atlas="bn210",
             suffix="dseg.nii.gz",
             **inputs.input_wildcards["preproc_dwi"],
         )
@@ -133,16 +161,68 @@ rule combine_dseg_hemispheres:
     log: f"logs/combine_dseg_hemispheres/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/combine_dseg_hemispheres/{'.'.join(wildcards.values())}.tsv"
     shell:
-        # "touch {output}"
         "wb_command -volume-math "
         "'max(l, 0) + max(r, 0) - (max(l, 0) * (r > 0))' "
         "-var l {input.left} -var r {input.right} {output}"
 
 
+rule reslice_cortical_seg_to_subcortex_volume_space:
+    input:
+        cortex=rules.combine_dseg_hemispheres.output,
+        subcortex=rules.map_brainnetome_atlas_subcortex.output,
+    output:
+        temp(work/"reslice_cortical_seg_to_subcortex_volume_space"/uid/".nii.gz")
+    log: f"logs/reslice_cortical_seg_to_subcortex_volume_space/{'.'.join(wildcards.values())}.log"
+    benchmark: f"benchmarks/reslice_cortical_seg_to_subcortex_volume_space/{'.'.join(wildcards.values())}.tsv"
+    envmodules:
+        "ants"
+    group: "connectome"
+    threads: 1
+    resources:
+        mem_mb=1000,
+        runtime=30,
+    shell:
+        "antsApplyTransforms -i {input.cortex} -r {input.subcortex} -o {output}"
+
+
+rule combine_dseg_cortex_subcortex:
+    input:
+        cortex=rules.reslice_cortical_seg_to_subcotex_volume_space.output,
+        subcortex=rules.map_brainnetome_atlas_subcortex.output,
+    output:
+        bids_output_anat(
+            atlas="bn246",
+            suffix="dseg.nii.gz",
+            **inputs.input_wildcards["preproc_dwi"],
+        )
+    log: f"logs/combine_dseg_cortex_subcortex/{'.'.join(wildcards.values())}.log"
+    benchmark: f"benchmarks/combine_dseg_cortex_subcortex/{'.'.join(wildcards.values())}.tsv"
+    container:
+        "docker://khanlab/connectome-workbench:latest"
+    group: "connectome"
+    threads: 1
+    resources:
+        mem_mb=1000,
+        runtime=30,
+    shell:
+        "wb_command -volume-math 'max(s, 0) + max(c, 0) - (max(s, 0) * (c > 0))' "
+        "-var s {input.subcortex} -var c {input.cortex} {output} "
+
+
+def _get_segmentation(wildcards):
+    if config["segmentation"] == "bn210":
+        return rules.combine_dseg_hemispheres.output[0].format(**wildcards)
+    if config["segmentation"] == "bn246":
+        return rules.combine_dseg_cortex_subcortex.output[0].format(**wildcards)
+    raise ValueError(
+        "config key 'segmentation' mut be set to one of 'bn210' or 'bn246', currently "
+        f"'{config['segmentation']}'"
+    )
+
 rule get_connectome:
     input:
         tracks=rules.run_act.output,
-        nodes=rules.combine_dseg_hemispheres.output,
+        nodes=_get_segmentation,
         tck_weights=rules.run_sift2.output.weights,
     output:
         connectome=bids_output_dwi(
@@ -159,7 +239,6 @@ rule get_connectome:
     envmodules:
         "git-annex/8.20200810",
         "mrtrix"
-
 
     threads: 4
     resources:
