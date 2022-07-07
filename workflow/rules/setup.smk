@@ -6,7 +6,7 @@ import functools as ft
 from snakebids import bids, generate_inputs
 
 from pathlib import Path
-from snakeboost import Tar, Pyscript, ScriptDict, XvfbRun, PipEnv, Boost, Datalad
+from snakeboost import Tar, Pyscript, ScriptDict, XvfbRun, PipEnv, Boost, Datalad, Env
 import snakeboost.bash as sh
 
 
@@ -14,6 +14,22 @@ participant_label = config.get("participant_label", None)
 exclude_participant_label = (
     config.get("exclude_participant_label", None) if not participant_label else None
 )
+
+
+###
+# Evaluate env vars passed through CLI
+###
+def eval_environ(s):
+    if s and s[0] = "$":
+        return os.environ.get(s[1:])
+    return s
+
+tmpdir = eval_environ(workflow.default_resources._args.get("tmpdir"))
+
+if tmpdir is not None:
+    workflow.default_resources.set_resource("tmpdir", tmpdir)
+
+workflow.shadow_prefix = eval_environ(workflow.shadow_prefix)
 
 ###
 # Input Globals
@@ -38,16 +54,15 @@ wildcards = inputs.input_wildcards['preproc_dwi']
 ###
 # Output Globals
 ###
-work = Path(
-    os.environ.get(config.get('tmpdir', ""), tempfile.mkdtemp(prefix="sn-tmp."))
-)/'prepdwi-recon'
 
-output = config['output_dir'] + "/prepdwi_recon"
+work = Path(tempfile.mkdtemp(dir=tmpdir, prefix="sn-work."))
 shared_work = Path(config['output_dir'])/'work'/'prepdwi_recon'
+output = Path(config['output_dir'])/"prepdwi_recon"
 qc = Path(output)/"qc"
 
 # Unique ID for easy naming in temporary files
 uid = '.'.join(wildcards.values())
+
 def shell_uid(sample):
     return '.'.join(
         re.sub(r'^\{', '{wildcards.', val)
@@ -67,6 +82,10 @@ tar = Tar(work)
 xvfb_run = XvfbRun()
 boost = Boost(work, logger)
 datalad = Datalad(config['bids_dir'])
+env = Env()
+
+# Patch shells in workflow, allowing implicit use of boost in every shell: ...
+workflow.shellcmd = lambda *cmd: Workflow.shellcmd(workflow, boost(*cmd))
 
 ###
 # Pipenvs

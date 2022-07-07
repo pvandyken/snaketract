@@ -19,10 +19,8 @@ rule convert_dwi_to_mrtrix_format:
     log: f"logs/convert_dwi_to_mrtrix_format/{'.'.join(wildcards.values())}.log"
     group: "response_generation"
     shell:
-        boost(
-            datalad,
-            'mrconvert {input.dwi} {output} -fslgrad {input.bvec} {input.bval} 2> {log}'
-        )
+        datalad,
+        'mrconvert {input.dwi} {output} -fslgrad {input.bvec} {input.bval} 2> {log}'
 
 
 
@@ -37,10 +35,8 @@ rule convert_mask_to_mrtrix_format:
     log: "logs/convert_mask_to_mrtrix_format/{subject}.log"
     group: "response_generation"
     shell:
-        boost(
-            datalad,
-            'mrconvert {input} {output} 2> {log}'
-        )
+        datalad,
+        'mrconvert {input} {output} 2> {log}'
 
 
 rule generate_response_function:
@@ -76,12 +72,10 @@ rule generate_response_function:
         "mrtrix/3.0.1",
         "git-annex/8.20200810"
     shell:
-        boost(
-            datalad.msg("Estimate WM, GM, CSF response functions"),
-            'dwi2response dhollander {input.dwi} {output.wm} {output.gm} {output.csf} '
-            '-voxels {output.voxels} -mask {input.mask} -scratch {resources.tmpdir} '
-            '2> {log}'
-        )
+        datalad.msg("Estimate WM, GM, CSF response functions"),
+        'dwi2response dhollander {input.dwi} {output.wm} {output.gm} {output.csf} '
+        '-voxels {output.voxels} -mask {input.mask} -scratch {resources.tmpdir} '
+        '2> {log}'
 
 
 rule compute_ss3t_fiber_orientation_densities:
@@ -162,12 +156,10 @@ rule compute_ms3t_fiber_orientation_densities:
         "git-annex/8.20200810"
     log: "logs/compute_ms3t_fiber_orientation_densities/{subject}.log"
     shell:
-        boost(
-            datalad.msg("Compute fod using ss3t algorithm"),
-            'dwi2fod msmt_csd {input.dwi} '
-            '{input.wm} {output.wm} {input.gm} {output.gm} {input.csf} {output.csf} '
-            '-mask {input.mask} -nthreads {threads} 2> {log}'
-        )
+        datalad.msg("Compute fod using ss3t algorithm"),
+        'dwi2fod msmt_csd {input.dwi} '
+        '{input.wm} {output.wm} {input.gm} {output.gm} {input.csf} {output.csf} '
+        '-mask {input.mask} -nthreads {threads} 2> {log}'
 
 
 rule normalize_fiber_orientation_densities:
@@ -215,9 +207,7 @@ rule normalize_fiber_orientation_densities:
         "git-annex/8.20200810"
     log: "logs/normalize_fiber_orientation_densities/{subject}.log"
     shell:
-        boost(
-            datalad.msg("Normalize fod functions"),
-            'mtnormalise '
-            '{input.wm} {output.wm} {input.gm} {output.gm} {input.csf} {output.csf} '
-            '-mask {input.mask} 2> {log}'
-        )
+        datalad.msg("Normalize fod functions"),
+        'mtnormalise '
+        '{input.wm} {output.wm} {input.gm} {output.gm} {input.csf} {output.csf} '
+        '-mask {input.mask} 2> {log}'

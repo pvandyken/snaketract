@@ -30,47 +30,45 @@ rule reformat_clusters:
         tmpdir=str(work/"__sn_tmp__"),
 
     shell:
-        boost(
-            datalad,
-            tar.using(inputs=["{input}"], outputs=["{output}"]),
-            wma_env.make_venv,
-            (
-                tmpdir := sh.ShVar(
-                    "{resources.tmpdir}/reformat_clusters/{wildcards.subject}"
+        datalad,
+        tar.using(inputs=["{input}"], outputs=["{output}"]),
+        wma_env.make_venv,
+        (
+            tmpdir := sh.ShVar(
+                "{resources.tmpdir}/reformat_clusters/{wildcards.subject}"
+            ),
+            sh.ShTry(
+                vtp_dir := sh.ShVar(str(tmpdir)+"/vtp-tracts"),
+                sh.mkdir(vtp_dir).p,
+                sh.mv("{input}/tracts_left_hemisphere/*", vtp_dir),
+
+                sh.find("{input}/tracts_right_hemisphere/ -type f") |
+                sh.awk(*rename_awk_expr).F('/').v(
+                    offset='800', output=vtp_dir
+                ) |
+                "xargs -L 1 mv",
+
+                sh.find("{input}/tracts_commissural/ -type f") |
+                sh.awk(*rename_awk_expr).F('/').v(
+                    offset='1600', output=vtp_dir
+                ) |
+                "xargs -L 1 mv",
+
+                Pyscript(workflow.basedir)(
+                    input={"input": vtp_dir},
+                    output={"output": str(tmpdir)+"/vtk-tracts"},
+                    script="scripts/convert_vtk.py",
+                    python_path=wma_env.python_path,
                 ),
-                sh.ShTry(
-                    vtp_dir := sh.ShVar(str(tmpdir)+"/vtp-tracts"),
-                    sh.mkdir(vtp_dir).p,
-                    sh.mv("{input}/tracts_left_hemisphere/*", vtp_dir),
 
-                    sh.find("{input}/tracts_right_hemisphere/ -type f") |
-                    sh.awk(*rename_awk_expr).F('/').v(
-                        offset='800', output=vtp_dir
-                    ) |
-                    "xargs -L 1 mv",
-
-                    sh.find("{input}/tracts_commissural/ -type f") |
-                    sh.awk(*rename_awk_expr).F('/').v(
-                        offset='1600', output=vtp_dir
-                    ) |
-                    "xargs -L 1 mv",
-
-                    Pyscript(workflow.basedir)(
-                        input={"input": vtp_dir},
-                        output={"output": str(tmpdir)+"/vtk-tracts"},
-                        script="scripts/convert_vtk.py",
-                        python_path=wma_env.python_path,
-                    ),
-
-                    sh.find(str(tmpdir)+"/vtk-tracts -type f") |
-                    sh.awk('print $0 " {output}/"$(NF-1)".tck"').F('[./]') |
-                    "xargs -L 1 tckconvert"
-                ).catch(
-                    f"rm {tmpdir} -rf",
-                    "false"
-                ).els(
-                    f"rm {tmpdir} -rf"
-                )
+                sh.find(str(tmpdir)+"/vtk-tracts -type f") |
+                sh.awk('print $0 " {output}/"$(NF-1)".tck"').F('[./]') |
+                "xargs -L 1 tckconvert"
+            ).catch(
+                f"rm {tmpdir} -rf",
+                "false"
+            ).els(
+                f"rm {tmpdir} -rf"
             )
         )
 
@@ -92,11 +90,9 @@ rule create_r1:
         tmpdir=str(work/"__sn_tmp__"),
     group: "profiling"
     shell:
-        boost(
-            Pyscript(workflow.basedir)(
-                "scripts/produce-r1.py",
-                input=["data", "mask"]
-            )
+        Pyscript(workflow.basedir)(
+            "scripts/produce-r1.py",
+            input=["data", "mask"]
         )
 
 
@@ -118,15 +114,13 @@ rule tract_profiles:
     params:
     group: "profiling"
     shell:
-        boost(
-            datalad,
-            tar.using(inputs=["{input.data}"]),
-            dipy_env.script,
-            Pyscript(workflow.basedir)(
-                "scripts/tract-profiling.py",
-                input=["data", "ref", "r1", "fa"],
-                wildcards=["subject"]
-            )
+        datalad,
+        tar.using(inputs=["{input.data}"]),
+        dipy_env.script,
+        Pyscript(workflow.basedir)(
+            "scripts/tract-profiling.py",
+            input=["data", "ref", "r1", "fa"],
+            wildcards=["subject"]
         )
 
 rule aggregate_profiles:
@@ -144,9 +138,7 @@ rule aggregate_profiles:
         mem_mb=1000,
         runtime=30,
     shell:
-        boost(
-            dipy_env.script,
-            Pyscript(workflow.basedir)(
-                "scripts/tract-profile-merge.py"
-            )
+        dipy_env.script,
+        Pyscript(workflow.basedir)(
+            "scripts/tract-profile-merge.py"
         )

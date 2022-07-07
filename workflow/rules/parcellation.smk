@@ -20,30 +20,28 @@ rule get_hemispheric_tracts:
         runtime=10,
 
     shell:
-        boost(
-            datalad.msg(""),
-            tar.using(inputs = ["{input.data}"]),
-            convert_env.make_venv,
-            (
-                hemi := sh.ShVar(
-                    sh.ShIf("{wildcards.hemi}").eq("L") >> (
-                        sh.echo("tracts_left_hemisphere").n()
-                    ) >> (
-                        sh.echo("tracts_right_hemisphere").n()
-                    ),
-                    export=True
+        datalad.msg(""),
+        tar.using(inputs = ["{input.data}"]),
+        convert_env.make_venv,
+        (
+            hemi := sh.ShVar(
+                sh.ShIf("{wildcards.hemi}").eq("L") >> (
+                    sh.echo("tracts_left_hemisphere").n()
+                ) >> (
+                    sh.echo("tracts_right_hemisphere").n()
                 ),
-                "mkdir -p {output}.tmp",
-                sh.ShFor(cluster:=sh.ShVar(), _in="`cat {input.index}`") >> (
-                    sh.mv(f"{{input.data}}/{hemi}/{cluster}", f"{{output}}.tmp/{cluster}"),
-                ),
-                Pyscript(workflow.basedir)(
-                    input={"input": f"{{output}}.tmp/\*.vtp"},
-                    output={"output": f"{{output}}/\*.tck"},
-                    script="scripts/convert_vtk.py",
-                    python_path=convert_env.python_path,
-                ),
-            )
+                export=True
+            ),
+            "mkdir -p {output}.tmp",
+            sh.ShFor(cluster:=sh.ShVar(), _in="`cat {input.index}`") >> (
+                sh.mv(f"{{input.data}}/{hemi}/{cluster}", f"{{output}}.tmp/{cluster}"),
+            ),
+            Pyscript(workflow.basedir)(
+                input={"input": f"{{output}}.tmp/\*.vtp"},
+                output={"output": f"{{output}}/\*.tck"},
+                script="scripts/convert_vtk.py",
+                python_path=convert_env.python_path,
+            ),
         )
 
 
@@ -76,11 +74,9 @@ rule get_parcellation:
         mem_mb=3000,
         runtime=28,
     shell:
-        boost(
-            datalad.msg(""),
-            parcellation_env.script,
+        datalad.msg(""),
+        parcellation_env.script,
 
-            "intersection main "
-            "{input.mesh} {input.tracts} "
-            "{output.atlas} {output.connectome} --threads {threads}"
-        )
+        "intersection main "
+        "{input.mesh} {input.tracts} "
+        "{output.atlas} {output.connectome} --threads {threads}"

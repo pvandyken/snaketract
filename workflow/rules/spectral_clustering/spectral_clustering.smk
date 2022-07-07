@@ -107,18 +107,16 @@ rule tractography_registration:
         transform_tfm=f"{registration_files}/itk_txform_{registration_output}.tfm",
         transform_xfm=f"{registration_files}/vtk_txform_{registration_output}.xfm"
     shell:
-        boost(
-            datalad.msg("Register tractography to ORG atlas"),
-            wma_env.script,
-            (
-                "wm_register_to_atlas_new.py "
-                "-mode {params.mode} "
-                "{input.data} {input.atlas} {params.main} && "
+        datalad.msg("Register tractography to ORG atlas"),
+        wma_env.script,
+        (
+            "wm_register_to_atlas_new.py "
+            "-mode {params.mode} "
+            "{input.data} {input.atlas} {params.main} && "
 
-                "mv {params.transformed_data} {output.data} && "
-                "mv {params.transform_tfm} {output.transform_tfm} && "
-                "mv {params.transform_xfm} {output.transform_xfm}"
-            )
+            "mv {params.transformed_data} {output.data} && "
+            "mv {params.transform_tfm} {output.transform_tfm} && "
+            "mv {params.transform_xfm} {output.transform_xfm}"
         )
 
 
@@ -149,18 +147,16 @@ rule tractography_spectral_clustering:
         work_folder=str(work/"tractography_clustering"/uid),
         results_subfolder=Path(rules.tractography_registration.output.data).stem
     shell:
-        boost(
-            datalad.msg("Cluster tracts with spectral clustering"),
-            xvfb_run,
-            tar.using(outputs=["{output}"]),
-            wma_env.script,
-            (
-                "wm_cluster_from_atlas.py "
-                "-j {threads} "
-                "{input.data} {input.atlas} {params.work_folder} && "
+        datalad.msg("Cluster tracts with spectral clustering"),
+        xvfb_run,
+        tar.using(outputs=["{output}"]),
+        wma_env.script,
+        (
+            "wm_cluster_from_atlas.py "
+            "-j {threads} "
+            "{input.data} {input.atlas} {params.work_folder} && "
 
-                "mv {params.work_folder}/{params.results_subfolder}/* {output}"
-            )
+            "mv {params.work_folder}/{params.results_subfolder}/* {output}"
         )
 
 
@@ -186,18 +182,16 @@ rule remove_cluster_outliers:
         work_folder=work/"tractography_outlier_removal",
         results_subfolder=Path(rules.tractography_spectral_clustering.output[0]).name
     shell:
-        boost(
-            datalad.msg("Remove outliers from clusters"),
-            tar.using(inputs = ["{input.data}"], outputs = ["{output}"]),
-            wma_env.script,
-            (
-                "wm_cluster_remove_outliers.py "
-                "-j {threads} "
-                "{input.data} {input.atlas} {params.work_folder} && "
+        datalad.msg("Remove outliers from clusters"),
+        tar.using(inputs = ["{input.data}"], outputs = ["{output}"]),
+        wma_env.script,
+        (
+            "wm_cluster_remove_outliers.py "
+            "-j {threads} "
+            "{input.data} {input.atlas} {params.work_folder} && "
 
-                "mv "
-                "{params.work_folder}/{params.results_subfolder}_outlier_removed/* {output}/"
-            )
+            "mv "
+            "{params.work_folder}/{params.results_subfolder}_outlier_removed/* {output}/"
         )
 
 
@@ -222,15 +216,13 @@ rule assess_cluster_location_by_hemisphere:
         runtime=10,
 
     shell:
-        boost(
-            datalad.msg("Assign cluster locations (left v right hem)"),
-            tar.using(modify=["{input.data}"]),
-            wma_env.script,
-            (
-                "wm_assess_cluster_location_by_hemisphere.py "
-                "{input.data} -clusterLocationFile "
-                "{input.atlas}/cluster_hemisphere_location.txt"
-            )
+        datalad.msg("Assign cluster locations (left v right hem)"),
+        tar.using(modify=["{input.data}"]),
+        wma_env.script,
+        (
+            "wm_assess_cluster_location_by_hemisphere.py "
+            "{input.data} -clusterLocationFile "
+            "{input.atlas}/cluster_hemisphere_location.txt"
         )
 
 rule transform_clusters_to_subject_space:
@@ -255,82 +247,76 @@ rule transform_clusters_to_subject_space:
         runtime=5,
 
     shell:
-        boost(
-            datalad.msg("Convert clusters back to subject T1w space"),
-            xvfb_run,
-            tar.using(inputs=["{input.data}"]),
-            wma_env.script,
-            Pyscript(workflow.basedir)(
-                "scripts/harden_transform.py",
-                input=["data", "transform"]
-            )
+        datalad.msg("Convert clusters back to subject T1w space"),
+        xvfb_run,
+        tar.using(inputs=["{input.data}"]),
+        wma_env.script,
+        Pyscript(workflow.basedir)(
+            "scripts/harden_transform.py",
+            input=["data", "transform"]
         )
 
 
 rule separate_clusters_by_hemisphere:
-    input:
-        rules.transform_clusters_to_subject_space.output,
+input:
+    rules.transform_clusters_to_subject_space.output,
 
-    output:
-        bids_output_dwi(
-            atlas="ORG",
-            desc="sorted",
-            suffix="clusters.tar.gz"
-        )
+output:
+    bids_output_dwi(
+        atlas="ORG",
+        desc="sorted",
+        suffix="clusters.tar.gz"
+    )
 
-    log: f"logs/separate_clusters_by_cluster/{'.'.join(wildcards.values())}.log"
-    benchmark: f"benchmarks/separate_clusters_by_cluster/{'.'.join(wildcards.values())}.tsv"
+log: f"logs/separate_clusters_by_cluster/{'.'.join(wildcards.values())}.log"
+benchmark: f"benchmarks/separate_clusters_by_cluster/{'.'.join(wildcards.values())}.tsv"
 
-    envmodules:
-        'python/3.7',
-        "git-annex/8.20200810"
+envmodules:
+    'python/3.7',
+    "git-annex/8.20200810"
 
-    group: "cluster_postprocess"
-    resources:
-        mem_mb=1500,
-        runtime=15,
+group: "cluster_postprocess"
+resources:
+    mem_mb=1500,
+    runtime=15,
 
-    shell:
-        boost(
-            datalad.msg("Seperate clusters into folders based on location"),
-            tar.using(outputs=["{output}"]),
-            wma_env.script,
+shell:
+    datalad.msg("Seperate clusters into folders based on location"),
+    tar.using(outputs=["{output}"]),
+    wma_env.script,
 
-            "wm_separate_clusters_by_hemisphere.py {input} {output}"
-        )
+    "wm_separate_clusters_by_hemisphere.py {input} {output}"
 
 
 rule assign_to_anatomical_tracts:
-    input:
-        data=rules.separate_clusters_by_hemisphere.output,
-        atlas=config["atlases"]["cluster_atlas"],
+input:
+    data=rules.separate_clusters_by_hemisphere.output,
+    atlas=config["atlases"]["cluster_atlas"],
 
-    output:
-        bids_output_dwi(
-            atlas="ORG",
-            desc="tracts",
-            suffix="clusters.tar.gz"
-        )
+output:
+    bids_output_dwi(
+        atlas="ORG",
+        desc="tracts",
+        suffix="clusters.tar.gz"
+    )
 
-    log: f"logs/assign_to_anatomical_tracts/{'.'.join(wildcards.values())}.log"
-    benchmark: f"benchmarks/assign_to_anatomical_tracts/{'.'.join(wildcards.values())}.tsv"
+log: f"logs/assign_to_anatomical_tracts/{'.'.join(wildcards.values())}.log"
+benchmark: f"benchmarks/assign_to_anatomical_tracts/{'.'.join(wildcards.values())}.tsv"
 
-    envmodules:
-        'python/3.7',
-        "git-annex/8.20200810"
+envmodules:
+    'python/3.7',
+    "git-annex/8.20200810"
 
-    group: "cluster_postprocess"
-    resources:
-        mem_mb=2000,
-        runtime=6,
+group: "cluster_postprocess"
+resources:
+    mem_mb=2000,
+    runtime=6,
 
-    shell:
-        boost(
-            datalad.msg("Assign clusters to one of 73 anatomical tracts"),
-            tar.using(inputs=["{input.data}"], outputs=["{output}"]),
-            wma_env.script,
-            (
-                "wm_append_clusters_to_anatomical_tracts.py "
-                "{input.data} {input.atlas} {output}"
-            )
-        )
+shell:
+    datalad.msg("Assign clusters to one of 73 anatomical tracts"),
+    tar.using(inputs=["{input.data}"], outputs=["{output}"]),
+    wma_env.script,
+    (
+        "wm_append_clusters_to_anatomical_tracts.py "
+        "{input.data} {input.atlas} {output}"
+    )
