@@ -19,12 +19,11 @@ rule map_brainnetome_atlas_cortex:
         ),
     output:
         bids_output_anat(
-            atlas="bn",
-            suffix="aparc.label.gii",
+            atlas="bn210",
+            suffix="dparc.label.gii",
             **inputs.input_wildcards["surf"],
         )
     shadow: "minimal"
-
     group: "connectome"
     envmodules:
         "freesurfer",
@@ -51,10 +50,11 @@ rule map_brainnetome_atlas_cortex:
             "structure[l]=CORTEX_LEFT",
             "structure[r]=CORTEX_RIGHT",
 
+            "ls -al $(pwd)/{input.atlas}",
             "mris_ca_label sub-{wildcards.subject} {sb_env.hemi}h "
-            "{input.sphere} {input.atlas} tmp.annot",
+            "{input.sphere} $(pwd)/{input.atlas} $(pwd)/tmp.annot || ls -al {input.atlas}",
 
-            "mris_convert --annot tmp.annot {input.surf} {output}",
+            "mris_convert --annot $(pwd)/tmp.annot {input.surf} {output}",
 
             "wb_command -set-structure {output} "
             "${{structure[{sb_env.hemi}]}}"
@@ -75,29 +75,25 @@ rule map_brainnetome_atlas_subcortex:
             atlas="bn",
             desc="subcortex",
             suffix="dseg.nii.gz",
-            **inputs.input_wildcards["surf"],
+            **inputs.input_wildcards["preproc_dwi"],
         )
     shadow: "minimal"
     log: f"logs/map_brainnetome_atlas_subcortex/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/map_brainnetome_atlas_subcortex/{'.'.join(wildcards.values())}.tsv"
-    container:
     envmodules:
         "freesurfer",
         "mrtrix",
-        "git-annex/8.20200810"
+        "git-annex/8.20200810",
+        "singularity",
     group: "connectome"
     threads: 1
     resources:
         mem_mb=1000,
-        runtime=30,
+        runtime=10,
     shell:
-        env.export.untracked(
-            SINGULARITYENV_SUBJECTS_DIR = config["freesurfer_output"],
-        )
-        (
-            "mri_ca_label {input.volume} {input.txf} {input.atlas} $(pwd)/out.mgz",
-            "mrconvert out.mgz {output}"
-        )
+        "export SINGULARITYENV_SUBJECTS_DIR=" + config['freesurfer_output'],
+        "mri_ca_label {input.volume} {input.txf} {input.atlas} $(pwd)/out.mgz",
+        "mrconvert out.mgz {output}"
 
 
 rule map_labels_to_volume_ribbon:
@@ -175,19 +171,20 @@ rule reslice_cortical_seg_to_subcortex_volume_space:
     log: f"logs/reslice_cortical_seg_to_subcortex_volume_space/{'.'.join(wildcards.values())}.log"
     benchmark: f"benchmarks/reslice_cortical_seg_to_subcortex_volume_space/{'.'.join(wildcards.values())}.tsv"
     envmodules:
-        "ants"
+        "StdEnv/2020",
+        "gcc/9.3.0",
+        "ants/2.3.5"
     group: "connectome"
     threads: 1
     resources:
-        mem_mb=1000,
-        runtime=30,
+        mem_mb=500,
     shell:
         "antsApplyTransforms -i {input.cortex} -r {input.subcortex} -o {output}"
 
 
 rule combine_dseg_cortex_subcortex:
     input:
-        cortex=rules.reslice_cortical_seg_to_subcotex_volume_space.output,
+        cortex=rules.reslice_cortical_seg_to_subcortex_volume_space.output,
         subcortex=rules.map_brainnetome_atlas_subcortex.output,
     output:
         bids_output_anat(
@@ -201,18 +198,16 @@ rule combine_dseg_cortex_subcortex:
         "docker://khanlab/connectome-workbench:latest"
     group: "connectome"
     threads: 1
-    resources:
-        mem_mb=1000,
-        runtime=30,
     shell:
-        "wb_command -volume-math 'max(s, 0) + max(c, 0) - (max(s, 0) * (c > 0))' "
+        "wb_command -volume-math "
+        "'round( max(s, 0) + max(c, 0) - (max(s, 0) * (c > 0)) )' "
         "-var s {input.subcortex} -var c {input.cortex} {output} "
 
 
 def _get_segmentation(wildcards):
-    if config["segmentation"] == "bn210":
+    if wildcards["atlas"] == "bn210":
         return rules.combine_dseg_hemispheres.output[0].format(**wildcards)
-    if config["segmentation"] == "bn246":
+    if wildcards["atlas"] == "bn246":
         return rules.combine_dseg_cortex_subcortex.output[0].format(**wildcards)
     raise ValueError(
         "config key 'segmentation' mut be set to one of 'bn210' or 'bn246', currently "
@@ -226,11 +221,11 @@ rule get_connectome:
         tck_weights=rules.run_sift2.output.weights,
     output:
         connectome=bids_output_dwi(
-            atlas="bn",
+            atlas="{atlas}",
             suffix="connectome.csv",
         ),
         assignments=bids_output_dwi(
-            atlas="bn",
+            atlas="{atlas}",
             desc="tract",
             suffix="assignments.csv",
         ),
@@ -244,8 +239,8 @@ rule get_connectome:
     resources:
         mem_mb=5000,
         runtime=2,
-    log: f"logs/get_connectome/{'.'.join(wildcards.values())}.log"
-    benchmark: f"benchmarks/get_connectome/{'.'.join(wildcards.values())}.tsv"
+    log: f"logs/get_connectome/{'.'.join(wildcards.values())}.{{atlas}}.log"
+    benchmark: f"benchmarks/get_connectome/{'.'.join(wildcards.values())}.{{atlas}}.tsv"
     shell:
         "tck2connectome {input.tracks} {input.nodes} {output.connectome} "
         "-scale_invnodevol -symmetric -keep_unassigned "

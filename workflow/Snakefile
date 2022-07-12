@@ -20,7 +20,8 @@ localrules: all, qc, aggregate_profiles
 rule all:
     input:
         expand(
-            getattr(rules, config.get("target", ""), rules.get_parcellation).output,
+            getattr(rules, config.get("target", ""), rules.get_connectome).output,
+            atlas=config["segmentation"],
             **inputs.input_lists['surf']
         )
 
