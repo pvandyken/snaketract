@@ -258,65 +258,65 @@ rule transform_clusters_to_subject_space:
 
 
 rule separate_clusters_by_hemisphere:
-input:
-    rules.transform_clusters_to_subject_space.output,
+    input:
+        rules.transform_clusters_to_subject_space.output,
 
-output:
-    bids_output_dwi(
-        atlas="ORG",
-        desc="sorted",
-        suffix="clusters.tar.gz"
-    )
+    output:
+        bids_output_dwi(
+            atlas="ORG",
+            desc="sorted",
+            suffix="clusters.tar.gz"
+        )
 
-log: f"logs/separate_clusters_by_cluster/{'.'.join(wildcards.values())}.log"
-benchmark: f"benchmarks/separate_clusters_by_cluster/{'.'.join(wildcards.values())}.tsv"
+    log: f"logs/separate_clusters_by_cluster/{'.'.join(wildcards.values())}.log"
+    benchmark: f"benchmarks/separate_clusters_by_cluster/{'.'.join(wildcards.values())}.tsv"
 
-envmodules:
-    'python/3.7',
-    "git-annex/8.20200810"
+    envmodules:
+        'python/3.7',
+        "git-annex/8.20200810"
 
-group: "cluster_postprocess"
-resources:
-    mem_mb=1500,
-    runtime=15,
+    group: "cluster_postprocess"
+    resources:
+        mem_mb=1500,
+        runtime=15,
 
-shell:
-    datalad.msg("Seperate clusters into folders based on location"),
-    tar.using(outputs=["{output}"]),
-    wma_env.script,
+    shell:
+        datalad.msg("Seperate clusters into folders based on location"),
+        tar.using(outputs=["{output}"]),
+        wma_env.script,
 
-    "wm_separate_clusters_by_hemisphere.py {input} {output}"
+        "wm_separate_clusters_by_hemisphere.py {input} {output}"
 
 
 rule assign_to_anatomical_tracts:
-input:
-    data=rules.separate_clusters_by_hemisphere.output,
-    atlas=config["atlases"]["cluster_atlas"],
+    input:
+        data=rules.separate_clusters_by_hemisphere.output,
+        atlas=config["atlases"]["cluster_atlas"],
 
-output:
-    bids_output_dwi(
-        atlas="ORG",
-        desc="tracts",
-        suffix="clusters.tar.gz"
-    )
+    output:
+        bids_output_dwi(
+            atlas="ORG",
+            desc="tracts",
+            suffix="clusters.tar.gz"
+        )
 
-log: f"logs/assign_to_anatomical_tracts/{'.'.join(wildcards.values())}.log"
-benchmark: f"benchmarks/assign_to_anatomical_tracts/{'.'.join(wildcards.values())}.tsv"
+    log: f"logs/assign_to_anatomical_tracts/{'.'.join(wildcards.values())}.log"
+    benchmark: f"benchmarks/assign_to_anatomical_tracts/{'.'.join(wildcards.values())}.tsv"
 
-envmodules:
-    'python/3.7',
-    "git-annex/8.20200810"
+    envmodules:
+        'python/3.7',
+        "git-annex/8.20200810"
 
-group: "cluster_postprocess"
-resources:
-    mem_mb=2000,
-    runtime=6,
+    group: "cluster_postprocess"
+    resources:
+        mem_mb=2000,
+        runtime=6,
 
-shell:
-    datalad.msg("Assign clusters to one of 73 anatomical tracts"),
-    tar.using(inputs=["{input.data}"], outputs=["{output}"]),
-    wma_env.script,
-    (
-        "wm_append_clusters_to_anatomical_tracts.py "
-        "{input.data} {input.atlas} {output}"
-    )
+    shell:
+        datalad.msg("Assign clusters to one of 73 anatomical tracts"),
+        tar.using(inputs=["{input.data}"], outputs=["{output}"]),
+        wma_env.script,
+        (
+            "wm_append_clusters_to_anatomical_tracts.py "
+            "{input.data} {input.atlas} {output}"
+        )
