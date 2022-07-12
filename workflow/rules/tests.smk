@@ -61,19 +61,19 @@ rule pipenv:
 #             "ls {input} |  wc -l > {output}"
 #         )
 
-rule add_to_tar:
-    input: rules.make_big_tar.output
-    output: touch("tar.finished")
-    shell:
-        test_boost(
-            tar.using(modify=["input"]),
-            "touch {input}/foo"
-        )
+# rule add_to_tar:
+#     input: rules.make_big_tar.output
+#     output: touch("tar.finished")
+#     shell:
+#         test_boost(
+#             tar.using(modify=["input"]),
+#             "touch {input}/foo"
+#         )
 
-rule read_all_big_tars:
-    input:
-        rules.add_to_tar.output,
-        expand(rules.read_big_tar.output, i=range(3)),
+# rule read_all_big_tars:
+#     input:
+#         rules.add_to_tar.output,
+#         expand(rules.read_big_tar.output, i=range(3)),
 
 rule test_pipenv_creation:
     shell:
