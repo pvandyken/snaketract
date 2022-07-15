@@ -214,6 +214,10 @@ def _get_segmentation(wildcards):
         f"'{config['segmentation']}'"
     )
 
+def _get_weights(wildcards):
+    if wildcards["weight"] == "sift2":
+        return rules.run_sift2.output.weights.format(**wildcards)
+
 rule get_connectome:
     input:
         tracks=rules.run_act.output,
@@ -222,10 +226,12 @@ rule get_connectome:
     output:
         connectome=bids_output_dwi(
             atlas="{atlas}",
+            weight="{weight}"
             suffix="connectome.csv",
         ),
         assignments=bids_output_dwi(
             atlas="{atlas}",
+            weight="{weight}"
             desc="tract",
             suffix="assignments.csv",
         ),

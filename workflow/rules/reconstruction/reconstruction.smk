@@ -73,3 +73,34 @@ rule run_sift2:
             "-out_mu {output.mu} -out_coeffs {output.coeffs} "
             "{input.tracks} {input.fod} {output.weights}"
         )
+
+def _get_image(wildcards):
+    if wildcards["weight"] == "fa":
+        return inputs.input_path["fa"].format(**wildcards)
+    raise ValueError(
+        "config key 'connectome_weight_property' mut be set to 'fa', currently "
+        f"'{config['segmentation']}'"
+    )
+
+rule tck_sample:
+    input:
+        tracks=rules.run_act.output,
+        image=_get_image
+    output:
+        bids_output_dwi(
+            prop="{weight}",
+            desc="{stat}",
+            suffix='afq.csv'
+        ),
+    threads: 1
+    resources:
+        mem_mb=10000,
+        runtime=9
+    envmodules:
+        "mrtrix/3.0.1",
+        "git-annex/8.20200810"
+    log: "logs/tck_sample/{subject}.log"
+    benchmark: "benchmarks/tck_sample/sub-{subject}.tsv"
+    shell:
+        "tcksample {input.tracks} {input.image} {output} "
+        "-nthreads {threads} -stat_tck {wildcards.stat}"

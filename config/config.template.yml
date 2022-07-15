@@ -42,6 +42,13 @@ pybids_inputs:
       desc: preproc
     wildcards:
     - subject
+  fa:
+    filters:
+      suffix: FA
+      extension: .nii.gz
+      datatype: dwi
+    wildcards:
+    - subject
   t1:
     filters:
       suffix: T1w
