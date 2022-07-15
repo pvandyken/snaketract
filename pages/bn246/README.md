@@ -10,7 +10,9 @@
 Hubs by subject:
 
 Left = healthy controls, Right = First Episode Psychosis
+
 ![hubs](hubs.png)
 
 Hubs by condition:
+
 ![hubs by condition](hubs_summary.png)
