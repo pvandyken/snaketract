@@ -75,11 +75,26 @@ rule run_sift2:
         )
 
 def _get_image(wildcards):
-    if wildcards["weight"] == "fa":
+    if wildcards["weight"][3:] == "FA":
         return inputs.input_path["fa"].format(**wildcards)
     raise ValueError(
-        "config key 'connectome_weight_property' mut be set to 'fa', currently "
-        f"'{config['segmentation']}'"
+        "config key 'connectome_weight' mut be set to '___FA', where ___ is one of "
+        f"'avg', 'med', 'min', 'max' currently '{config['segmentation']}'"
+    )
+
+def _get_stat(wildcards):
+    stat = wildcards[:3]
+    mapping = {
+        "avg": "mean",
+        "med": "median",
+        "min": "min",
+        "max": "max",
+    }
+    if stat in mapping:
+        return mapping[stat]
+    raise ValueError(
+        "config key 'connectome_weight' mut be set to '___FA', where ___ is one of "
+        f"'avg', 'med', 'min', 'max' currently '{config['segmentation']}'"
     )
 
 rule tck_sample:
@@ -88,9 +103,8 @@ rule tck_sample:
         image=_get_image
     output:
         bids_output_dwi(
-            prop="{weight}",
-            desc="{stat}",
-            suffix='afq.csv'
+            desc="{weight}",
+            suffix='tractometry.csv'
         ),
     threads: 1
     resources:
@@ -101,6 +115,8 @@ rule tck_sample:
         "git-annex/8.20200810"
     log: "logs/tck_sample/{subject}.log"
     benchmark: "benchmarks/tck_sample/sub-{subject}.tsv"
+    params:
+        stat: _get_stat
     shell:
         "tcksample {input.tracks} {input.image} {output} "
         "-nthreads {threads} -stat_tck {wildcards.stat}"

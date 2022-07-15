@@ -8,7 +8,8 @@ tractography:
   maxlength: 250
   cutoff: 0.06
   num_tracts: 10000000
-segmentation: "bn210"
+segmentation: "bn246"
+connectome_weight: "minFA"
 freesurfer_output: /scratch/knavynde/newtopsy/derivatives/fmriprep_21.0.0_anat-only/sourcedata/freesurfer
 pybids_inputs:
   preproc_dwi:

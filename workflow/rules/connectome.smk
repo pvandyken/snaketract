@@ -217,6 +217,13 @@ def _get_segmentation(wildcards):
 def _get_weights(wildcards):
     if wildcards["weight"] == "sift2":
         return rules.run_sift2.output.weights.format(**wildcards)
+    if wildcards["weight"][3:] == "FA"
+        return rules.tck_sample.output[0].format(**wildcards)
+    raise ValueError(
+        "config key 'connectome_weight' mut be set to 'sift2' or '___FA', where ___ is "
+        f"one of 'avg', 'med', 'min', 'max' currently '{config['segmentation']}'"
+
+    )
 
 rule get_connectome:
     input:
