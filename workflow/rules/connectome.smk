@@ -88,12 +88,12 @@ rule map_brainnetome_atlas_subcortex:
     group: "connectome"
     threads: 1
     resources:
-        mem_mb=1000,
+        mem_mb=3000,
         runtime=10,
     shell:
         "export SINGULARITYENV_SUBJECTS_DIR=" + config['freesurfer_output'],
         "mri_ca_label {input.volume} {input.txf} {input.atlas} $(pwd)/out.mgz",
-        "mrconvert out.mgz {output}"
+        "mrconvert out.mgz {output} -quiet"
 
 
 rule map_labels_to_volume_ribbon:
@@ -243,5 +243,5 @@ rule get_connectome:
     benchmark: f"benchmarks/get_connectome/{'.'.join(wildcards.values())}.{{atlas}}.tsv"
     shell:
         "tck2connectome {input.tracks} {input.nodes} {output.connectome} "
-        "-scale_invnodevol -symmetric -keep_unassigned "
+        "-q -scale_invnodevol -symmetric -keep_unassigned "
         "-tck_weights_in {input.tck_weights} -out_assignments {output.assignments}"
