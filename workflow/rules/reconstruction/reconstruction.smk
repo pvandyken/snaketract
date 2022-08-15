@@ -83,7 +83,7 @@ def _get_image(wildcards):
     )
 
 def _get_stat(wildcards):
-    stat = wildcards[:3]
+    stat = wildcards["weight"][:3]
     mapping = {
         "avg": "mean",
         "med": "median",
@@ -113,10 +113,10 @@ rule tck_sample:
     envmodules:
         "mrtrix/3.0.1",
         "git-annex/8.20200810"
-    log: "logs/tck_sample/{subject}.log"
-    benchmark: "benchmarks/tck_sample/sub-{subject}.tsv"
+    log: "logs/tck_sample/{subject}.{weight}.log"
+    benchmark: "benchmarks/tck_sample/sub-{subject}.{weight}.tsv"
     params:
-        stat: _get_stat
+        stat=_get_stat
     shell:
         "tcksample {input.tracks} {input.image} {output} "
-        "-nthreads {threads} -stat_tck {wildcards.stat}"
+        "-nthreads {threads} -stat_tck {params.stat} -q"

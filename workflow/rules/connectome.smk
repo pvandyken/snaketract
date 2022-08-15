@@ -214,31 +214,30 @@ def _get_segmentation(wildcards):
         f"'{config['segmentation']}'"
     )
 
-def _get_weights(wildcards):
-    if wildcards["weight"] == "sift2":
-        return rules.run_sift2.output.weights.format(**wildcards)
-    if wildcards["weight"][3:] == "FA"
-        return rules.tck_sample.output[0].format(**wildcards)
+def _get_weights(wcards):
+    if wcards["weight"] == "sift2":
+        return rules.run_sift2.output.weights.format(**wcards)
+    if wcards["weight"][3:] == "FA":
+        return rules.tck_sample.output[0].format(**wcards)
     raise ValueError(
         "config key 'connectome_weight' mut be set to 'sift2' or '___FA', where ___ is "
         f"one of 'avg', 'med', 'min', 'max' currently '{config['segmentation']}'"
-
     )
 
 rule get_connectome:
     input:
         tracks=rules.run_act.output,
         nodes=_get_segmentation,
-        tck_weights=rules.run_sift2.output.weights,
+        tck_weights=_get_weights,
     output:
         connectome=bids_output_dwi(
             atlas="{atlas}",
-            weight="{weight}"
+            weight="{weight}",
             suffix="connectome.csv",
         ),
         assignments=bids_output_dwi(
             atlas="{atlas}",
-            weight="{weight}"
+            weight="{weight}",
             desc="tract",
             suffix="assignments.csv",
         ),
@@ -252,8 +251,8 @@ rule get_connectome:
     resources:
         mem_mb=5000,
         runtime=2,
-    log: f"logs/get_connectome/{'.'.join(wildcards.values())}.{{atlas}}.log"
-    benchmark: f"benchmarks/get_connectome/{'.'.join(wildcards.values())}.{{atlas}}.tsv"
+    log: f"logs/get_connectome/{'.'.join(wildcards.values())}.{{atlas}}.{{weight}}.log"
+    benchmark: f"benchmarks/get_connectome/{'.'.join(wildcards.values())}.{{atlas}}.{{weight}}.tsv"
     shell:
         "tck2connectome {input.tracks} {input.nodes} {output.connectome} "
         "-q -scale_invnodevol -symmetric -keep_unassigned "
