@@ -13,9 +13,7 @@ rule convert_t1_to_mrtrix_format:
         "mrtrix/3.0.1",
         "git-annex/8.20200810"
     shell:
-        datalad(
-            'mrconvert {input} {output} 2> {log}'
-        )
+        'mrconvert {input} {output} 2> {log}'
 
 
 rule convert_t1_mask_to_mrtrix_format:
@@ -31,9 +29,7 @@ rule convert_t1_mask_to_mrtrix_format:
         "mrtrix/3.0.1",
         "git-annex/8.20200810"
     shell:
-        datalad(
-            'mrconvert {input} {output} 2> {log}'
-        )
+        'mrconvert {input} {output} 2> {log}'
 
 
 rule segment_anatomical_image:
@@ -58,10 +54,9 @@ rule segment_anatomical_image:
         "fsl/6.0.4",
         "git-annex/8.20200810"
     shell:
-        datalad.msg("Segment into 5 tissue types with fsl")(
-            '5ttgen fsl {input.data} {output} -mask {input.mask} '
-            '-scratch {resources.tmpdir} 2> {log}'
-        )
+        # datalad.msg("Segment into 5 tissue types with fsl"),
+        '5ttgen fsl {input.data} {output} -mask {input.mask} '
+        '-scratch {resources.tmpdir} 2> {log}'
 
 rule create_seed_boundary:
     input:
@@ -80,6 +75,5 @@ rule create_seed_boundary:
     resources:
         runtime=5,
     shell:
-        datalad.msg("Compute boundary between GM/WM for tractography")(
-            '5tt2gmwmi {input} {output} 2> {log}'
-        )
+        # datalad.msg("Compute boundary between GM/WM for tractography"),
+        '5tt2gmwmi {input} {output} 2> {log}'

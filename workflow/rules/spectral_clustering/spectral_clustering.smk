@@ -49,7 +49,7 @@ rule convert_tracts_to_vtk:
         mem_mb=1000,
         runtime=30 # for 10M fibres
 
-    shell: datalad("tckconvert {input} {output}")
+    shell: "tckconvert {input} {output}"
 
 
 # Including {uid} at the end of registration_dir will lead to it appearing twice in the
@@ -107,7 +107,7 @@ rule tractography_registration:
         transform_tfm=f"{registration_files}/itk_txform_{registration_output}.tfm",
         transform_xfm=f"{registration_files}/vtk_txform_{registration_output}.xfm"
     shell:
-        datalad.msg("Register tractography to ORG atlas"),
+        # datalad.msg("Register tractography to ORG atlas"),
         wma_env.script,
         (
             "wm_register_to_atlas_new.py "
@@ -147,7 +147,7 @@ rule tractography_spectral_clustering:
         work_folder=str(work/"tractography_clustering"/uid),
         results_subfolder=Path(rules.tractography_registration.output.data).stem
     shell:
-        datalad.msg("Cluster tracts with spectral clustering"),
+        # datalad.msg("Cluster tracts with spectral clustering"),
         xvfb_run,
         tar.using(outputs=["{output}"]),
         wma_env.script,
@@ -182,7 +182,7 @@ rule remove_cluster_outliers:
         work_folder=work/"tractography_outlier_removal",
         results_subfolder=Path(rules.tractography_spectral_clustering.output[0]).name
     shell:
-        datalad.msg("Remove outliers from clusters"),
+        # datalad.msg("Remove outliers from clusters"),
         tar.using(inputs = ["{input.data}"], outputs = ["{output}"]),
         wma_env.script,
         (
@@ -216,7 +216,7 @@ rule assess_cluster_location_by_hemisphere:
         runtime=10,
 
     shell:
-        datalad.msg("Assign cluster locations (left v right hem)"),
+        # datalad.msg("Assign cluster locations (left v right hem)"),
         tar.using(modify=["{input.data}"]),
         wma_env.script,
         (
@@ -247,7 +247,7 @@ rule transform_clusters_to_subject_space:
         runtime=5,
 
     shell:
-        datalad.msg("Convert clusters back to subject T1w space"),
+        # datalad.msg("Convert clusters back to subject T1w space"),
         xvfb_run,
         tar.using(inputs=["{input.data}"]),
         wma_env.script,
@@ -281,7 +281,7 @@ rule separate_clusters_by_hemisphere:
         runtime=15,
 
     shell:
-        datalad.msg("Seperate clusters into folders based on location"),
+        # datalad.msg("Seperate clusters into folders based on location"),
         tar.using(outputs=["{output}"]),
         wma_env.script,
 
@@ -313,7 +313,7 @@ rule assign_to_anatomical_tracts:
         runtime=6,
 
     shell:
-        datalad.msg("Assign clusters to one of 73 anatomical tracts"),
+        # datalad.msg("Assign clusters to one of 73 anatomical tracts"),
         tar.using(inputs=["{input.data}"], outputs=["{output}"]),
         wma_env.script,
         (

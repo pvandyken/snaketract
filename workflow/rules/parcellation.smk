@@ -20,7 +20,7 @@ rule get_hemispheric_tracts:
         runtime=10,
 
     shell:
-        datalad.msg(""),
+        # datalad.msg(""),
         tar.using(inputs = ["{input.data}"]),
         convert_env.make_venv,
         (
@@ -74,7 +74,7 @@ rule get_parcellation:
         mem_mb=3000,
         runtime=28,
     shell:
-        datalad.msg(""),
+        # datalad.msg(""),
         parcellation_env.script,
 
         "intersection main "

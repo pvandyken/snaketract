@@ -30,7 +30,7 @@ rule reformat_clusters:
         tmpdir=str(work/"__sn_tmp__"),
 
     shell:
-        datalad,
+        # datalad,
         tar.using(inputs=["{input}"], outputs=["{output}"]),
         wma_env.make_venv,
         (
@@ -114,7 +114,7 @@ rule tract_profiles:
     params:
     group: "profiling"
     shell:
-        datalad,
+        # datalad,
         tar.using(inputs=["{input.data}"]),
         dipy_env.script,
         Pyscript(workflow.basedir)(

@@ -29,13 +29,12 @@ rule run_act:
         "git-annex/8.20200810"
     group: 'act'
     shell:
-        datalad.msg("Generate anatomically constrained tractography")(
-            'tckgen -act {input.act} -seed_gmwmi {input.gmwmi} '
-            '-nthreads {threads} -backtrack '
-            '-maxlength {params.maxlength} -cutoff {params.cutoff} '
-            '-select {params.num_tracts} '
-            '{input.fod} {output} 2> {log}'
-        )
+        # datalad.msg("Generate anatomically constrained tractography"),
+        'tckgen -act {input.act} -seed_gmwmi {input.gmwmi} '
+        '-nthreads {threads} -backtrack '
+        '-maxlength {params.maxlength} -cutoff {params.cutoff} '
+        '-select {params.num_tracts} '
+        '{input.fod} {output} 2> {log}'
 
 rule run_sift2:
     input:
@@ -67,12 +66,11 @@ rule run_sift2:
         "benchmarks/run_sift2/sub-{subject}.tsv"
     group: "sift"
     shell:
-        datalad.msg("Calculate streamline weights")(
-            "tcksift2 "
-            "-nthreads {threads} "
-            "-out_mu {output.mu} -out_coeffs {output.coeffs} "
-            "{input.tracks} {input.fod} {output.weights}"
-        )
+        # datalad.msg("Calculate streamline weights"),
+        "tcksift2 "
+        "-nthreads {threads} "
+        "-out_mu {output.mu} -out_coeffs {output.coeffs} "
+        "{input.tracks} {input.fod} {output.weights}"
 
 def _get_image(wildcards):
     if wildcards["weight"][3:] == "FA":
