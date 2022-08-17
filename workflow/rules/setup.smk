@@ -107,7 +107,7 @@ class BoostShell(base_shell):
             .replace('}', '}}')
         )
         return base_shell(
-                formatted,
+            formatted,
             iterable=iterable,
             read=read,
             bench_record=bench_record,

@@ -37,12 +37,10 @@ rule map_brainnetome_atlas_cortex:
         runtime=1,
     log: f"logs/map_brainnetome_atlas_cortex/{'.'.join(inputs.input_wildcards['surf'].values())}.log"
     benchmark: f"benchmarks/map_brainnetome_atlas_cortex/{'.'.join(inputs.input_wildcards['surf'].values())}.tsv"
+    params:
+        hemi=lambda wcards: wcards["hemi"].lower()
     shell:
-        env.untracked(
-            # Get the hemisphere in lowercase
-            hemi = sh.echo("{wildcards.hemi}") | sh.awk('print tolower($0)'),
-        ),
-        env.export.untracked(
+        env.export(
             SINGULARITYENV_SUBJECTS_DIR = config["freesurfer_output"],
         ),
         (
@@ -50,14 +48,13 @@ rule map_brainnetome_atlas_cortex:
             "structure[l]=CORTEX_LEFT",
             "structure[r]=CORTEX_RIGHT",
 
-            "ls -al $(pwd)/{input.atlas}",
-            "mris_ca_label sub-{wildcards.subject} {sb_env.hemi}h "
-            "{input.sphere} $(pwd)/{input.atlas} $(pwd)/tmp.annot || ls -al {input.atlas}",
+            "mris_ca_label sub-{wildcards.subject} {params.hemi}h "
+            "{input.sphere} $(pwd)/{input.atlas} $(pwd)/tmp.annot",
 
             "mris_convert --annot $(pwd)/tmp.annot {input.surf} {output}",
 
             "wb_command -set-structure {output} "
-            "${{structure[{sb_env.hemi}]}}"
+            "${{structure[{params.hemi}]}}"
         )
 
 
@@ -91,7 +88,9 @@ rule map_brainnetome_atlas_subcortex:
         mem_mb=3000,
         runtime=10,
     shell:
-        "export SINGULARITYENV_SUBJECTS_DIR=" + config['freesurfer_output'],
+        env.export(
+            SINGULARITYENV_SUBJECTS_DIR = config["freesurfer_output"],
+        ),
         "mri_ca_label {input.volume} {input.txf} {input.atlas} $(pwd)/out.mgz",
         "mrconvert out.mgz {output} -quiet"
 
@@ -232,13 +231,12 @@ rule get_connectome:
     output:
         connectome=bids_output_dwi(
             atlas="{atlas}",
-            weight="{weight}",
+            desc="{weight}"
             suffix="connectome.csv",
         ),
         assignments=bids_output_dwi(
             atlas="{atlas}",
-            weight="{weight}",
-            desc="tract",
+            desc="{weight}"
             suffix="assignments.csv",
         ),
 
