@@ -91,8 +91,10 @@ rule map_brainnetome_atlas_subcortex:
         env.export(
             SINGULARITYENV_SUBJECTS_DIR = config["freesurfer_output"],
         ),
-        "mri_ca_label {input.volume} {input.txf} {input.atlas} $(pwd)/out.mgz",
-        "mrconvert out.mgz {output} -quiet"
+        (
+            "mri_ca_label {input.volume} {input.txf} {input.atlas} $(pwd)/out.mgz",
+            "mrconvert out.mgz {output} -quiet",
+        )
 
 
 rule map_labels_to_volume_ribbon:
@@ -231,12 +233,12 @@ rule get_connectome:
     output:
         connectome=bids_output_dwi(
             atlas="{atlas}",
-            desc="{weight}"
+            desc="{weight}",
             suffix="connectome.csv",
         ),
         assignments=bids_output_dwi(
             atlas="{atlas}",
-            desc="{weight}"
+            desc="{weight}",
             suffix="assignments.csv",
         ),
 
