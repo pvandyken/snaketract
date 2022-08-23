@@ -72,9 +72,18 @@ rule run_sift2:
         "-out_mu {output.mu} -out_coeffs {output.coeffs} "
         "{input.tracks} {input.fod} {output.weights}"
 
+use rule dtifit_resampled_t1w from snakedwi with:
+    input:
+        dwi=inputs.input_path["preproc_dwi"],
+        bvals=inputs.input_path["bval"],
+        bvecs=inputs.input_path["bvec"],
+        brainmask=inputs.input_path["brainmask"],
+
 def _get_image(wildcards):
     if wildcards["weight"][3:] == "FA":
-        return inputs.input_path["fa"].format(**wildcards)
+        if "fa" in inputs.input_path:
+            return inputs.input_path["fa"].format(**wildcards)
+        return rules.dtifit_resampled_t1w.output.out_fa
     raise ValueError(
         "config key 'connectome_weight' mut be set to '___FA', where ___ is one of "
         f"'avg', 'med', 'min', 'max' currently '{config['segmentation']}'"
