@@ -18,6 +18,8 @@ rule convert_dwi_to_mrtrix_format:
         "git-annex/8.20200810"
     log: f"logs/convert_dwi_to_mrtrix_format/{'.'.join(wildcards.values())}.log"
     group: "response_generation"
+    resources:
+        mem_mb=lambda wcards, input: input.size_mb * 3.2
     shell:
         # datalad,
         'mrconvert {input.dwi} {output} -fslgrad {input.bvec} {input.bval} 2> {log}'
