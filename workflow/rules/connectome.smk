@@ -225,6 +225,18 @@ def _get_weights(wcards):
         f"one of 'avg', 'med', 'min', 'max' currently '{config['segmentation']}'"
     )
 
+def _get_weight_arg(wcards, input):
+    if wcards["weight"] == "sift2":
+        return f"-tck_weights_in {input.tck_weights} -scale_invnodevol"
+    if wcards["weight"][3:] == "FA":
+        return f"-scale_file {input.tck_weights} -stat_edge mean"
+        return rules.tck_sample.output[0].format(**wcards)
+    raise ValueError(
+        "config key 'connectome_weight' mut be set to 'sift2' or '___FA', where ___ is "
+        f"one of 'avg', 'med', 'min', 'max' currently '{config['segmentation']}'"
+    )
+
+
 rule get_connectome:
     input:
         tracks=rules.run_act.output,
@@ -253,7 +265,9 @@ rule get_connectome:
         runtime=2,
     log: f"logs/get_connectome/{'.'.join(wildcards.values())}.{{atlas}}.{{weight}}.log"
     benchmark: f"benchmarks/get_connectome/{'.'.join(wildcards.values())}.{{atlas}}.{{weight}}.tsv"
+    params:
+        weight=_get_weight_arg
     shell:
         "tck2connectome {input.tracks} {input.nodes} {output.connectome} "
-        "-q -scale_invnodevol -symmetric -keep_unassigned "
-        "-tck_weights_in {input.tck_weights} -out_assignments {output.assignments}"
+        "-q -symmetric -keep_unassigned "
+        "{params.weight} -out_assignments {output.assignments}"
