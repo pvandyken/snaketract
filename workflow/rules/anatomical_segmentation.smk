@@ -43,7 +43,7 @@ rule segment_anatomical_image:
     group: "segmentation"
     resources:
         tmpdir=str(work/"__sn_tmp__"),
-        runtime=15,
+        runtime=25,
         mem_mb=4000,
     log: "logs/segment_anatomical_image/{subject}.log"
     benchmark: f"benchmarks/segment_anatomical_image/{'.'.join(wildcards.values())}.tsv"
