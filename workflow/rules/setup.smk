@@ -32,16 +32,24 @@ exclude_participant_label = (
 ###
 def eval_environ(s):
     s = s.strip("'\"") if s else s
+    if s == "system_tmpdir":
+        return None
     if s and len(s) > 1 and s[0] == "$":
         if s[1] == "$":
             return s[1:]
         return os.environ.get(s[1:])
     return s
 
-tmpdir = eval_environ(workflow.default_resources._args.get("tmpdir"))
+def eval_resources(s):
+    return eval(
+        s.strip("'\""),
+        {
+            "os": os,
+            "system_tmpdir": None
+        }
+    )
+tmpdir = eval_resources(workflow.default_resources._args.get("tmpdir"))
 
-if tmpdir is not None:
-    workflow.default_resources.set_resource("tmpdir", tmpdir)
 
 workflow.shadow_prefix = eval_environ(workflow.shadow_prefix)
 
