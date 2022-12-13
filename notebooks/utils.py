@@ -5,10 +5,17 @@ import plotly.graph_objs as go
 import pandas as pd
 from pathlib import Path
 import ipywidgets as widgets
+import xarray as xr
 import pickle
+import itertools as it
 import copy
 from typing import Any
 import shutil
+
+def listify(generator):
+    def inner(*args, **kwargs):
+        return list(generator(*args, **kwargs))
+    return inner
 
 def filter_logile(matrix, bin: int, num_bins: int = 10):
     if bin >= num_bins:
@@ -39,8 +46,38 @@ def lut_label(data, path):
 def titleize(label):
     return label.replace("_", " ").capitalize()
 
-def distribution_plot(df, x, y: str):
+def error_line(df, x=None, y=None, color=None, err=None, **kwargs):
+    fig = px.line(
+        df,
+        x=x,
+        y=y,
+        color=color,
+        **kwargs,
+    )
+    for trace in fig.data:
+        ddf = df[df[color] == trace["name"]] if color else df
+        fig.add_traces([
+            go.Scatter(
+                x=ddf[x],
+                y=ddf[y] + ddf[err],
+                mode="lines",
+                line=dict(width=0),
+                showlegend=False,
+            ),
+            go.Scatter(
+                x=ddf[x],
+                y=ddf[y] - ddf[err],
+                mode="lines",
+                line=dict(width=0),
+                fill='tonexty',
+                fillcolor=f'rgba{(*hex_to_rgb(trace["line"]["color"]), 0.2)}',
+                showlegend=False,
+            )
 
+        ])
+    return fig
+
+def distribution_plot(df, x, y: str):
     std_col = y+"_std"
     grouper = df.groupby(["category", x])
     ddf = pd.concat([
@@ -71,6 +108,7 @@ def distribution_plot(df, x, y: str):
                 y=ddf.loc[cat, std_col]+ddf.loc[cat,y],
                 mode="lines",
                 line=dict(width=0),
+                showlegend=False,
             ),
             go.Scatter(
                 x=ddf.loc[cat, x],
@@ -78,7 +116,8 @@ def distribution_plot(df, x, y: str):
                 mode="lines",
                 line=dict(width=0),
                 fill='tonexty',
-                fillcolor=f'rgba{(*hex_to_rgb(px.colors.qualitative.Plotly[i]), 0.2)}'
+                fillcolor=f'rgba{(*hex_to_rgb(px.colors.qualitative.Plotly[i]), 0.2)}',
+                showlegend=False
             )
         ])
         buttons.append({
@@ -172,3 +211,43 @@ class NbCache:
                 print(path, "->", dest)
                 continue
             shutil.move(str(path), dest)
+
+class underscore:
+    @staticmethod
+    def pipe(__iterable, *__funcs):
+        result = __iterable
+        for func in __funcs:
+            if isinstance(result, underscore.unpack):
+                result = func(*result)
+            else:
+                result = func(result)
+        return result
+
+    @staticmethod
+    def map(__func):
+        def inner(__iterable):
+            return map(__func, __iterable)
+        return inner
+
+    @staticmethod
+    def filter(__func):
+        def inner(__iterable):
+            return filter(__func, __iterable)
+        return inner
+
+    @staticmethod
+    def starmap(__func):
+        def inner(__iterable):
+            return it.starmap(__func, __iterable)
+        return inner
+
+    class unpack:
+        def __init__(self, __iterable):
+            self.data = __iterable
+        
+        def __iter__(self):
+            return self.data
+        
+    @staticmethod
+    def print(*items):
+        d
