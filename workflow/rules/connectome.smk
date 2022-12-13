@@ -218,7 +218,7 @@ def _get_segmentation(wildcards):
 def _get_weights(wcards):
     if wcards["weight"] == "sift2":
         return rules.run_sift2.output.weights.format(**wcards)
-    if wcards["weight"][3:] == "FA":
+    if wcards["weight"][3:] in ["FA", "R1"]:
         return rules.tck_sample.output[0].format(**wcards)
     raise ValueError(
         "config key 'connectome_weight' mut be set to 'sift2' or '___FA', where ___ is "
@@ -226,14 +226,17 @@ def _get_weights(wcards):
     )
 
 def _get_weight_arg(wcards, input):
-    if wcards["weight"] == "sift2":
-        return f"-tck_weights_in {input.tck_weights} -scale_invnodevol"
-    if wcards["weight"][3:] == "FA":
+    if "sift2" in wcards["weight"]:
+        scale_invnodevol = (
+            " -scale_invnodevol" if wcards["weight"] == "sift2Density" else ""
+        )
+        return f"-tck_weights_in {input.tck_weights}{scale_invnodevol}"
+    if wcards["weight"][3:] in ["FA", "R1"]:
         return f"-scale_file {input.tck_weights} -stat_edge mean"
-        return rules.tck_sample.output[0].format(**wcards)
     raise ValueError(
-        "config key 'connectome_weight' mut be set to 'sift2' or '___FA', where ___ is "
-        f"one of 'avg', 'med', 'min', 'max' currently '{config['segmentation']}'"
+        "config key 'connectome_weight' mut be set to 'sift2', 'sift2Density', or "
+        "'<stat>FA', where <stat> is one of 'avg', 'med', 'min', 'max' currently "
+        f"'{config['segmentation']}'"
     )
 
 

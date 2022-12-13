@@ -3,7 +3,12 @@
 """
 configfile: 'config/config.yml'
 
+module snakedwi:
+    snakefile: "/scratch/knavynde/snakedwi/snakedwi/workflow/Snakefile"
+    # configfile: "/scratch/knavynde/snakedwi/snakedwi/config/snakebids.yml"
+
 include: 'rules/setup.smk'
+include: 'rules/weights.smk'
 include: 'rules/anatomical_segmentation.smk'
 include: "rules/response_function.smk"
 include: 'rules/reconstruction/reconstruction.smk'
@@ -11,8 +16,10 @@ include: 'rules/spectral_clustering/spectral_clustering.smk'
 include: 'rules/tract_profiles.smk'
 include: 'rules/parcellation.smk'
 include: 'rules/connectome.smk'
+include: 'rules/graph_theory.smk'
 include: 'rules/spectral_clustering/qc.smk'
 include: 'rules/tests.smk'
+include: 'rules/voxelwise.smk'
 #include: "rules/qc.smk"
 
 localrules: all, qc, aggregate_profiles
@@ -20,12 +27,27 @@ localrules: all, qc, aggregate_profiles
 rule all:
     input:
         expand(
-            rules.get_connectome.output.connectome,
+            rules.apply_wm_mask_to_dmri.output,
+            **inputs.input_lists['preproc_dwi'],
+        )
+
+rule rich_club:
+    input:
+        expand(
+            rules.rich_club_coefficient.output,
             atlas=config["segmentation"],
             weight=config["connectome_weight"],
             **inputs.input_lists['preproc_dwi'],
         )
 
+rule connectome:
+    input:
+        expand(
+            rules.get_connectome.output,
+            atlas=config["segmentation"],
+            weight=config["connectome_weight"],
+            **inputs.input_lists['preproc_dwi'],
+        )
 
 rule tractography:
     input:

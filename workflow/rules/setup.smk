@@ -3,12 +3,13 @@ import re
 import tempfile
 import functools as ft
 
-from snakebids import bids, generate_inputs
+from snakebids import bids, generate_inputs, filter_list
 from snakemake import utils as sutils
 
 from pathlib import Path
 from snakeboost import Tar, Pyscript, ScriptDict, XvfbRun, PipEnv, Boost, Datalad, Env
 import snakeboost.bash as sh
+from lib.participants import filter_participants
 
 def get_labels(label):
     cli = config.get(label, None)
@@ -49,7 +50,6 @@ def eval_resources(s):
         }
     )
 tmpdir = eval_resources(workflow.default_resources._args.get("tmpdir"))
-
 
 workflow.shadow_prefix = eval_environ(workflow.shadow_prefix)
 
@@ -149,6 +149,16 @@ dipy_env = PipEnv(
     root = work
 )
 
+r1_env = PipEnv(
+    packages = [
+        'numpy',
+        'snakeboost',
+        'nibabel',
+    ],
+    flags = config.get("pip-flags", ""),
+    root = work
+)
+
 convert_env = PipEnv(
     packages = [
         'dipy',
@@ -165,6 +175,34 @@ convert_env = PipEnv(
 parcellation_env = PipEnv(
     packages = [
         'intersection',
+    ],
+    flags = config.get("pip-flags", ""),
+    root = work,
+)
+
+rich_club_env = PipEnv(
+    packages = [
+        "more-itertools",
+        "networkx",
+        "numpy",
+        "pandas",
+        "/scratch/knavynde/snakeboost",
+        "plotly",
+        "colour",
+        "ipywidgets",
+        "xarray",
+    ],
+    flags = config.get("pip-flags", ""),
+    root = work,
+)
+
+design_matrix_env = PipEnv(
+    packages = [
+        "more-itertools",
+        "numpy",
+        "pandas",
+        "scikit-learn",
+        "/scratch/knavynde/snakeboost",
     ],
     flags = config.get("pip-flags", ""),
     root = work,

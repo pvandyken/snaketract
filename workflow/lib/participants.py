@@ -1,0 +1,9 @@
+import pandas as pd
+import more_itertools as itx
+
+
+def filter_participants(participant_path, **filters):
+    df = pd.read_csv(participant_path, sep="\t")
+    for col, values in filters.items():
+        df = df[df[col].isin(itx.always_iterable(values))]
+    return df

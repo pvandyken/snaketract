@@ -73,27 +73,6 @@ rule reformat_clusters:
         )
 
 
-rule create_r1:
-    input:
-        data=inputs.input_path["t1_map"],
-        mask=inputs.input_path["t1_mask"]
-    output:
-        bids_output_anat(
-            suffix="R1.nii.gz"
-        )
-    log: f"logs/create_r1/{'.'.join(wildcards.values())}.log"
-    benchmark: f"benchmarks/create_r1/{'.'.join(wildcards.values())}.tsv"
-    threads: 1
-    resources:
-        mem_mb=1000,
-        runtime=1,
-        tmpdir=str(work/"__sn_tmp__"),
-    group: "profiling"
-    shell:
-        Pyscript(workflow.basedir)(
-            "scripts/produce-r1.py",
-            input=["data", "mask"]
-        )
 
 
 rule tract_profiles:
