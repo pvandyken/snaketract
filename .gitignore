@@ -12,3 +12,8 @@ config/*
 results
 .python-version
 *.swp
+.ipynb_cache
+.ipynb_checkpoints
+.licenses
+.pybids
+.virtual_documents

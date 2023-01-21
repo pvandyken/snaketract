@@ -5,10 +5,12 @@ import functools as ft
 
 from snakebids import bids, generate_inputs, filter_list
 from snakemake import utils as sutils
+import pandas as pd
 
 from pathlib import Path
 from snakeboost import Tar, Pyscript, ScriptDict, XvfbRun, PipEnv, Boost, Datalad, Env
 import snakeboost.bash as sh
+from templateflow import api as tflow
 from lib.participants import filter_participants
 
 def get_labels(label):
@@ -16,16 +18,26 @@ def get_labels(label):
     vals = cli.split(",") if cli is not None else None
     if vals is None:
         try:
-            with open(f"{label}.txt") as f:
-                return f.read().splitlines()
+            get_participants(Path(config['bids_dir'], 'derivatives', 'snakedwi-0.1.0', 'participants.tsv'))
         except FileNotFoundError:
             pass
     return vals
+
+def get_participants(participant_file):
+    subs = pd.read_csv(participant_file, sep='\t')
+    return subs['participant_id'].map(lambda s: s[4:])
 
 participant_label = get_labels("participant_label")
 exclude_participant_label = (
     get_labels("exclude_participant_label") if participant_label is None else None
 )
+if participant_label is None and exclude_participant_label is None:
+    # try:
+    participant_label = list(get_participants(
+        Path(config['bids_dir'], 'derivatives', 'snakedwi-0.1.0', 'participants.tsv')
+    ))
+    # except FileNotFoundError:
+    #     pass
 
 
 ###
@@ -191,6 +203,20 @@ rich_club_env = PipEnv(
         "colour",
         "ipywidgets",
         "xarray",
+    ],
+    flags = config.get("pip-flags", ""),
+    root = work,
+)
+
+nodal_props_venv = PipEnv(
+    packages = [
+        "numpy",
+        "pandas",
+        "networkx",
+        "colour",
+        "/scratch/knavynde/snakeboost",
+        "plotly",
+        "attrs",
     ],
     flags = config.get("pip-flags", ""),
     root = work,

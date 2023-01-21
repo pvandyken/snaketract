@@ -1,36 +1,3 @@
-rule convert_5tt_mif_to_nii:
-    input:
-        rules.segment_anatomical_image.output
-    output:
-        temp(work/"convert_5tt_mif_to_nii"/uid/".nii.gz")
-    log: f"logs/convert_5tt_mif_to_nii/{'.'.join(wildcards.values())}.log"
-    benchmark: f"benchmarks/convert_5tt_mif_to_nii/{'.'.join(wildcards.values())}.tsv"
-    envmodules:
-        "mrtrix/3.0.1"
-    group: "wm_mask"
-    shell:
-        "mrconvert {input} {output} -quiet"
-
-rule extract_wm_mask_from_5tt:
-    input:
-        rules.convert_5tt_mif_to_nii.output,
-    output:
-        temp(
-            work/"extract_wm_mask_from_5tt"/uid/".nii.gz"
-        ),
-    log: f"logs/extract_wm_mask_from_5tt/{'.'.join(wildcards.values())}.log"
-    benchmark: f"benchmarks/extract_wm_mask_from_5tt/{'.'.join(wildcards.values())}.tsv"
-    group: "wm_mask"
-    container:
-        "docker://pyushkevich/itksnap:v3.8.2"
-    resources:
-        mem_mb=500,
-    shadow: 'minimal'
-    shell:
-        "c4d {input} -slice w 2 extracted.nii.gz",
-        "c3d extracted.nii.gz {output}"
-
-
 rule warp_dmri_to_mni:
     input:
         dmri=inputs.input_path["fa"],
@@ -54,31 +21,41 @@ rule warp_dmri_to_mni:
         "-i {input.dmri} -o {output} -r {input.ref} -t {input.txf}"
 
 
-rule warp_wm_mask_to_mni:
-    """Transform the wm mask into mni space
-    """
+rule warp_dmri_to_mni6:
     input:
-        mask=rules.extract_wm_mask_from_5tt.output,
-        txf=inputs['txf_t1w_to_mni'].path,
-        ref=inputs['mni_t1w_ref'].path,
+        dmri=inputs.input_path["fa"],
+        mni2009=inputs['txf_t1w_to_mni'].path,
+        mni6=tflow.get(
+            "MNI152NLin6Asym",
+            **{"from":"MNI152NLin2009cAsym"},
+            mode="image",
+            extension=".h5",
+        ),
+        ref=tflow.get(
+            "MNI152NLin6Asym",
+            resolution=2,
+            desc="brain",
+            suffix="T1w",
+            extension=".nii.gz",
+        )
     output:
-        temp(work/"warp_wm_mask_to_mni"/uid/".nii.gz")
-    log: f"logs/warp_wm_mask_to_mni/{'.'.join(wildcards.values())}.log"
-    benchmark: f"benchmarks/warp_wm_mask_to_mni/{'.'.join(wildcards.values())}.tsv"
-    group: 'wm_mask'
-    threads: 1
+        bids_output_dwi(
+            space="MNI152NLin6Asym",
+            suffix="FA.nii.gz",
+        )
+    log: f"logs/warp_dmri_to_mni6/{'.'.join(wildcards.values())}.log"
+    benchmark: f"benchmarks/warp_dmri_to_mni6/{'.'.join(wildcards.values())}.tsv"
     envmodules:
         "StdEnv/2020",
         "gcc/9.3.0",
         "ants/2.3.5",
-    resources:
-        mem_mb=1000,
-        runtime=30,
-    params:
+    group: "wm_mask"
     shell:
         "antsApplyTransforms "
         "-d 3 --interpolation linear "
-        "-i {input.mask} -o {output} -r {input.ref} -t {input.txf}"
+        "-i {input.dmri} -o {output} -r {input.ref} "
+        "-t {input.mni2009} -t {input.mni6}"
+
 
 
 rule transform_dmri_image_to_mask:
@@ -221,6 +198,38 @@ rule convert_design_matrices_to_fsl:
     shell:
         "Text2Vest {input.mat} {output.mat}",
         "Text2Vest {input.con} {output.con}"
+
+rule get_average_fa_image:
+    input:
+        _get_subjects_from_group(['HC'])
+    output:
+        Path(config['output_dir'], 'avgFA.nii.gz')
+    log: f"logs/get_average_fa_image.log"
+    benchmark: f"benchmarks/get_average_fa_image.tsv"
+    container:
+        "docker://pyushkevich/itksnap:v3.8.2"
+    threads: 1
+    resources:
+        mem_mb=1000,
+        runtime=30,
+    shell:
+        "c3d {input} -mean -o {output}"
+
+# rule get_std_fa_image:
+#     input:
+#         _get_subjects_from_group(['HC'])
+#     output:
+#         Path(config['output_dir'], 'avgFA.nii.gz')
+#     log: f"logs/get_std_fa_image/{'.'.join(wildcards.values())}.log"
+#     benchmark: f"benchmarks/get_std_fa_image/{'.'.join(wildcards.values())}.tsv"
+#     container:
+#         "docker://pyushkevich/itksnap:v3.8.2"
+#     threads: 1
+#     resources:
+#         mem_mb=1000,
+#         runtime=30,
+#     shell:
+#         "c3d {input} -mean -o {output}"
 
 
 rule do_voxelwise_comparison:

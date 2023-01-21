@@ -31,6 +31,15 @@ rule all:
             **inputs.input_lists['preproc_dwi'],
         )
 
+rule graph_theory:
+    input:
+        expand(
+            rules.nodal_properties.output,
+            atlas=config["segmentation"],
+            weight=config["connectome_weight"],
+            **inputs.input_lists['preproc_dwi'],
+        )
+
 rule rich_club:
     input:
         expand(
