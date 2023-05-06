@@ -3,18 +3,18 @@ from tokenize import group
 from snakebids import bids
 
 class FodAlgorithm:
-    def __init__(self, tissue, bval, root):
+    def __init__(self, tissue, bval, root, single_shell_alg="ss3t"):
         self.tissue = tissue
         self.bval = bval
         self.root = root
+        self.single_shell_alg = single_shell_alg
 
     def __call__(self, wildcards):
-        sub = wildcards['subject']
-        bval = self.bval.format(subject=sub)
+        bval = self.bval.format(**wildcards)
         if is_multi_shelled(bval):
             algorithm = 'ms3t'
         else:
-            algorithm = 'ss3t'
+            algorithm = self.single_shell_alg
         return bids(
             root=self.root,
             datatype='dwi',
@@ -22,7 +22,7 @@ class FodAlgorithm:
             space="T1w",
             desc=algorithm,
             label=self.tissue,
-            suffix="fod.mif",
+            suffix="fod.nii.gz",
             **wildcards
         )
 

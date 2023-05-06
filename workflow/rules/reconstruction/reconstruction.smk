@@ -6,24 +6,37 @@ from lib.shells import is_multi_shelled
 
 # group sift:
 #    group_components=40
+
+
+def _select_fod_algorithm(wcards):
+    if (
+        config['tractography'].get('single_shell_algorithm', 'ss3t') == "csd"
+        and not is_multi_shelled(inputs['bval'].path.format(**wcards))
+    ):
+        return rules.compute_csd_fiber_orientation_densities.output[0].format(**wcards)
+    return rules.normalize_fiber_orientation_densities.output[0].format(**wcards)
+
+
 rule run_act:
     input:
-        act=rules.segment_anatomical_image.output,
+        act=rules.get_5tt_segmentation.output,
         gmwmi=rules.create_seed_boundary.output,
-        fod=rules.normalize_fiber_orientation_densities.output.wm
+        fod=_select_fod_algorithm,
     output:
         bids_output_dwi(
+            rec="{rec}",
             suffix='tractography.tck'
         )
     params:
         maxlength=config['tractography']['maxlength'],
         cutoff=config['tractography']['cutoff'],
-        num_tracts=config['tractography']['num_tracts']
+        num_tracts=config['tractography']['num_tracts'],
+        rec=lambda wcards: {"iFOD2": "iFOD2"}[wcards['rec']]
     threads: 32
     resources:
-        runtime=90,
-        mem_mb=4000
-    log: "logs/run_act/{subject}.log"
+        runtime=int(max(config['tractography']['num_tracts'] * 90 / 10_000_000, 10)),
+        mem_mb=4000,
+    log: "logs/run_act/" + uid + ".{rec}.log"
     envmodules:
         "mrtrix/3.0.1",
         "git-annex/8.20200810"
@@ -32,6 +45,7 @@ rule run_act:
         # datalad.msg("Generate anatomically constrained tractography"),
         'tckgen -act {input.act} -seed_gmwmi {input.gmwmi} '
         '-nthreads {threads} -backtrack '
+        '-algorithm {params.rec} '
         '-maxlength {params.maxlength} -cutoff {params.cutoff} '
         '-select {params.num_tracts} '
         '{input.fod} {output} 2> {log}'
@@ -39,31 +53,34 @@ rule run_act:
 rule run_sift2:
     input:
         tracks=rules.run_act.output,
-        fod=rules.normalize_fiber_orientation_densities.output.wm,
-        act=rules.segment_anatomical_image.output
+        fod=_select_fod_algorithm,
+        act=rules.get_5tt_segmentation.output
     output:
         weights=bids_output_dwi(
+            rec="{rec}",
             desc="weights",
             suffix='sift.txt'
         ),
         mu=bids_output_dwi(
+            rec="{rec}",
             desc="mu",
             suffix='sift.txt'
         ),
         coeffs=bids_output_dwi(
+            rec="{rec}",
             desc="coeffs",
             suffix='sift.txt'
         )
     threads: 16
     resources:
-        mem_mb=10000,
-        runtime=9
+        mem_mb=30000,
+        runtime=20
     envmodules:
         "mrtrix/3.0.1",
         "git-annex/8.20200810"
-    log: "logs/run_sift2/{subject}.log"
+    log: "logs/run_sift2/"+uid+".{rec}.log"
     benchmark:
-        "benchmarks/run_sift2/sub-{subject}.tsv"
+        "benchmarks/run_sift2/"+uid+".{rec}.tsv"
     group: "sift"
     shell:
         # datalad.msg("Calculate streamline weights"),
@@ -71,56 +88,3 @@ rule run_sift2:
         "-nthreads {threads} "
         "-out_mu {output.mu} -out_coeffs {output.coeffs} "
         "{input.tracks} {input.fod} {output.weights}"
-
-
-
-def _get_image(wildcards):
-    if wildcards["weight"][3:] == "FA":
-        if "fa" in inputs.input_path:
-            return inputs.input_path["fa"].format(**wildcards)
-        return rules.dtifit_resampled_t1w.output.out_fa
-    if wildcards["weight"][3:] == "R1":
-        return rules.create_r1.output
-    raise ValueError(
-        "config key 'connectome_weight' mut be set to '___FA', where ___ is one of "
-        f"'avg', 'med', 'min', 'max' currently '{config['segmentation']}'"
-    )
-
-def _get_stat(wildcards):
-    stat = wildcards["weight"][:3]
-    mapping = {
-        "avg": "mean",
-        "med": "median",
-        "min": "min",
-        "max": "max",
-    }
-    if stat in mapping:
-        return mapping[stat]
-    raise ValueError(
-        "config key 'connectome_weight' mut be set to '___FA', where ___ is one of "
-        f"'avg', 'med', 'min', 'max' currently '{config['segmentation']}'"
-    )
-
-rule tck_sample:
-    input:
-        tracks=rules.run_act.output,
-        image=_get_image
-    output:
-        bids_output_dwi(
-            desc="{weight}",
-            suffix='tractometry.csv'
-        ),
-    threads: 1
-    resources:
-        mem_mb=10000,
-        runtime=9
-    envmodules:
-        "mrtrix/3.0.1",
-        "git-annex/8.20200810"
-    log: "logs/tck_sample/{subject}.{weight}.log"
-    benchmark: "benchmarks/tck_sample/sub-{subject}.{weight}.tsv"
-    params:
-        stat=_get_stat
-    shell:
-        "tcksample {input.tracks} {input.image} {output} "
-        "-nthreads {threads} -stat_tck {params.stat} -q"

@@ -97,6 +97,11 @@ class AdjacencyMatrix:
     raw: NDArray[Any] = attrs.field(converter=np.ma.asarray)
     metadata: pd.DataFrame
     props: dict[str, Any] = attrs.field(factory=dict)
+    attrs: dict[str, Any] = attrs.field(factory=dict)
+
+    def __attrs_post_init__(self):
+        assert self.raw.shape[0] == self.raw.shape[1]
+        assert self.raw.shape[1] == len(self.metadata.index), "Mismatch between length of metadata and shape of data array"
 
     class masks:
         @attrs.frozen
@@ -144,10 +149,13 @@ class AdjacencyMatrix:
         return group_outer(self.metadata.sort_index()["hemispheres"])
 
     def update(self, __new: NDArray[Any]):
-        return self.__class__(__new, self.metadata)
+        return attrs.evolve(self, raw=__new)
 
     def with_metadata(self, __metadata: pd.DataFrame):
-        return self.__class__(self.raw, __metadata)
+        return attrs.evolve(self, metadata=__metadata)
+
+    def sort_values(self, *args, **kwargs):
+        return self.with_metadata(self.metadata.sort_values(*args, **kwargs))
 
     def threshold(self, threshold):
         return self.update(np.ma.masked_less(self.raw, threshold))
@@ -214,7 +222,7 @@ class AdjacencyMatrix:
         return np.ix_(stat_index, stat_index)
 
     def plot(self, layers=None, labels=None, colorscale=None, **kwargs):
-        labels, template = get_labels(self.metadata, labels) if labels else None, None
+        labels, template = get_labels(self.metadata, labels) if labels else (None, None)
 
         def get_heatmaps(data):
             colors = map(

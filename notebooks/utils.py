@@ -43,6 +43,17 @@ def lut_label(data, path):
     return pd.DataFrame(data).rename(index=lut, columns=lut)
 
 
+def concat_product(func, **iters):
+    def inner(func, dims, given_args, iters):
+        if len(iters) == 1:
+            return xr.concat([func(*given_args, val) for val in iters[0]], dim=dims[0])
+        return xr.concat(
+            [inner(func, dims[1:], given_args + [val], iters[1:]) for val in iters[0]],
+            dim=dims[0]
+        )
+    
+    return inner(func, list(iters.keys()), [], list(iters.values()))
+
 def titleize(label):
     return label.replace("_", " ").capitalize()
 

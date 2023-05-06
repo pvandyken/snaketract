@@ -251,7 +251,7 @@ rule transform_clusters_to_subject_space:
         xvfb_run,
         tar.using(inputs=["{input.data}"]),
         wma_env.script,
-        Pyscript(workflow.basedir)(
+        pyscript(
             "scripts/harden_transform.py",
             input=["data", "transform"]
         )

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import itertools as it
-from pathlib import Path
+import json
 
 import more_itertools as itx
 import numpy as np
@@ -35,13 +34,21 @@ def main():
         raise TypeError("Inputs must be specified as a single item")
     if not isinstance(args.output, dict):
         raise TypeError("Outputs must be specified as a dict")
+    if (
+        not isinstance(args.params, dict) or
+        'groups' not in args.params or
+        'confounds' not in args.params
+    ):
+        raise TypeError("Params must be specified as a dict with one key 'groups'")
 
     input = itx.one(args.input)
-    partic = pd.read_csv(input, sep='\t')
+    partic = pd.read_csv(input, sep='\t').sort_values(by="participant_id")
 
-    groups = ["HC", "FEP"]
+    groups = json.loads(args.params['groups'])
     for group in groups:
-        partic[group] = (partic['group'] == group).map(int)
+        partic[group] = (partic['phenotype'] == group).map(int)
+
+    confound_names = json.loads(args.params["confounds"])
 
     sex_encode = pipeline.make_pipeline(
         preproc.OrdinalEncoder(),
@@ -49,14 +56,14 @@ def main():
     )
     column_preproc = compose.make_column_transformer(
         ("passthrough", groups),
-        (sex_encode, ["sex"]),
-        (impute.SimpleImputer(), ['age']),
+        (sex_encode, [confound_names.get('sex', 'sex')]),
+        (impute.SimpleImputer(), [confound_names.get('age', 'age')]),
     )
 
     X = column_preproc.fit_transform(partic)
     np.savetxt(args.output['mat'], X, fmt='%i')
     con = np.array([
-        [1, -1, 0, 0],
+        # [1, -1, 0, 0],
         [-1, 1, 0, 0]
     ])
     np.savetxt(args.output['con'], con, fmt='%i')

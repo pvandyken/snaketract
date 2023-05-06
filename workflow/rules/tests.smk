@@ -82,9 +82,7 @@ rule test_pipenv_creation:
 test_script = Pyscript(config["snakemake_dir"])
 rule test_pyscript:
     output:
-        **test_script.output(
-            foo="out",
-        )
+        foo="out"
     params:
         first="second",
         third=workflow.basedir
@@ -96,6 +94,7 @@ rule test_pyscript:
             test_script(
                 "workflow/scripts/test.py",
                 params=["third"],
+                output=["foo"],
             )
         )
 

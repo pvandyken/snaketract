@@ -27,7 +27,6 @@ rule reformat_clusters:
     resources:
         mem_mb=1000,
         runtime=10,
-        tmpdir=str(work/"__sn_tmp__"),
 
     shell:
         # datalad,
@@ -54,7 +53,7 @@ rule reformat_clusters:
                 ) |
                 "xargs -L 1 mv",
 
-                Pyscript(workflow.basedir)(
+                pyscript(
                     input={"input": vtp_dir},
                     output={"output": str(tmpdir)+"/vtk-tracts"},
                     script="scripts/convert_vtk.py",
@@ -75,49 +74,49 @@ rule reformat_clusters:
 
 
 
-rule tract_profiles:
-    input:
-        data=rules.reformat_clusters.output,
-        ref=inputs.input_path['t1'],
-        r1=rules.create_r1.output,
-        fa=bids_output_dwi(model="CSD", suffix="FA.nii.gz")
-    output:
-        temp(shared_work/f"{uid}_tract_profiles.csv")
-    log: f"logs/tract_profiles/{'.'.join(wildcards.values())}.log"
-    benchmark: f"benchmarks/tract_profiles/{'.'.join(wildcards.values())}.tsv"
-    threads: 1
-    resources:
-        mem_mb=2000,
-        runtime=660,
-        tmpdir=str(work/"__sn_tmp__"),
-    params:
-    group: "profiling"
-    shell:
-        # datalad,
-        tar.using(inputs=["{input.data}"]),
-        dipy_env.script,
-        Pyscript(workflow.basedir)(
-            "scripts/tract-profiling.py",
-            input=["data", "ref", "r1", "fa"],
-            wildcards=["subject"]
-        )
+# rule tract_profiles:
+#     input:
+#         data=rules.reformat_clusters.output,
+#         ref=inputs.input_path['t1'],
+#         r1=rules.create_r1.output,
+#         fa=bids_output_dwi(model="CSD", suffix="FA.nii.gz")
+#     output:
+#         temp(shared_work/f"{uid}_tract_profiles.csv")
+#     log: f"logs/tract_profiles/{'.'.join(wildcards.values())}.log"
+#     benchmark: f"benchmarks/tract_profiles/{'.'.join(wildcards.values())}.tsv"
+#     threads: 1
+#     resources:
+#         mem_mb=2000,
+#         runtime=660,
+#         tmpdir=str(work/"__sn_tmp__"),
+#     params:
+#     group: "profiling"
+#     shell:
+#         # datalad,
+#         tar.using(inputs=["{input.data}"]),
+#         dipy_env.script,
+#         Pyscript(workflow.basedir)(
+#             "scripts/tract-profiling.py",
+#             input=["data", "ref", "r1", "fa"],
+#             wildcards=["subject"]
+#         )
 
-rule aggregate_profiles:
-    input:
-        expand(
-            rules.tract_profiles.output,
-            **inputs.input_lists['preproc_dwi']
-        )
-    output:
-        config['output_dir'] + "/tract_profiles.csv"
-    log: f"logs/aggregate_profiles/all.log"
-    benchmark: f"benchmarks/aggregate_profiles/all.tsv"
-    threads: 1
-    resources:
-        mem_mb=1000,
-        runtime=30,
-    shell:
-        dipy_env.script,
-        Pyscript(workflow.basedir)(
-            "scripts/tract-profile-merge.py"
-        )
+# rule aggregate_profiles:
+#     input:
+#         expand(
+#             rules.tract_profiles.output,
+#             **inputs.input_lists['preproc_dwi']
+#         )
+#     output:
+#         config['output_dir'] + "/tract_profiles.csv"
+#     log: f"logs/aggregate_profiles/all.log"
+#     benchmark: f"benchmarks/aggregate_profiles/all.tsv"
+#     threads: 1
+#     resources:
+#         mem_mb=1000,
+#         runtime=30,
+#     shell:
+#         dipy_env.script,
+#         Pyscript(workflow.basedir)(
+#             "scripts/tract-profile-merge.py"
+#         )

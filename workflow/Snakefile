@@ -1,58 +1,85 @@
 """Prepdwi_recon
 
 """
-configfile: 'config/config.yml'
+configfile: 'config/topsy-base.yml'
 
-module snakedwi:
-    snakefile: "/scratch/knavynde/snakedwi/snakedwi/workflow/Snakefile"
-    # configfile: "/scratch/knavynde/snakedwi/snakedwi/config/snakebids.yml"
 
 include: 'rules/setup.smk'
-include: 'rules/weights.smk'
+include: 'rules/reference_images.smk'
 include: 'rules/anatomical_segmentation.smk'
 include: "rules/response_function.smk"
 include: 'rules/reconstruction/reconstruction.smk'
-include: 'rules/spectral_clustering/spectral_clustering.smk'
-include: 'rules/tract_profiles.smk'
-include: 'rules/parcellation.smk'
+include: 'rules/weights.smk'
+# include: 'rules/spectral_clustering/spectral_clustering.smk'
+# include: 'rules/tract_profiles.smk'
+# include: 'rules/parcellation.smk'
 include: 'rules/connectome.smk'
 include: 'rules/graph_theory.smk'
-include: 'rules/spectral_clustering/qc.smk'
+# include: 'rules/spectral_clustering/qc.smk'
 include: 'rules/tests.smk'
-include: 'rules/voxelwise.smk'
-#include: "rules/qc.smk"
+include: 'rules/regressions/index.smk'
+include: "rules/qc.smk"
 
-localrules: all, qc, aggregate_profiles
+localrules: qc, aggregate_profiles, merge_nodal_properties
 
-rule all:
-    input:
-        expand(
-            rules.apply_wm_mask_to_dmri.output,
-            **inputs.input_lists['preproc_dwi'],
-        )
+# rule all:
+#     input:
+#         expand(
+#             rules.apply_wm_mask_to_dmri.output,
+#             **inputs.input_lists['preproc_dwi'],
+#         )
 
 rule graph_theory:
     input:
-        expand(
+        inputs['preproc_dwi'].expand(
             rules.nodal_properties.output,
+            rec=config["tractography"]["algorithm"],
             atlas=config["segmentation"],
             weight=config["connectome_weight"],
-            **inputs.input_lists['preproc_dwi'],
         )
 
 rule rich_club:
     input:
         expand(
             rules.rich_club_coefficient.output,
+            rec=config["tractography"]["algorithm"],
             atlas=config["segmentation"],
             weight=config["connectome_weight"],
             **inputs.input_lists['preproc_dwi'],
         )
 
+rule nbs:
+    input:
+        expand(
+            rules.run_nbs.output,
+            atlas="bn246",
+            weight=["sift2", "avgFA"],
+            **(
+                {
+                    "model": config['design_matrix']['models']
+                }
+                if 'models' in config['design_matrix'] else {}
+            )
+        )
+
+if "fa_registered" in inputs:
+    rule tbss:
+        input:
+            expand(
+                rules.skeleton_glm.output,
+                **(
+                    {
+                        "model": config['design_matrix']['models']
+                    }
+                    if 'models' in config['design_matrix'] else {}
+                ),
+            )
+
 rule connectome:
     input:
         expand(
             rules.get_connectome.output,
+            rec=config["tractography"]["algorithm"],
             atlas=config["segmentation"],
             weight=config["connectome_weight"],
             **inputs.input_lists['preproc_dwi'],
@@ -62,15 +89,18 @@ rule tractography:
     input:
         expand(
             rules.run_sift2.output.weights,
+            rec=config["tractography"]["algorithm"],
             **inputs.input_lists['preproc_dwi']
         )
 
-rule reformated:
-    input:
-        expand(
-            rules.reformat_clusters.output,
-            **inputs.input_lists['preproc_dwi']
-        )
+
+
+# rule reformated:
+#     input:
+#         expand(
+#             rules.reformat_clusters.output,
+#             **inputs.input_lists['preproc_dwi']
+#         )
 
 
 # rule qc:

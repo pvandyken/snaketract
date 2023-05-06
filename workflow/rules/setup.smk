@@ -3,24 +3,23 @@ import re
 import tempfile
 import functools as ft
 
+from bids.layout import parse_file_entities
 from snakebids import bids, generate_inputs, filter_list
 from snakemake import utils as sutils
+from snakemake.exceptions import WorkflowError, IncompleteCheckpointException
+from snakemake.io import checkpoint_target
 import pandas as pd
 
 from pathlib import Path
-from snakeboost import Tar, Pyscript, ScriptDict, XvfbRun, PipEnv, Boost, Datalad, Env
+from snakeboost import Tar, Pyscript, XvfbRun, PipEnv, Boost, Datalad, Env
 import snakeboost.bash as sh
 from templateflow import api as tflow
 from lib.participants import filter_participants
+from lib.path_store import PathStore
 
 def get_labels(label):
     cli = config.get(label, None)
-    vals = cli.split(",") if cli is not None else None
-    if vals is None:
-        try:
-            get_participants(Path(config['bids_dir'], 'derivatives', 'snakedwi-0.1.0', 'participants.tsv'))
-        except FileNotFoundError:
-            pass
+    vals = cli if isinstance(cli, int) else cli.split(",") if cli is not None else None
     return vals
 
 def get_participants(participant_file):
@@ -32,38 +31,19 @@ exclude_participant_label = (
     get_labels("exclude_participant_label") if participant_label is None else None
 )
 if participant_label is None and exclude_participant_label is None:
-    # try:
-    participant_label = list(get_participants(
-        Path(config['bids_dir'], 'derivatives', 'snakedwi-0.1.0', 'participants.tsv')
-    ))
-    # except FileNotFoundError:
-    #     pass
+    try:
+        participant_label = list(get_participants(
+            Path(config['bids_dir'], 'derivatives', 'snakedwi-0.1.0', 'participants.tsv')
+        ))
+    except FileNotFoundError:
+        pass
 
 
-###
-# Evaluate env vars passed through CLI
-###
-def eval_environ(s):
-    s = s.strip("'\"") if s else s
-    if s == "system_tmpdir":
-        return None
-    if s and len(s) > 1 and s[0] == "$":
-        if s[1] == "$":
-            return s[1:]
-        return os.environ.get(s[1:])
-    return s
 
-def eval_resources(s):
-    return eval(
-        s.strip("'\""),
-        {
-            "os": os,
-            "system_tmpdir": None
-        }
-    )
-tmpdir = eval_resources(workflow.default_resources._args.get("tmpdir"))
+tmpdir = eval(workflow.default_resources._args.get("tmpdir"), {"system_tmpdir": tempfile.gettempdir()})
 
-workflow.shadow_prefix = eval_environ(workflow.shadow_prefix)
+if workflow.run_local:
+    workflow.shadow_prefix = os.environ.get("SLURM_TMPDIR")
 
 ###
 # Input Globals
@@ -74,10 +54,10 @@ inputs = generate_inputs(
     derivatives=True,
     participant_label=participant_label,
     exclude_participant_label=exclude_participant_label,
-    use_bids_inputs=True,
     pybids_database_dir=config.get("pybids_database_dir"),
     pybids_reset_database=config.get("pybids_reset_database"),
 )
+del inputs['surf']
 
 wildcards = inputs.input_wildcards['preproc_dwi']
 
@@ -85,7 +65,7 @@ wildcards = inputs.input_wildcards['preproc_dwi']
 # Output Globals
 ###
 
-work = Path(tmpdir or tempfile.gettempdir()) / "sn_prepdwi_recon"
+work = Path(tmpdir) / "sn_prepdwi_recon"
 shared_work = Path(config['output_dir'])/'work'/'prepdwi_recon'
 output = Path(config['output_dir'])/"prepdwi_recon"
 qc = Path(output)/"qc"
@@ -113,6 +93,7 @@ xvfb_run = XvfbRun()
 boost = Boost(work, logger, debug=True)
 datalad = Datalad(config['bids_dir'])
 env = Env()
+pyscript = Pyscript(workflow.basedir)
 
 # Patch shells in workflow, allowing implicit use of boost in every shell: ...
 workflow.shellcmd = lambda *cmd: Workflow.shellcmd(workflow, boost(*cmd))
@@ -164,7 +145,7 @@ dipy_env = PipEnv(
 r1_env = PipEnv(
     packages = [
         'numpy',
-        'snakeboost',
+        '/scratch/knavynde/snakeboost',
         'nibabel',
     ],
     flags = config.get("pip-flags", ""),

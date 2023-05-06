@@ -6,8 +6,8 @@ rule get_hemispheric_tracts:
     output:
         temp(directory(work/"get_hemispheric_tracts"/uid/"{hemi}"))
 
-    log: f"logs/get_hemispheric_tracts/{'.'.join(inputs.input_wildcards['surf'].values())}.log"
-    benchmark: f"benchmarks/get_hemispheric_tracts/{'.'.join(inputs.input_wildcards['surf'].values())}.tsv"
+    log: f"logs/get_hemispheric_tracts/{uid}.{{hemi}}.log"
+    benchmark: f"benchmarks/get_hemispheric_tracts/{uid}.{{hemi}}.tsv"
     group: "parcellation"
     envmodules:
         "mrtrix/3.0.1",
@@ -36,7 +36,7 @@ rule get_hemispheric_tracts:
             sh.ShFor(cluster:=sh.ShVar(), _in="`cat {input.index}`") >> (
                 sh.mv(f"{{input.data}}/{hemi}/{cluster}", f"{{output}}.tmp/{cluster}"),
             ),
-            Pyscript(workflow.basedir)(
+            pyscript(
                 input={"input": f"{{output}}.tmp/\*.vtp"},
                 output={"output": f"{{output}}/\*.tck"},
                 script="scripts/convert_vtk.py",
@@ -61,8 +61,8 @@ rule get_parcellation:
             **inputs.input_wildcards['surf'],
         ),
 
-    log: f"logs/get_hemisphere_parcellation/{'.'.join(inputs.input_wildcards['surf'].values())}.log"
-    benchmark: f"benchmarks/get_hemisphere_parcellation/{'.'.join(inputs.input_wildcards['surf'].values())}.tsv"
+    log: f"logs/get_hemisphere_parcellation/{uid}.{{surf}}.log"
+    benchmark: f"benchmarks/get_hemisphere_parcellation/{uid}.{{surf}}.tsv"
     group: "parcellation"
     envmodules:
         "git-annex/8.20200810",
