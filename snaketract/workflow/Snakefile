@@ -1,0 +1,48 @@
+"""Prepdwi_recon
+
+"""
+configfile: 'config/snakebids.yml'
+
+
+include: 'rules/setup.smk'
+include: 'rules/reference_images.smk'
+include: 'rules/anatomical_segmentation.smk'
+include: "rules/response_function.smk"
+include: 'rules/reconstruction/reconstruction.smk'
+include: 'rules/weights.smk'
+include: 'rules/connectome.smk'
+include: "rules/qc.smk"
+
+localrules: connectome, tractography
+
+if config['qc']:
+    target = [
+        rules.qc.output,
+        rules.qc_scripts.output,
+        rules.unpack_qc_app.output,
+        rules.unpack_qc_scripts.output,
+    ]
+else:
+    target = inputs["preproc_dwi"].expand(
+        bids_output_dwi(
+            rec="{rec}",
+            atlas="{atlas}",
+            desc="{weight}",
+            suffix="connectome.csv",
+        ),
+        rec=config["tractography_algorithm"],
+        atlas=config["segmentation"],
+        weight=config["connectome_weight"],
+    )
+
+
+rule connectome:
+    input:
+        target
+
+rule tractography:
+    input:
+        inputs["preproc_dwi"].expand(
+            rules.run_sift2.output.weights,
+            rec=config["tractography_algorithm"],
+        )

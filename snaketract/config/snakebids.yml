@@ -1,0 +1,210 @@
+pip-flags: --no-index -f ~/projects/ctb-akhanf/knavynde/wheels/
+
+pybids_inputs:
+  preproc_dwi:
+    filters:
+      suffix: dwi
+      extension: .nii.gz
+      datatype: dwi
+      desc: eddy
+      space: T1w
+      scope: snakedwi
+    wildcards:
+    - subject
+    - session
+  brainmask:
+    filters:
+      suffix: mask
+      extension: .nii.gz
+      datatype: dwi
+      space: T1w
+      scope: snakedwi
+    wildcards:
+    - subject
+    - session
+  bvec:
+    filters:
+      suffix: dwi
+      extension: bvec
+      datatype: dwi
+      space: T1w
+      desc: eddy
+    wildcards:
+    - subject
+    - session
+  bval:
+    filters:
+      suffix: dwi
+      extension: bval
+      datatype: dwi
+      space: T1w
+      desc: eddy
+    wildcards:
+    - subject
+    - session
+  t1:
+    filters:
+      suffix: T1w
+      extension: .nii.gz
+      datatype: anat
+      desc: preproc
+      scope: snakedwi
+    wildcards:
+    - subject
+    - session
+  t1_mask:
+    filters:
+      suffix: mask
+      extension: .nii.gz
+      datatype: anat
+      scope: snakedwi
+    wildcards:
+    - subject
+    - session
+  t1_map:
+    filters:
+      suffix: T1map
+      extension: .nii.gz
+      scope: gradcorrect
+    wildcards:
+    - subject
+    - session
+  txf_t1w_to_mni:
+    filters:
+      extension:
+      - .h5
+      - .nii.gz
+      from: T1w
+      to: MNI152NLin6Asym
+      mode: image
+      suffix: xfm
+    wildcards:
+      - subject
+      - session
+  txf_mni_to_t1w:
+    filters:
+      extension:
+      - .h5
+      - .nii.gz
+      from: MNI152NLin6Asym
+      to: T1w
+      mode: image
+      suffix: xfm
+    wildcards:
+      - subject
+      - session
+  pial:
+    filters:
+      scope: snakeanat
+      datatype: anat
+      extension: .surf.gii
+      space: T1wLR
+      den: 32k
+      suffix: pial
+    wildcards:
+    - subject
+    - session
+    - hemi
+  wm:
+    filters:
+      scope: snakeanat
+      datatype: anat
+      extension: .surf.gii
+      space: T1wLR
+      den: 32k
+      suffix: wm
+    wildcards:
+    - subject
+    - session
+    - hemi
+
+
+targets_by_analysis_level:
+  participant:
+  - 'connectome'
+analysis_levels: &id001
+- participant
+parse_args:
+  bids_dir:
+    help: The directory with the input dataset formatted according to the BIDS standard.
+    nargs: '?'
+    default: ../hcp1200
+  output_dir:
+    help: The directory where the output files should be stored. If you are running
+      group level analysis this folder should be prepopulated with the results of
+      the participant level analysis.
+    nargs: '?'
+    default: ../hcp1200/derivatives
+  analysis_level:
+    help: Level of the analysis that will be performed.
+    choices: *id001
+    nargs: '?'
+    default: participant
+  --qc:
+    action: store_true
+    default: false
+  --participant_label:
+    help: The label(s) of the participant(s) that should be analyzed. The label corresponds
+      to sub-<participant_label> from the BIDS spec (so it does not include "sub-").
+      If this parameter is not provided all subjects should be analyzed. Multiple
+      participants can be specified with a space separated list.
+    nargs: +
+  --exclude_participant_label:
+    help: The label(s) of the participant(s) that should be excluded. The label corresponds
+      to sub-<participant_label> from the BIDS spec (so it does not include "sub-").
+      If this parameter is not provided all subjects should be analyzed. Multiple
+      participants can be specified with a space separated list.
+    nargs: +
+  --derivatives:
+    default: false
+    action: store_true
+  --response-generation-lmax:
+    help: >
+      lmax to use in response generation.
+    default: 0,8
+  --single-shell-algorithm:
+    help: >
+      Algorithm to use for single shelled (e.g. b=0 plus one other b value)
+      diffusion images.
+    choices:
+    - ss3t
+    - csd
+    - ms3t
+    default: ss3t
+  --tractography-maxlength:
+    help: >
+      Maximum length of streamlines in Tractography
+    default: 250
+  --tractography-cutoff:
+    help: >
+      FOD amplitude for terminating tracts
+    default: 0.06
+  --tractography-numtracts:
+    help: >
+      Number of streamlines to generated
+    default: 10_000_000
+  --tractography-algorithm:
+    help: >
+      Tractography algorithm to use
+    choices:
+    - iFOD2
+    default: iFOD2
+  --segmentation:
+    help: >
+      Atlas to use for segmentation
+    choices:
+    - bn246
+    default: "bn246"
+    nargs: +
+  --connectome-weight: 
+    help: >
+      Weight to use for tractography
+    default:
+    - avgFA
+    - sift2
+    - logsift2
+    # - medR1
+    nargs: +
+
+containers:
+  workbench: docker://brainlife/connectome_workbench:1.5.0-freesurfer-update

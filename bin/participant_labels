@@ -1,4 +1,0 @@
-#!/bin/bash
-
-cat $1 | tail -n+2 | cut -d- -f2 | xargs echo | sed 's/ /,/g'
-
