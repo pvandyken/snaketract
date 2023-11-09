@@ -20,7 +20,7 @@ if config['qc']:
         rules.qc.output,
         rules.qc_scripts.output,
         rules.unpack_qc_app.output,
-        rules.unpack_qc_scripts.output,
+        # rules.unpack_qc_scripts.output,
     ]
 else:
     target = inputs["preproc_dwi"].expand(

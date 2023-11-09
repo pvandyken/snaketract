@@ -136,7 +136,7 @@ rule compute_ss3t_fiber_orientation_densities:
         mem_mb=1000,
         runtime=96,
     container:
-        resource('3tissue.sif')
+        "docker://vnmd/mrtrix3tissue_5.2.8:latest"
     log: log("compute_ss3t_fiber_orientation_densities", inputs['preproc_dwi'])
     benchmark: benchmark("compute_ss3t_fiber_orientation_densities", inputs['preproc_dwi'])
     shell:

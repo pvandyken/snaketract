@@ -53,7 +53,7 @@ inputs = generate_inputs(
     derivatives=config.get("derivatives", False),
     participant_label=config.get('participant_label'),
     exclude_participant_label=config.get('exclude_participant_label'),
-    pybids_database_dir=config.get("pybids_db_dir"),
+    pybidsdb_dir=config.get("pybidsdb_dir"),
 )
 
 wildcards = inputs.input_wildcards['preproc_dwi']

@@ -271,10 +271,10 @@ rule unpack_qc_app:
     shell:
         "tar -xvzf {input}"
 
-rule unpack_qc_scripts:
-    input:
-        _qc_scripts
-    output:
-        _get_tar_contents(_qc_scripts),
-    shell:
-        "tar -xvzf {input}"
+# rule unpack_qc_scripts:
+#     input:
+#         _qc_scripts
+#     output:
+#         _get_tar_contents(_qc_scripts),
+#     shell:
+#         "tar -xvzf {input}"

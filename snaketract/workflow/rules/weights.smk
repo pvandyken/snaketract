@@ -125,9 +125,10 @@ rule run_dtifit:
 
 
 def _get_image(wildcards):
-    if wildcards["weight"][3:] in DIFFUSION_PARAMS:
-        return rules.run_dtifit.output.fa
-    if wildcards["weight"][3:] == "R1":
+    weight = wildcards["weight"][3:]
+    if weight in DIFFUSION_PARAMS:
+        return rules.run_dtifit.output[weight.lower()]
+    if weight == "R1":
         return rules.create_r1.output
     raise ValueError(
         "config key 'connectome_weight' mut be set to '___FA', where ___ is one of "
@@ -163,7 +164,7 @@ rule tck_sample:
     threads: 4
     resources:
         mem_mb=10000,
-        runtime=9,
+        runtime=11,
     envmodules:
         "mrtrix/3.0.1",
         "git-annex/8.20200810"
