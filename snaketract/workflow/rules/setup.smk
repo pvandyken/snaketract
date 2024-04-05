@@ -16,6 +16,12 @@ import snakeboost.bash as sh
 from templateflow import api as tflow
 from lib.path_store import PathStore
 
+try:
+    from snakebids import set_bids_spec
+    set_bids_spec("v0_0_0")
+except:
+    pass
+
 # def get_labels(label):
 #     cli = config.get(label, None)
 #     vals = cli if isinstance(cli, int) else cli.split(",") if cli is not None else None

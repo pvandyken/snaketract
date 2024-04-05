@@ -11,7 +11,7 @@ include: "rules/response_function.smk"
 include: 'rules/reconstruction/reconstruction.smk'
 include: 'rules/weights.smk'
 include: 'rules/connectome.smk'
-include: "rules/qc.smk"
+# include: "rules/qc.smk"
 
 localrules: connectome, tractography
 
@@ -34,15 +34,18 @@ else:
         atlas=config["segmentation"],
         weight=config["connectome_weight"],
     )
+    # target = inputs["t1"].expand(
+    #     rules.get_5tt_segmentation.output
+    # )
 
 
 rule connectome:
     input:
         target
 
-rule tractography:
-    input:
-        inputs["preproc_dwi"].expand(
-            rules.run_sift2.output.weights,
-            rec=config["tractography_algorithm"],
-        )
+# rule tractography:
+#     input:
+#         inputs["preproc_dwi"].expand(
+#             rules.run_sift2.output.weights,
+#             rec=config["tractography_algorithm"],
+#         )

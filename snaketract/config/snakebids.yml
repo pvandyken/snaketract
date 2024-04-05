@@ -61,6 +61,17 @@ pybids_inputs:
     wildcards:
     - subject
     - session
+  t1_dseg:
+    filters:
+      suffix: dparc
+      extension: .nii.gz
+      datatype: anat
+      scope: snakeanat
+      space: T1w
+      desc: wmparc
+    wildcards:
+    - subject
+    - session
   t1_map:
     filters:
       suffix: T1map
